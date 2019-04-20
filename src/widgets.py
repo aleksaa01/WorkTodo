@@ -71,7 +71,6 @@ class FlowLayout(QLayout):
         sy = self.spacey
         for item in self.itemList:
             nextx = x + item.sizeHint().width() + sx
-            print(item.widget().text())
             # print('x, item.sizeHint(), sx, nextxm, rect: ', x, item.sizeHint(), sx, nextx, rect)
             if nextx - sx > rect.right() and line_height > 0:
                 # print('Go to new line...')
