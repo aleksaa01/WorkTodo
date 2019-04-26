@@ -36,8 +36,8 @@ class JsonStorage(object):
         self.saved = False
 
     def add_task(self, table_name, task_name, value):
-        if not isinstance(task, dict):
-            raise TypeError('Task must be of type dict, got {} instead.'.format(type(task)))
+        if not isinstance(value, dict):
+            raise TypeError('Task value must be of type dict, got {} instead.'.format(type(value)))
 
         self._storage[table_name][task_name] = value
         self.saved = False
