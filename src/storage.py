@@ -29,17 +29,17 @@ class QueueStorage(object):
         return list(self._storage.keys())
 
     def tasks(self, queue_name):
-        return list(self._storage[queue_name].keys())
+        return self._storage[queue_name]
 
     def add_queue(self, queue_name):
-        self._storage[queue_name] = {}
+        self._storage[queue_name] = []
         self.saved = False
 
     def add_task(self, queue_name, task_name, value):
         if not isinstance(value, dict):
             raise TypeError('Task value must be of type dict, got {} instead.'.format(type(value)))
 
-        self._storage[queue_name][task_name] = value
+        self._storage[queue_name].append([task_name, value])
         self.saved = False
 
     def remove_queue(self, queue_name):
@@ -47,8 +47,42 @@ class QueueStorage(object):
         self.saved = False
 
     def remove_task(self, queue_name, task_name):
-        self._storage[queue_name].pop(task_name)
+        index = self._find_task(queue_name, task_name)
+        self._storage.pop(index)
         self.saved = False
+
+    def move_task_up(self, queue_name, task_name, moves=1):
+        task_index = self._find_task(queue_name, task_name)
+        temp_tasks = self._storage[queue_name]
+        task = temp_tasks[task_index]
+
+        end_index = max(0, task_index - moves)
+        for i in range(task_index, end_index, -1):
+            temp_tasks[i] = temp_tasks[i - 1]
+
+        temp_tasks[end_index] = task
+        self._storage[queue_name] = temp_tasks
+        self.saved = False
+
+    def move_task_down(self, queue_name, task_name, moves=1):
+        task_index = self._find_task(queue_name, task_name)
+        temp_tasks = self._storage[queue_name]
+        task = temp_tasks[task_index]
+
+        end_index = min(len(temp_tasks) - 1, task_index + moves)
+        for i in range(task_index, end_index):
+            temp_tasks[i] = temp_tasks[i + 1]
+
+        temp_tasks[end_index] = task
+        self._storage[queue_name] = temp_tasks
+        self.saved = False
+
+    def _find_task(self, queue_name, task_name):
+        for index, field in enumerate(self._storage[queue_name]):
+            if task_name == field[0]:
+                return index
+        raise ValueError("Task with name: {}, doesn't exist.")
+
 
     def save(self):
         with open(self.path, 'w') as f:
