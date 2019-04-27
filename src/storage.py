@@ -6,7 +6,7 @@ import json
 STORAGE_NAME = 'storage.json'
 
 
-class JsonStorage(object):
+class QueueStorage(object):
 
     def __init__(self, filename=None, path=None):
         self.name = filename if filename else STORAGE_NAME
@@ -25,29 +25,29 @@ class JsonStorage(object):
         # Check saved attribute to see if file content and storage object are synchronized.
         self.saved = True
 
-    def tables(self):
+    def queues(self):
         return list(self._storage.keys())
 
-    def tasks(self, table_name):
-        return list(self._storage[table_name].keys())
+    def tasks(self, queue_name):
+        return list(self._storage[queue_name].keys())
 
-    def add_table(self, table_name):
-        self._storage[table_name] = {}
+    def add_queue(self, queue_name):
+        self._storage[queue_name] = {}
         self.saved = False
 
-    def add_task(self, table_name, task_name, value):
+    def add_task(self, queue_name, task_name, value):
         if not isinstance(value, dict):
             raise TypeError('Task value must be of type dict, got {} instead.'.format(type(value)))
 
-        self._storage[table_name][task_name] = value
+        self._storage[queue_name][task_name] = value
         self.saved = False
 
-    def remove_table(self, table_name):
-        self._storage.pop(table_name)
+    def remove_queue(self, queue_name):
+        self._storage.pop(queue_name)
         self.saved = False
 
-    def remove_task(self, table_name, task_name):
-        self._storage[table_name].pop(task_name)
+    def remove_task(self, queue_name, task_name):
+        self._storage[queue_name].pop(task_name)
         self.saved = False
 
     def save(self):
