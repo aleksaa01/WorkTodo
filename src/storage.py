@@ -47,37 +47,57 @@ class QueueStorage(object):
         self.saved = False
 
     def remove_task(self, queue_name, task_name):
-        index = self._find_task(queue_name, task_name)
+        index = self.find_task(queue_name, task_name)
         self._storage.pop(index)
         self.saved = False
 
-    def move_task_up(self, queue_name, task_name, moves=1):
-        task_index = self._find_task(queue_name, task_name)
+    def move_task_up_by_name(self, queue_name, task_name, moves=1):
+        task_index = self.find_task(queue_name, task_name)
+        end_index = task_name - moves
+        self._move_task_up(queue_name, task_index, end_index)
+
+    def move_task_down_by_name(self, queue_name, task_name, moves=1):
+        task_index = self.find_task(queue_name, task_name)
+        end_index = task_index + moves
+        self._move_task_down(queue_name, task_index, end_index)
+
+    def move_task_by_index(self, queue_name, task_index, end_index):
+        print('Moving task with index {} to index {}'.format(task_index, end_index))
+
+        if task_index <= end_index:
+            self._move_task_down(queue_name, task_index, end_index)
+        else:
+            self._move_task_up(queue_name, task_index, end_index)
+
+        print(self.tasks(queue_name))
+
+    def _move_task_up(self, queue_name, task_index, end_index):
         temp_tasks = self._storage[queue_name]
         task = temp_tasks[task_index]
-
-        end_index = max(0, task_index - moves)
+        # check if end_index is out of range, and if it is set it to beginning of the list
+        end_index = max(0, end_index)
         for i in range(task_index, end_index, -1):
             temp_tasks[i] = temp_tasks[i - 1]
 
         temp_tasks[end_index] = task
         self._storage[queue_name] = temp_tasks
+
         self.saved = False
 
-    def move_task_down(self, queue_name, task_name, moves=1):
-        task_index = self._find_task(queue_name, task_name)
+    def _move_task_down(self, queue_name, task_index, end_index):
         temp_tasks = self._storage[queue_name]
         task = temp_tasks[task_index]
-
-        end_index = min(len(temp_tasks) - 1, task_index + moves)
+        # check if end_index is out of range, and if it is set it to end of the list
+        end_index = min(len(temp_tasks) - 1, end_index)
         for i in range(task_index, end_index):
             temp_tasks[i] = temp_tasks[i + 1]
 
         temp_tasks[end_index] = task
         self._storage[queue_name] = temp_tasks
+
         self.saved = False
 
-    def _find_task(self, queue_name, task_name):
+    def find_task(self, queue_name, task_name):
         for index, field in enumerate(self._storage[queue_name]):
             if task_name == field[0]:
                 return index
