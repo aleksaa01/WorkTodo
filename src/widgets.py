@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
-    QGroupBox, QDialog, QTextEdit, QLineEdit, QWidget, QLayout, QSizePolicy
-from PyQt5.QtCore import QRect, QSize, Qt, QPoint
+    QGroupBox, QDialog, QTextEdit, QLineEdit, QWidget, QLayout, QSizePolicy, \
+    QListWidget, QListWidgetItem, QListView, QAbstractItemView
+from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal
 
 from random import randint
 
@@ -113,6 +114,54 @@ class Sidebar(QWidget):
     def add_widgets(self, widget_list):
         for w in widget_list:
             self.layout.addWidget(w)
+
+
+class CustomListWidget(QListWidget):
+
+    dropped = pyqtSignal(int)
+    dragstarted = pyqtSignal(int)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def dropEvent(self, event):
+        super().dropEvent(event)
+        # You must check currentIndex after the drop event has been processed
+        self.dropped.emit(self.currentIndex().row())
+
+    def dragEnterEvent(self, event):
+        super().dragEnterEvent(event)
+        self.dragstarted.emit(self.currentIndex().row())
+
+
+class QueueWidget(QWidget):
+
+    def __init__(self, name, storage, parent=None):
+        super().__init__(parent)
+
+        self.name = name
+        self.storage = storage
+        self._data = []
+
+        self.drag_index = 0
+        self.lw = CustomListWidget(self)
+        self.lw.dragstarted.connect(self.update_drag)
+        self.lw.dropped.connect(self.move_items)
+        self.lw.setDragDropMode(QAbstractItemView.InternalMove)
+
+    def update_drag(self, index):
+        self.drag_index = index
+
+    def move_items(self, drop_index):
+        self.storage.move_task_by_index(self.name, self.drag_index, drop_index)
+
+    def load(self):
+        if self._data:
+            return
+        for task in self.storage.tasks(self.name):
+            item = QListWidgetItem(task[0], self.lw)
+            self._data.append(task)
+
 
 
 if __name__ == '__main__':
