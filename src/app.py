@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QPushButton
 
-from widgets import Sidebar, QueueWidget
+from widgets import Sidebar, QueueWidget, QueueManager
 from storage import QueueStorage
 
 import random
@@ -18,10 +18,12 @@ class AppWindow(QMainWindow):
         self.layout = QVBoxLayout()
 
         self.colors = ['red', 'green', 'blue', 'yellow', 'orange']
-        self.sidebar = Sidebar()
+        self.sidebar = Sidebar(self.cw)
+        self.queue_manager = QueueManager(self.sidebar, self.storage, self.cw)
         self.load_pages()
 
         self.layout.addWidget(self.sidebar)
+        self.layout.addWidget(self.queue_manager)
         self.cw.setLayout(self.layout)
         self.setCentralWidget(self.cw)
 
@@ -33,23 +35,9 @@ class AppWindow(QMainWindow):
 
     def add_page(self, name):
         widget = QPushButton(name)
-        widget.clicked.connect(lambda: self.show_queue(name))
         widget.setFixedSize(80, 40)
         widget.setStyleSheet('background: {}'.format(random.choice(self.colors)))
-        self.sidebar.add_widget(widget)
-
-    def show_queue(self, name):
-        print('Queue name:', name)
-        if name in self.queues:
-            qs = self.queues[name]
-        else:
-            qs = QueueWidget(name, self.storage, self.cw)
-            self.queues[name] = qs
-
-        qs.load()
-        self.layout.addWidget(qs)
-        self.cw.setLayout(self.layout)
-        self.setCentralWidget(self.cw)
+        self.sidebar.add_widget(widget, name)
 
 
 
