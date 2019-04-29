@@ -101,19 +101,26 @@ class FlowLayout(QLayout):
 
 
 class Sidebar(QWidget):
+    """
+    You pass sidebar widget to managers, so manager widgets can react to itemclicked signal.
+    """
+
+    itemclicked = pyqtSignal(str)
 
     def __init__(self, parent=None, maxheight=200, maxwidth=500):
         super().__init__(parent)
         self.layout = FlowLayout()
         self.setLayout(self.layout)
+        # self.mapper = {}
 
-    def add_widget(self, widget):
+    def add_widget(self, widget, name):
         print('Adding new widget...')
+        # self.mapper[name] = widget
+        widget.clicked.connect(lambda: self.item_clicked(name))
         self.layout.addWidget(widget)
 
-    def add_widgets(self, widget_list):
-        for w in widget_list:
-            self.layout.addWidget(w)
+    def item_clicked(self, name):
+        self.itemclicked.emit(name)
 
 
 class CustomListWidget(QListWidget):
@@ -141,13 +148,13 @@ class QueueWidget(QWidget):
 
         self.name = name
         self.storage = storage
-        self._data = []
 
         self.drag_index = 0
         self.lw = CustomListWidget(self)
         self.lw.dragstarted.connect(self.update_drag)
         self.lw.dropped.connect(self.move_items)
         self.lw.setDragDropMode(QAbstractItemView.InternalMove)
+        self.setStyleSheet('background: #FFAA22;')
 
     def update_drag(self, index):
         self.drag_index = index
@@ -156,11 +163,34 @@ class QueueWidget(QWidget):
         self.storage.move_task_by_index(self.name, self.drag_index, drop_index)
 
     def load(self):
-        if self._data:
-            return
         for task in self.storage.tasks(self.name):
             item = QListWidgetItem(task[0], self.lw)
-            self._data.append(task)
+
+
+class QueueManager(QWidget):
+
+    def __init__(self, sidebar, storage, parent=None):
+        super().__init__(parent)
+
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        self.sidebar = sidebar
+        self.sidebar.itemclicked.connect(self.display_queue)
+        self.storage = storage
+        self.cq = None  # current queue
+
+    def display_queue(self, name):
+        if not self.cq:
+            self.cq = QueueWidget(name, self.storage)
+        elif self.cq.name != name:
+            self.layout.removeWidget(self.cq)
+            self.cq = QueueWidget(name, self.storage)
+        else:
+            return
+
+        self.layout.addWidget(self.cq)
+        self.cq.load()
 
 
 
