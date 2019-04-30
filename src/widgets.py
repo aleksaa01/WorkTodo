@@ -185,6 +185,18 @@ class QueueWidget(QWidget):
         self.lw.clear()
         self.load()
 
+    def set_multi_selection(self):
+        self.lw.clearSelection()
+        self.lw.setSelectionMode(QAbstractItemView.MultiSelection)
+        # Have to turn off drag and drop for multi-selection because currently
+        # storage doesn't support multiple drags and drops of items.
+        self.lw.setDragDropMode(QAbstractItemView.NoDragDrop)
+
+    def set_single_selection(self):
+        self.lw.clearSelection()
+        self.lw.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.lw.setDragDropMode(QAbstractItemView.InternalMove)
+
 
 class QueueActions(QWidget):
 
@@ -200,11 +212,15 @@ class QueueActions(QWidget):
         self.add_task_btn = QPushButton('Add Task')
         self.add_task_btn.clicked.connect(self.run_add_task_dialog)
         self.remove_task_btn = QPushButton('Remove Task')
-        self.select_tasks = QPushButton('Select Tasks')
+        self.select_tasks_btn = QPushButton('Select Tasks')
+        self.select_tasks_btn.clicked.connect(self.toggle_selection)
+
+        self.select_on_stylesheet = 'background: green; border: 1px solid red; padding: 2px;'
+        self.select_off_stylesheet = ''
 
         mlayout.addWidget(self.add_task_btn)
         mlayout.addWidget(self.remove_task_btn)
-        mlayout.addWidget(self.select_tasks)
+        mlayout.addWidget(self.select_tasks_btn)
         self.setLayout(mlayout)
 
     def set_queue_widget(self, queue_widget):
@@ -217,6 +233,16 @@ class QueueActions(QWidget):
 
     def emit_task(self, task):
         self.task_created.emit(task)
+
+    def toggle_selection(self):
+        if self.add_task_btn.isEnabled():
+            self.add_task_btn.setDisabled(True)
+            self.queue_widget.set_multi_selection()
+            self.select_tasks_btn.setStyleSheet(self.select_on_stylesheet)
+        else:
+            self.add_task_btn.setEnabled(True)
+            self.queue_widget.set_single_selection()
+            self.select_tasks_btn.setStyleSheet(self.select_off_stylesheet)
 
 
 class AddTaskDialog(QDialog):
