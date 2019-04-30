@@ -148,12 +148,14 @@ class QueueWidget(QWidget):
 
         self.name = name
         self.storage = storage
-
         self.drag_index = 0
+
         self.lw = CustomListWidget(self)
         self.lw.dragstarted.connect(self.update_drag)
         self.lw.dropped.connect(self.move_items)
         self.lw.setDragDropMode(QAbstractItemView.InternalMove)
+        self.lw.clicked.connect(lambda: self.add('SOME TASK', {'start_time': 13.30, 'end_time': 15.7}))
+
         self.setStyleSheet('background: #FFAA22;')
 
     def update_drag(self, index):
@@ -166,14 +168,151 @@ class QueueWidget(QWidget):
         for task in self.storage.tasks(self.name):
             item = QListWidgetItem(task[0], self.lw)
 
+    def task_names(self):
+        return self.storage.task_names(self.name)
+
+    def remove(self, index):
+        self.storage.remove_task_by_index(self.name, index)
+
+    def add(self, task):
+        print('Adding new task')
+        name, value = task
+
+        if name in self.storage.task_names(self.name):
+            print('This task already exists')
+            return
+
+        self.storage.add_task(self.name, name, value)
+        self.lw.clear()
+        self.load()
+
+
+class QueueActions(QWidget):
+
+    task_created = pyqtSignal(list)
+
+    def __init__(self, queue_widget=None, parent=None):
+        super().__init__(parent)
+
+        self.queue_widget = queue_widget
+
+        mlayout = QVBoxLayout()
+
+        self.add_task_btn = QPushButton('Add Task')
+        self.add_task_btn.clicked.connect(self.run_add_task_dialog)
+        self.remove_task_btn = QPushButton('Remove Task')
+        self.select_tasks = QPushButton('Select Tasks')
+
+        mlayout.addWidget(self.add_task_btn)
+        mlayout.addWidget(self.remove_task_btn)
+        mlayout.addWidget(self.select_tasks)
+        self.setLayout(mlayout)
+
+    def set_queue_widget(self, queue_widget):
+        self.queue_widget = queue_widget
+
+    def run_add_task_dialog(self):
+        dialog = AddTaskDialog(self.queue_widget.task_names())
+        dialog.accepted.connect(self.emit_task)
+        dialog.exec_()
+
+    def emit_task(self, task):
+        self.task_created.emit(task)
+
+
+class AddTaskDialog(QDialog):
+
+    accepted = pyqtSignal(list)
+    rejected = pyqtSignal(bool)
+
+    def __init__(self, task_list, parent=None):
+        super().__init__(parent)
+
+        self._task_list = task_list
+
+        mlayout = QVBoxLayout()
+        namelayout = QHBoxLayout()
+        desclayout = QHBoxLayout()
+        stimelayout = QHBoxLayout()
+        etimelayout = QHBoxLayout()
+        btnslayout = QHBoxLayout()
+
+        namelbl = QLabel('Task Name:', self)
+        self.name_line_edit = QLineEdit(self)
+        namelayout.addWidget(namelbl)
+        namelayout.addWidget(self.name_line_edit)
+
+        desclbl = QLabel('Description:', self)
+        self.desc_text_edit = QTextEdit(self)
+        desclayout.addWidget(desclbl)
+        desclayout.addWidget(self.desc_text_edit)
+
+        stimelbl = QLabel('Start Time:', self)
+        self.stime_line_edit = QLineEdit(self)
+        stimelayout.addWidget(stimelbl)
+        stimelayout.addWidget(self.stime_line_edit)
+
+        etimelbl = QLabel('Start Time:', self)
+        self.etime_line_edit = QLineEdit(self)
+        etimelayout.addWidget(etimelbl)
+        etimelayout.addWidget(self.etime_line_edit)
+
+        self.ok_btn = QPushButton('OK')
+        self.ok_btn.clicked.connect(self.accept)
+        self.cancel_btn = QPushButton('Cancel')
+        self.cancel_btn.clicked.connect(self.reject)
+        btnslayout.addWidget(self.ok_btn)
+        btnslayout.addWidget(self.cancel_btn)
+
+        mlayout.addLayout(namelayout)
+        mlayout.addLayout(desclayout)
+        mlayout.addLayout(stimelayout)
+        mlayout.addLayout(etimelayout)
+        mlayout.addLayout(btnslayout)
+
+        self.setLayout(mlayout)
+
+    def accept(self):
+        task_name = self.name_line_edit.text()
+        if task_name in self._task_list:
+            self.name_line_edit.setStyleSheet('border: 1px solid red;')
+            return
+        description = self.desc_text_edit.toPlainText()
+        start_time = round(float(self.stime_line_edit.text()), 2)
+        end_time = round(float(self.etime_line_edit.text()), 2)
+
+        if not (0.00 <= start_time <= 24.00):
+            self.stime_line_edit.setStyleSheet('border: 1px solid red;')
+            return
+        if not (0.00 <= end_time <= 24.00):
+            self.etime_line_edit.setStyleSheet('border: 1px solid red;')
+            return
+
+        task = [task_name, {'description': description, 'start_time': start_time, 'end_time': end_time}]
+
+        self.accepted.emit(task)
+        super().accept()
+
+    def reject(self):
+        self.rejected.emit(True)
+        super().reject()
+
+
 
 class QueueManager(QWidget):
 
     def __init__(self, sidebar, storage, parent=None):
         super().__init__(parent)
 
+        mlayout = QHBoxLayout()
+
         self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
+        mlayout.addLayout(self.layout)
+
+        self.qa = QueueActions()
+        mlayout.addWidget(self.qa)
+
+        self.setLayout(mlayout)
 
         self.sidebar = sidebar
         self.sidebar.itemclicked.connect(self.display_queue)
@@ -189,6 +328,8 @@ class QueueManager(QWidget):
         else:
             return
 
+        self.qa.set_queue_widget(self.cq)
+        self.qa.task_created.connect(self.cq.add)
         self.layout.addWidget(self.cq)
         self.cq.load()
 
