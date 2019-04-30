@@ -154,7 +154,6 @@ class QueueWidget(QWidget):
         self.lw.dragstarted.connect(self.update_drag)
         self.lw.dropped.connect(self.move_items)
         self.lw.setDragDropMode(QAbstractItemView.InternalMove)
-        self.lw.clicked.connect(lambda: self.add('SOME TASK', {'start_time': 13.30, 'end_time': 15.7}))
 
         self.setStyleSheet('background: #FFAA22;')
 
