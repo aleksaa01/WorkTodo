@@ -360,6 +360,7 @@ class QueueManager(QWidget):
         mlayout.addLayout(self.layout)
 
         self.qa = QueueActions()
+        self.qa.hide()
         mlayout.addWidget(self.qa)
 
         self.setLayout(mlayout)
@@ -372,6 +373,7 @@ class QueueManager(QWidget):
     def display_queue(self, name):
         if not self.cq:
             self.cq = QueueWidget(name, self.storage)
+            self.qa.show()
         elif self.cq.name != name:
             self.layout.removeWidget(self.cq)
             self.cq = QueueWidget(name, self.storage)
