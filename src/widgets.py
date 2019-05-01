@@ -197,30 +197,50 @@ class QueueWidget(QWidget):
         self.lw.setSelectionMode(QAbstractItemView.SingleSelection)
         self.lw.setDragDropMode(QAbstractItemView.InternalMove)
 
+    def remove_selected_item(self):
+        index = self.lw.currentIndex().row()
+        self.storage.remove_task_by_index(self.name, index)
+        self.lw.clear()
+        self.load()
+
+    def get_selected_rows(self):
+        selected_rows = [i.row() for i in self.lw.selectedIndexes()]
+        selected_rows.sort(reverse=True)
+        return selected_rows
+
+    def remove_selected_items(self):
+        rows = self.get_selected_rows()
+        print(rows)
+        for index in rows:
+            self.storage.remove_task_by_index(self.name, index)
+        self.lw.clear()
+        self.load()
+
 
 class QueueActions(QWidget):
-
-    task_created = pyqtSignal(list)
 
     def __init__(self, queue_widget=None, parent=None):
         super().__init__(parent)
 
         self.queue_widget = queue_widget
+        self.selection_flag = False
 
         mlayout = QVBoxLayout()
 
         self.add_task_btn = QPushButton('Add Task')
         self.add_task_btn.clicked.connect(self.run_add_task_dialog)
+        # Connect to remove_task.clicked for signals
         self.remove_task_btn = QPushButton('Remove Task')
-        self.select_tasks_btn = QPushButton('Select Tasks')
-        self.select_tasks_btn.clicked.connect(self.toggle_selection)
+        self.remove_task_btn.clicked.connect(self.remove_task)
+        self.select_tasks = QPushButton('Select Tasks')
+        self.select_tasks.clicked.connect(self.toggle_selection)
 
         self.select_on_stylesheet = 'background: green; border: 1px solid red; padding: 2px;'
         self.select_off_stylesheet = ''
 
         mlayout.addWidget(self.add_task_btn)
         mlayout.addWidget(self.remove_task_btn)
-        mlayout.addWidget(self.select_tasks_btn)
+        mlayout.addWidget(self.select_tasks)
         self.setLayout(mlayout)
 
     def set_queue_widget(self, queue_widget):
@@ -228,21 +248,26 @@ class QueueActions(QWidget):
 
     def run_add_task_dialog(self):
         dialog = AddTaskDialog(self.queue_widget.task_names())
-        dialog.accepted.connect(self.emit_task)
+        dialog.accepted.connect(self.queue_widget.add)
         dialog.exec_()
 
-    def emit_task(self, task):
-        self.task_created.emit(task)
+    def remove_task(self):
+        if self.selection_flag:
+            self.queue_widget.remove_selected_items()
+        else:
+            self.queue_widget.remove_selected_item()
 
     def toggle_selection(self):
-        if self.add_task_btn.isEnabled():
+        self.selection_flag = not self.selection_flag
+
+        if self.selection_flag:
             self.add_task_btn.setDisabled(True)
             self.queue_widget.set_multi_selection()
-            self.select_tasks_btn.setStyleSheet(self.select_on_stylesheet)
+            self.select_tasks.setStyleSheet(self.select_on_stylesheet)
         else:
             self.add_task_btn.setEnabled(True)
             self.queue_widget.set_single_selection()
-            self.select_tasks_btn.setStyleSheet(self.select_off_stylesheet)
+            self.select_tasks.setStyleSheet(self.select_off_stylesheet)
 
 
 class AddTaskDialog(QDialog):
@@ -354,7 +379,6 @@ class QueueManager(QWidget):
             return
 
         self.qa.set_queue_widget(self.cq)
-        self.qa.task_created.connect(self.cq.add)
         self.layout.addWidget(self.cq)
         self.cq.load()
 
