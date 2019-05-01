@@ -381,12 +381,3 @@ class QueueManager(QWidget):
         self.qa.set_queue_widget(self.cq)
         self.layout.addWidget(self.cq)
         self.cq.load()
-
-
-
-if __name__ == '__main__':
-    from PyQt5.QtWidgets import QApplication
-    app = QApplication([])
-    w = Sidebar()
-    w.show()
-    app.exec_()
