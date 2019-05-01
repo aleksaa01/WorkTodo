@@ -56,11 +56,11 @@ class QueueStorage(object):
 
     def remove_task(self, queue_name, task_name):
         index = self.find_task(queue_name, task_name)
-        self._storage.pop(index)
+        self._storage[queue_name].pop(index)
         self.saved = False
 
     def remove_task_by_index(self, queue_name, task_index):
-        self._storage.pop(task_index)
+        self._storage[queue_name].pop(task_index)
         self.saved = False
 
     def move_task_up_by_name(self, queue_name, task_name, moves=1):
