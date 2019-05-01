@@ -1,6 +1,7 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QPushButton
+from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QPushButton, QSizePolicy
 
-from widgets import Sidebar, QueueWidget, QueueManager
+from widgets import Sidebar
+from queue.widgets import QueueWidget, QueueManager
 from storage import QueueStorage
 
 import random
@@ -8,10 +9,11 @@ import random
 
 class AppWindow(QMainWindow):
 
-    def __init__(self):
+    def __init__(self, width=500, height=400):
         super().__init__(None)
+        self.resize(width, height)
+
         self.storage = QueueStorage()
-        self.queues = {}
 
         self.cw = QWidget(self)  # central widget
         self.cw.setStyleSheet('background: #44ffaa;')
