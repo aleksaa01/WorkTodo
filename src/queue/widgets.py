@@ -79,6 +79,10 @@ class QueueWidget(QWidget):
         self.lw.setDragDropMode(QAbstractItemView.InternalMove)
 
     def remove_selected_item(self):
+        current_item = self.lw.currentItem()
+        if current_item is None:
+            return
+
         index = self.lw.currentIndex().row()
         self.storage.remove_task_by_index(self.name, index)
         self.lw.clear()
