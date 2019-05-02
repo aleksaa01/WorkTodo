@@ -261,6 +261,7 @@ class QueueManager(QWidget):
             self.qa.show()
         elif self.cq.name != name:
             self.layout.removeWidget(self.cq)
+            self.cq.deleteLater()
             self.cq = QueueWidget(name, self.storage)
         else:
             return
