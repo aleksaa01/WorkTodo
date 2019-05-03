@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
     QGroupBox, QDialog, QTextEdit, QLineEdit, QWidget, QSizePolicy, \
-    QListWidget, QListWidgetItem, QListView, QAbstractItemView
-from PyQt5.QtCore import pyqtSignal
+    QListWidget, QListWidgetItem, QListView, QAbstractItemView, QApplication, \
+    QToolButton, QCheckBox
+from PyQt5.QtCore import pyqtSignal, QSize, Qt
 
 
 class CustomListWidget(QListWidget):
@@ -63,8 +64,7 @@ class QueueWidget(QWidget):
             return
 
         self.storage.add_task(self.name, name, value)
-        self.lw.clear()
-        self.load()
+        self.lw.addItem(QListWidgetItem(task[0], self.lw))
 
     def set_multi_selection(self):
         self.lw.clearSelection()
@@ -85,8 +85,7 @@ class QueueWidget(QWidget):
 
         index = self.lw.currentIndex().row()
         self.storage.remove_task_by_index(self.name, index)
-        self.lw.clear()
-        self.load()
+        self.lw.takeItem(index)
 
     def get_selected_rows(self):
         selected_rows = [i.row() for i in self.lw.selectedIndexes()]
@@ -98,8 +97,7 @@ class QueueWidget(QWidget):
         print(rows)
         for index in rows:
             self.storage.remove_task_by_index(self.name, index)
-        self.lw.clear()
-        self.load()
+            self.lw.takeItem(index)
 
 
 class QueueActions(QWidget):
