@@ -46,8 +46,16 @@ class QueueWidget(QWidget):
         self.storage.move_task_by_index(self.name, self.drag_index, drop_index)
 
     def load(self):
+        size = QSize()
+        size.setHeight(50)
         for task in self.storage.tasks(self.name):
-            item = QListWidgetItem(task[0], self.lw)
+            widget = TaskWidget(task[0])
+
+            item = QListWidgetItem()
+            item.setSizeHint(size)
+
+            self.lw.addItem(item)
+            self.lw.setItemWidget(item, widget)
 
     def task_names(self):
         return self.storage.task_names(self.name)
@@ -64,7 +72,12 @@ class QueueWidget(QWidget):
             return
 
         self.storage.add_task(self.name, name, value)
-        self.lw.addItem(QListWidgetItem(task[0], self.lw))
+
+        widget = TaskWidget(task[0])
+        item = QListWidgetItem()
+        item.setSizeHint(50)
+        self.lw.addItem(item)
+        self.lw.setItemWidget(item, widget)
 
     def set_multi_selection(self):
         self.lw.clearSelection()
