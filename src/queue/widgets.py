@@ -267,3 +267,27 @@ class QueueManager(QWidget):
         self.qa.set_queue_widget(self.cq)
         self.layout.addWidget(self.cq)
         self.cq.load()
+
+
+class TaskWidget(QWidget):
+
+    def __init__(self, text, parent=None):
+        super().__init__(parent)
+
+        self.label = QLabel(text)
+        self.rmbtn = QToolButton()
+        self.rmbtn.setText('X')
+        self.rmbtn.setFixedSize(20, 20)
+
+        self.checker = None
+
+        self.layout = QHBoxLayout()
+        self.layout.addWidget(self.label)
+        self.layout.addStretch()
+        self.layout.addWidget(self.rmbtn)
+
+        self.setLayout(self.layout)
+
+    def add_checker(self):
+        self.checker = QCheckBox()
+        self.layout.insertWidget(0, self.checker)
