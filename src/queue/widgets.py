@@ -75,7 +75,9 @@ class QueueWidget(QWidget):
 
         widget = TaskWidget(task[0])
         item = QListWidgetItem()
-        item.setSizeHint(50)
+        size = QSize()
+        size.setHeight(50)
+        item.setSizeHint(size)
         self.lw.addItem(item)
         self.lw.setItemWidget(item, widget)
 
@@ -111,59 +113,6 @@ class QueueWidget(QWidget):
         for index in rows:
             self.storage.remove_task_by_index(self.name, index)
             self.lw.takeItem(index)
-
-
-class QueueActions(QWidget):
-
-    def __init__(self, queue_widget=None, parent=None):
-        super().__init__(parent)
-
-        self.queue_widget = queue_widget
-        self.selection_flag = False
-
-        mlayout = QVBoxLayout()
-
-        self.add_task_btn = QPushButton('Add Task')
-        self.add_task_btn.clicked.connect(self.run_add_task_dialog)
-        # Connect to remove_task.clicked for signals
-        self.remove_task_btn = QPushButton('Remove Task')
-        self.remove_task_btn.clicked.connect(self.remove_task)
-        self.select_tasks = QPushButton('Select Tasks')
-        self.select_tasks.clicked.connect(self.toggle_selection)
-
-        self.select_on_stylesheet = 'background: green; border: 1px solid red; padding: 2px;'
-        self.select_off_stylesheet = ''
-
-        mlayout.addWidget(self.add_task_btn)
-        mlayout.addWidget(self.remove_task_btn)
-        mlayout.addWidget(self.select_tasks)
-        self.setLayout(mlayout)
-
-    def set_queue_widget(self, queue_widget):
-        self.queue_widget = queue_widget
-
-    def run_add_task_dialog(self):
-        dialog = AddTaskDialog(self.queue_widget.task_names())
-        dialog.accepted.connect(self.queue_widget.add)
-        dialog.exec_()
-
-    def remove_task(self):
-        if self.selection_flag:
-            self.queue_widget.remove_selected_items()
-        else:
-            self.queue_widget.remove_selected_item()
-
-    def toggle_selection(self):
-        self.selection_flag = not self.selection_flag
-
-        if self.selection_flag:
-            self.add_task_btn.setDisabled(True)
-            self.queue_widget.set_multi_selection()
-            self.select_tasks.setStyleSheet(self.select_on_stylesheet)
-        else:
-            self.add_task_btn.setEnabled(True)
-            self.queue_widget.set_single_selection()
-            self.select_tasks.setStyleSheet(self.select_off_stylesheet)
 
 
 class AddTaskDialog(QDialog):
@@ -251,14 +200,31 @@ class QueueManager(QWidget):
         super().__init__(parent)
 
         mlayout = QHBoxLayout()
+        self.queuelayout = QVBoxLayout()
+        mlayout.addLayout(self.queuelayout)
 
-        self.layout = QVBoxLayout()
-        mlayout.addLayout(self.layout)
+        self.right_container = QWidget()
+        rightlayout = QVBoxLayout()
 
-        self.qa = QueueActions()
-        self.qa.hide()
-        mlayout.addWidget(self.qa)
+        self.add_task_btn = QPushButton('Add Task')
+        self.add_task_btn.clicked.connect(self.run_add_task_dialog)
 
+        self.remove_task_btn = QPushButton('Remove Task')
+        self.remove_task_btn.clicked.connect(self.remove_triggered)
+
+        self.selection_flag = False
+        self.select_tasks = QPushButton('Select Tasks')
+        self.select_tasks.clicked.connect(self.toggle_selection)
+        self.select_on_stylesheet = 'background: green; border: 1px solid red; padding: 2px;'
+        self.select_off_stylesheet = ''
+
+        rightlayout.addWidget(self.add_task_btn)
+        rightlayout.addWidget(self.remove_task_btn)
+        rightlayout.addWidget(self.select_tasks)
+        self.right_container.setLayout(rightlayout)
+        self.right_container.hide()
+
+        mlayout.addWidget(self.right_container)
         self.setLayout(mlayout)
 
         self.sidebar = sidebar
@@ -269,17 +235,39 @@ class QueueManager(QWidget):
     def display_queue(self, name):
         if not self.cq:
             self.cq = QueueWidget(name, self.storage)
-            self.qa.show()
+            self.right_container.show()
         elif self.cq.name != name:
-            self.layout.removeWidget(self.cq)
+            self.queuelayout.removeWidget(self.cq)
             self.cq.deleteLater()
             self.cq = QueueWidget(name, self.storage)
         else:
             return
 
-        self.qa.set_queue_widget(self.cq)
-        self.layout.addWidget(self.cq)
+        self.queuelayout.addWidget(self.cq)
         self.cq.load()
+
+    def run_add_task_dialog(self):
+        dialog = AddTaskDialog(self.cq.task_names())
+        dialog.accepted.connect(self.cq.add)
+        dialog.exec_()
+
+    def remove_triggered(self):
+        if self.selection_flag:
+            self.cq.remove_selected_items()
+        else:
+            self.cq.remove_selected_item()
+
+    def toggle_selection(self):
+        self.selection_flag = not self.selection_flag
+
+        if self.selection_flag:
+            self.add_task_btn.setDisabled(True)
+            self.cq.set_multi_selection()
+            self.select_tasks.setStyleSheet(self.select_on_stylesheet)
+        else:
+            self.add_task_btn.setEnabled(True)
+            self.cq.set_single_selection()
+            self.select_tasks.setStyleSheet(self.select_off_stylesheet)
 
 
 class TaskWidget(QWidget):
