@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
     QDialog, QTextEdit, QLineEdit, QWidget, QListWidget, QListWidgetItem, \
-    QAbstractItemView, QToolButton, QCheckBox
+    QAbstractItemView, QToolButton, QCheckBox, QSizePolicy, QSpacerItem
 from PyQt5.QtCore import pyqtSignal, QSize
 from PyQt5.QtGui import QIcon, QPixmap
 
@@ -51,7 +51,7 @@ class QueueWidget(QWidget):
         size.setHeight(50)
         delete_icon = QIcon()
         delete_icon.addPixmap(QPixmap(':/images/delete_icon.png'))
-        for task in self.storage.tasks(self.name) * 10:
+        for task in self.storage.tasks(self.name):
             widget = TaskWidget(task[0], delete_icon)
 
             item = QListWidgetItem()
@@ -87,38 +87,33 @@ class QueueWidget(QWidget):
         self.lw.addItem(item)
         self.lw.setItemWidget(item, widget)
 
-    def set_multi_selection(self):
-        self.lw.clearSelection()
-        self.lw.setSelectionMode(QAbstractItemView.MultiSelection)
-        # Have to turn off drag and drop for multi-selection because currently
-        # storage doesn't support multiple drags and drops of items.
-        self.lw.setDragDropMode(QAbstractItemView.NoDragDrop)
-
-    def set_single_selection(self):
-        self.lw.clearSelection()
-        self.lw.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.lw.setDragDropMode(QAbstractItemView.InternalMove)
-
-    def remove_selected_item(self):
-        current_item = self.lw.currentItem()
-        if current_item is None:
-            return
-
-        index = self.lw.currentIndex().row()
-        self.storage.remove_task_by_index(self.name, index)
-        self.lw.takeItem(index)
-
     def get_selected_rows(self):
-        selected_rows = [i.row() for i in self.lw.selectedIndexes()]
-        selected_rows.sort(reverse=True)
+        num_items = self.lw.count()
+        selected_rows = []
+        for idx in range(num_items):
+            widget = self.lw.itemWidget(self.lw.item(idx))
+            if widget.checker.isChecked():
+                selected_rows.append(idx)
         return selected_rows
 
     def remove_selected_items(self):
         rows = self.get_selected_rows()
         print(rows)
-        for index in rows:
-            self.storage.remove_task_by_index(self.name, index)
-            self.lw.takeItem(index)
+        for index in range(len(rows) - 1, -1, -1):
+            self.storage.remove_task_by_index(self.name, rows[index])
+            self.lw.takeItem(rows[index])
+
+    def turn_on_selection(self):
+        items = self.lw.count()
+        for idx in range(items):
+            widget = self.lw.itemWidget(self.lw.item(idx))
+            widget.add_checker()
+
+    def turn_off_selection(self):
+        num_items = self.lw.count()
+        for idx in range(num_items):
+            widget = self.lw.itemWidget(self.lw.item(idx))
+            widget.remove_checker()
 
 
 class AddTaskDialog(QDialog):
@@ -199,81 +194,105 @@ class AddTaskDialog(QDialog):
         super().reject()
 
 
+class QueueActions(QWidget):
+
+    def __init__(self, queue_widget=None, parent=None):
+        super().__init__(parent)
+
+        self.queue_widget = queue_widget
+        self.selection_flag = False
+
+        self.select = QToolButton()
+        icon = QIcon()
+        icon.addPixmap(QPixmap(':/images/delete_icon2.png'))
+        self.select.setIcon(icon)
+        self.select.clicked.connect(self.selection_triggered)
+
+        self.delete = QToolButton()
+        icon = QIcon()
+        icon.addPixmap(QPixmap(':/images/delete_icon.png'))
+        self.delete.setIcon(icon)
+        self.delete.clicked.connect(self.delete_triggered)
+
+        self.add = QToolButton()
+        icon = QIcon()
+        icon.addPixmap(QPixmap(':/images/delete_icon2.png'))
+        self.add.setIcon(icon)
+        self.add.clicked.connect(self.run_add_task_dialog)
+
+        layout = QHBoxLayout()
+        layout.addWidget(self.select)
+        layout.addWidget(self.delete)
+        layout.addWidget(self.add)
+        self.setLayout(layout)
+
+    def selection_triggered(self):
+        if not self.selection_flag:
+            self.queue_widget.turn_on_selection()
+            self.selection_flag = True
+            self.add.setDisabled(True)
+        else:
+            self.queue_widget.turn_off_selection()
+            self.selection_flag = False
+            self.add.setEnabled(True)
+
+    def delete_triggered(self):
+        if self.selection_flag:
+            self.queue_widget.remove_selected_items()
+
+    def run_add_task_dialog(self):
+        dialog = AddTaskDialog(self.queue_widget.task_names())
+        dialog.accepted.connect(self.queue_widget.add)
+        dialog.exec_()
+
+
 
 class QueueManager(QWidget):
+
+    # TODO: Add stretches on both sides of queuelayout, and when you add queue-widgets add them before last stretch
 
     def __init__(self, sidebar, storage, parent=None):
         super().__init__(parent)
 
-        mlayout = QHBoxLayout()
-        self.queuelayout = QVBoxLayout()
-        mlayout.addLayout(self.queuelayout)
-
-        self.right_container = QWidget()
-        rightlayout = QVBoxLayout()
-
-        self.add_task_btn = QPushButton('Add Task')
-        self.add_task_btn.clicked.connect(self.run_add_task_dialog)
-
-        self.remove_task_btn = QPushButton('Remove Task')
-        self.remove_task_btn.clicked.connect(self.remove_triggered)
-
-        self.selection_flag = False
-        self.select_tasks = QPushButton('Select Tasks')
-        self.select_tasks.clicked.connect(self.toggle_selection)
-        self.select_on_stylesheet = 'background: green; border: 1px solid red; padding: 2px;'
-        self.select_off_stylesheet = ''
-
-        rightlayout.addWidget(self.add_task_btn)
-        rightlayout.addWidget(self.remove_task_btn)
-        rightlayout.addWidget(self.select_tasks)
-        self.right_container.setLayout(rightlayout)
-        self.right_container.hide()
-
-        mlayout.addWidget(self.right_container)
-        self.setLayout(mlayout)
-
         self.sidebar = sidebar
-        self.sidebar.itemclicked.connect(self.display_queue)
+        self.sidebar.itemclicked.connect(self.check_existance)
         self.storage = storage
         self.cq = None  # current queue
+        self.queues = {}
+
+        self.queuelayout = QHBoxLayout()
+        self.setLayout(self.queuelayout)
+
+    def check_existance(self, queue_name):
+        if queue_name in self.queues:
+            self.remove_queue(queue_name)
+        else:
+            self.display_queue(queue_name)
 
     def display_queue(self, name):
-        if not self.cq:
-            self.cq = QueueWidget(name, self.storage)
-            self.right_container.show()
-        elif self.cq.name != name:
-            self.queuelayout.removeWidget(self.cq)
-            self.cq.deleteLater()
-            self.cq = QueueWidget(name, self.storage)
-        else:
-            return
+        container = QWidget(self)
+        queue_widget = QueueWidget(name, self.storage, container)
+        queue_actions = QueueActions(queue_widget, container)
+        layout = QVBoxLayout()
+        layout.addWidget(queue_actions)
+        layout.addWidget(queue_widget)
+        container.setLayout(layout)
+        container.setMaximumWidth(300)
+        container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # container.setStyleSheet('background: red;')
 
-        self.queuelayout.addWidget(self.cq)
-        self.cq.load()
+        self.queues[name] = container
+        self.queuelayout.addWidget(container)
+        queue_widget.load()
+        print('container:', container.geometry())
+        print('queue_widget:', queue_widget.geometry())
+        print('manager:', self.geometry())
 
-    def run_add_task_dialog(self):
-        dialog = AddTaskDialog(self.cq.task_names())
-        dialog.accepted.connect(self.cq.add)
-        dialog.exec_()
-
-    def remove_triggered(self):
-        if self.selection_flag:
-            self.cq.remove_selected_items()
-        else:
-            self.cq.remove_selected_item()
-
-    def toggle_selection(self):
-        self.selection_flag = not self.selection_flag
-
-        if self.selection_flag:
-            self.add_task_btn.setDisabled(True)
-            self.cq.set_multi_selection()
-            self.select_tasks.setStyleSheet(self.select_on_stylesheet)
-        else:
-            self.add_task_btn.setEnabled(True)
-            self.cq.set_single_selection()
-            self.select_tasks.setStyleSheet(self.select_off_stylesheet)
+    def remove_queue(self, name):
+        container = self.queues[name]
+        self.queuelayout.removeWidget(container)
+        container.deleteLater()
+        self.queues.pop(name)
 
 
 class TaskWidget(QWidget):
@@ -310,3 +329,8 @@ class TaskWidget(QWidget):
 
         self.checker = QCheckBox()
         self.layout.insertWidget(0, self.checker)
+
+    def remove_checker(self):
+        self.layout.removeWidget(self.checker)
+        self.checker.deleteLater()
+        self.checker = None
