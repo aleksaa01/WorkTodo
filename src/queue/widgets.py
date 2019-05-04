@@ -2,7 +2,9 @@ from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
     QDialog, QTextEdit, QLineEdit, QWidget, QListWidget, QListWidgetItem, \
     QAbstractItemView, QToolButton, QCheckBox
 from PyQt5.QtCore import pyqtSignal, QSize
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QPixmap
+
+import time
 
 
 class CustomListWidget(QListWidget):
@@ -37,8 +39,6 @@ class QueueWidget(QWidget):
         self.lw.dropped.connect(self.move_items)
         self.lw.setDragDropMode(QAbstractItemView.InternalMove)
 
-        self.setStyleSheet('background: #FFAA22;')
-
     def update_drag(self, index):
         self.drag_index = index
 
@@ -46,16 +46,22 @@ class QueueWidget(QWidget):
         self.storage.move_task_by_index(self.name, self.drag_index, drop_index)
 
     def load(self):
+        t1 = time.perf_counter()
         size = QSize()
         size.setHeight(50)
-        for task in self.storage.tasks(self.name):
-            widget = TaskWidget(task[0])
+        delete_icon = QIcon()
+        delete_icon.addPixmap(QPixmap(':/images/delete_icon.png'))
+        for task in self.storage.tasks(self.name) * 10:
+            widget = TaskWidget(task[0], delete_icon)
 
             item = QListWidgetItem()
             item.setSizeHint(size)
 
             self.lw.addItem(item)
             self.lw.setItemWidget(item, widget)
+
+        t2 = time.perf_counter()
+        print('Time took for loading {} items: {}'.format(self.lw.count(), t2 - t1))
 
     def task_names(self):
         return self.storage.task_names(self.name)
@@ -272,18 +278,21 @@ class QueueManager(QWidget):
 
 class TaskWidget(QWidget):
 
-    def __init__(self, text, parent=None):
+    def __init__(self, text, icon=None, parent=None):
         super().__init__(parent)
 
+        # creating icon every time is proximately 3 times slower than creating it once
+        # and passing it many times
+        if not icon:
+            icon = QIcon(":/images/delete_icon.png")
+
         self.label = QLabel(text)
-        icon = QIcon(":/images/delete_icon.png")
         self.rmbtn = QToolButton()
         self.rmbtn.setIcon(icon)
         self.rmbtn.setIconSize(QSize(20, 20))
         self.rmbtn.setIcon(icon)
         self.rmbtn.setFixedSize(20, 20)
         self.rmbtn.setAutoRaise(True)
-        self.rmbtn.setStyleSheet('background: transparent;')
 
         self.checker = None
 
