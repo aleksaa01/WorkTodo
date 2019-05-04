@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
-    QGroupBox, QDialog, QTextEdit, QLineEdit, QWidget, QSizePolicy, \
-    QListWidget, QListWidgetItem, QListView, QAbstractItemView, QApplication, \
-    QToolButton, QCheckBox
-from PyQt5.QtCore import pyqtSignal, QSize, Qt
+    QDialog, QTextEdit, QLineEdit, QWidget, QListWidget, QListWidgetItem, \
+    QAbstractItemView, QToolButton, QCheckBox
+from PyQt5.QtCore import pyqtSignal, QSize
+from PyQt5.QtGui import QIcon
 
 
 class CustomListWidget(QListWidget):
@@ -288,9 +288,14 @@ class TaskWidget(QWidget):
         super().__init__(parent)
 
         self.label = QLabel(text)
+        icon = QIcon(":/images/delete_icon.png")
         self.rmbtn = QToolButton()
-        self.rmbtn.setText('X')
+        self.rmbtn.setIcon(icon)
+        self.rmbtn.setIconSize(QSize(20, 20))
+        self.rmbtn.setIcon(icon)
         self.rmbtn.setFixedSize(20, 20)
+        self.rmbtn.setAutoRaise(True)
+        self.rmbtn.setStyleSheet('background: transparent;')
 
         self.checker = None
 
@@ -302,5 +307,9 @@ class TaskWidget(QWidget):
         self.setLayout(self.layout)
 
     def add_checker(self):
+        # if checker is present just return
+        if self.checker:
+            return
+
         self.checker = QCheckBox()
         self.layout.insertWidget(0, self.checker)
