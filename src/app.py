@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QPushButton, QSizePolicy
 from PyQt5.QtGui import QIcon, QPixmap
 from widgets import Sidebar
-from queue.widgets import QueueWidget, QueueManager
+from queues.widgets import QueueWidget, QueueManager
 from storage import QueueStorage
 
 import random
