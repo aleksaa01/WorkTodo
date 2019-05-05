@@ -19,7 +19,7 @@ class AppWindow(QMainWindow):
         self.layout = QVBoxLayout()
 
         self.colors = ['red', 'green', 'blue', 'yellow', 'orange']
-        self.sidebar = Sidebar(self.cw)
+        self.sidebar = Sidebar(parent=self.cw)
         self.queue_manager = QueueManager(self.sidebar, self.storage, self.cw)
         self.load_pages()
 

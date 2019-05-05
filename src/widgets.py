@@ -1,10 +1,13 @@
-from PyQt5.QtWidgets import QWidget, QLayout
+from PyQt5.QtWidgets import QWidget, QLayout, QSizePolicy
 from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal
+from PyQt5.QtGui import QPalette
 
 
 class FlowLayout(QLayout):
-    def __init__(self, parent=None, margin=0, spacex=5, spacey=5):
-        super(FlowLayout, self).__init__(parent)
+    def __init__(self, max_height=None, parent=None, margin=0, spacex=5, spacey=5):
+        super().__init__(parent)
+
+        self.max_height = max_height if max_height else 10000
 
         if parent:
             self.setMargin(margin)
@@ -41,8 +44,15 @@ class FlowLayout(QLayout):
         return Qt.Orientations(Qt.Orientation(0))
 
     def setGeometry(self, rect):
-        super(FlowLayout, self).setGeometry(rect)
-        self.resize_layout(rect)
+        super().setGeometry(rect)
+
+        final_height = self.resize_layout(rect)
+        parent = self.parent()
+        if final_height != parent.height() and final_height <= self.max_height:
+            parent.setFixedHeight(final_height)
+        elif final_height == parent.height():
+            # TODO: Resize items to fit into max_height
+            pass
 
     def sizeHint(self):
         return self.minimumSize()
@@ -67,21 +77,25 @@ class FlowLayout(QLayout):
         sx = self.spacex
         sy = self.spacey
         for item in self.itemList:
-            nextx = x + item.sizeHint().width() + sx
+            item_size_hint = item.sizeHint()
+            item_width = item_size_hint.width()
+            item_height = item_size_hint.height()
+
+            nextx = x + item_width + sx
             # print('x, item.sizeHint(), sx, nextxm, rect: ', x, item.sizeHint(), sx, nextx, rect)
             if nextx - sx > rect.right() and line_height > 0:
                 # print('Go to new line...')
                 x = rect.x()
                 y = y + line_height + sy
-                nextx = x + item.sizeHint().width() + sx
+                nextx = x + item_width + sx
                 # going to new line, set line_height to 0.
                 line_height = 0
 
-            item.setGeometry(QRect(QPoint(x, y), item.sizeHint()))
+            item.setGeometry(QRect(QPoint(x, y), item_size_hint))
 
             x = nextx
             # Check if this item has the biggest height of all the items in current line.
-            line_height = max(line_height, item.sizeHint().height())
+            line_height = max(line_height, item_height)
         return y + line_height + sy
 
     def resize_children(self):
@@ -103,10 +117,16 @@ class Sidebar(QWidget):
 
     itemclicked = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, max_height=100, parent=None):
         super().__init__(parent)
-        self.layout = FlowLayout()
+
+        self.layout = FlowLayout(max_height)
         self.setLayout(self.layout)
+
+        palette = QPalette()
+        palette.setColor(QPalette.Background, Qt.red)
+        self.setAutoFillBackground(True)
+        self.setPalette(palette)
 
     def add_widget(self, widget, name):
         print('Adding new widget...')
