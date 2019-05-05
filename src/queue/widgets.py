@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
     QDialog, QTextEdit, QLineEdit, QWidget, QListWidget, QListWidgetItem, \
-    QAbstractItemView, QToolButton, QCheckBox, QSizePolicy, QSpacerItem
-from PyQt5.QtCore import pyqtSignal, QSize
-from PyQt5.QtGui import QIcon, QPixmap
+    QAbstractItemView, QToolButton, QCheckBox, QSizePolicy
+from PyQt5.QtCore import pyqtSignal, QSize, Qt
+from PyQt5.QtGui import QIcon, QPixmap, QPalette
 
 import time
 
@@ -14,6 +14,8 @@ class CustomListWidget(QListWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
     def dropEvent(self, event):
         super().dropEvent(event)
@@ -38,6 +40,12 @@ class QueueWidget(QWidget):
         self.lw.dragstarted.connect(self.update_drag)
         self.lw.dropped.connect(self.move_items)
         self.lw.setDragDropMode(QAbstractItemView.InternalMove)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.lw)
+        self.setLayout(layout)
 
     def update_drag(self, index):
         self.drag_index = index
@@ -202,28 +210,37 @@ class QueueActions(QWidget):
         self.queue_widget = queue_widget
         self.selection_flag = False
 
-        self.select = QToolButton()
+        self.select = QToolButton(self)
         icon = QIcon()
         icon.addPixmap(QPixmap(':/images/delete_icon2.png'))
         self.select.setIcon(icon)
+        self.select.setMaximumSize(20, 20)
         self.select.clicked.connect(self.selection_triggered)
 
-        self.delete = QToolButton()
+        self.delete = QToolButton(self)
         icon = QIcon()
-        icon.addPixmap(QPixmap(':/images/delete_icon.png'))
+        icon.addPixmap(QPixmap(':/images/delete_icon2.png'))
         self.delete.setIcon(icon)
+        self.delete.setMaximumSize(20, 20)
         self.delete.clicked.connect(self.delete_triggered)
 
-        self.add = QToolButton()
+        self.add = QToolButton(self)
         icon = QIcon()
         icon.addPixmap(QPixmap(':/images/delete_icon2.png'))
         self.add.setIcon(icon)
+        self.add.setMaximumSize(20, 20)
         self.add.clicked.connect(self.run_add_task_dialog)
 
-        layout = QHBoxLayout()
+        layout = QHBoxLayout(self)
+        # Set spacing and margins instead of widget size
+        layout.setSpacing(2)
+        layout.setContentsMargins(0, 0, 0, 0)
+        ###
+        layout.addStretch(1)
         layout.addWidget(self.select)
         layout.addWidget(self.delete)
         layout.addWidget(self.add)
+        layout.addStretch(1)
         self.setLayout(layout)
 
     def selection_triggered(self):
@@ -249,8 +266,6 @@ class QueueActions(QWidget):
 
 class QueueManager(QWidget):
 
-    # TODO: Add stretches on both sides of queuelayout, and when you add queue-widgets add them before last stretch
-
     def __init__(self, sidebar, storage, parent=None):
         super().__init__(parent)
 
@@ -274,19 +289,15 @@ class QueueManager(QWidget):
         queue_widget = QueueWidget(name, self.storage, container)
         queue_actions = QueueActions(queue_widget, container)
         layout = QVBoxLayout()
+        layout.setSpacing(0)
         layout.addWidget(queue_actions)
         layout.addWidget(queue_widget)
         container.setLayout(layout)
         container.setMaximumWidth(300)
-        container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        # container.setStyleSheet('background: red;')
 
         self.queues[name] = container
         self.queuelayout.addWidget(container)
         queue_widget.load()
-        print('container:', container.geometry())
-        print('queue_widget:', queue_widget.geometry())
-        print('manager:', self.geometry())
 
     def remove_queue(self, name):
         container = self.queues[name]
@@ -308,9 +319,9 @@ class TaskWidget(QWidget):
         self.label = QLabel(text)
         self.rmbtn = QToolButton()
         self.rmbtn.setIcon(icon)
-        self.rmbtn.setIconSize(QSize(20, 20))
+        self.rmbtn.setIconSize(QSize(25, 25))
         self.rmbtn.setIcon(icon)
-        self.rmbtn.setFixedSize(20, 20)
+        self.rmbtn.setFixedSize(25, 25)
         self.rmbtn.setAutoRaise(True)
 
         self.checker = None
