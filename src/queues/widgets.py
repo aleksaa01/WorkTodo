@@ -18,13 +18,53 @@ class CustomListWidget(QListWidget):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
     def dropEvent(self, event):
+        t1 = time.perf_counter()
         super().dropEvent(event)
-        # You must check currentIndex after the drop event has been processed
-        self.dropped.emit(self.currentIndex().row())
+        dropped_at_item = self.itemAt(event.pos())
+        new_item_pos = self.indexFromItem(dropped_at_item).row()
+        t2 = time.perf_counter()
+
+        drop_indicator = self.dropIndicatorPosition()
+        if event.source() == self:
+            if drop_indicator == 1:
+                new_item_pos -= 1
+            elif drop_indicator == 3:
+                new_item_pos = self.count() - 1
+        else:
+            if drop_indicator == 2:
+                new_item_pos += 1
+            elif drop_indicator == 3:
+                new_item_pos = self.count() - 1
+
+            t3 = time.perf_counter()
+
+            item = self.item(new_item_pos)
+            widget = TaskWidget(event.mimeData().text())
+            self.setItemWidget(item, widget)
+
+        t4 = time.perf_counter()
+        print('First:', t2 - t1)
+        print('Second:', t3 - t2)
+        print('Third:', t4 - t3)
+        # TODO: Synchronize cross-widget drag-drop with storage.
 
     def dragEnterEvent(self, event):
+        t1 = time.perf_counter()
         super().dragEnterEvent(event)
+        source = event.source()
+        if isinstance(source, type(self)):
+            event.accept()
+        if source == self:
+            # item = self.takeItem(self.currentIndex().row())
+            widget = self.itemWidget(self.item(self.currentIndex().row()))
+            event.mimeData().setText(widget.label.text())
+        else:
+            text = event.mimeData().text()
+            print(text)
+
         self.dragstarted.emit(self.currentIndex().row())
+        t2 = time.perf_counter()
+        print('Time took for dragEnterEvent:', t2 - t1)
 
 
 class QueueWidget(QWidget):
@@ -39,7 +79,9 @@ class QueueWidget(QWidget):
         self.lw = CustomListWidget(self)
         self.lw.dragstarted.connect(self.update_drag)
         self.lw.dropped.connect(self.move_items)
-        self.lw.setDragDropMode(QAbstractItemView.InternalMove)
+        self.lw.setDragDropMode(QAbstractItemView.DragDrop) #InternalMove
+        self.lw.setDefaultDropAction(Qt.MoveAction)
+        self.lw.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         layout = QVBoxLayout()
