@@ -356,7 +356,8 @@ class TaskWidget(QWidget):
         # creating icon every time is proximately 3 times slower than creating it once
         # and passing it many times
         if not icon:
-            icon = QIcon(":/images/delete_icon.png")
+            icon = QIcon()
+            icon.addPixmap(QPixmap(':/images/delete_icon.png'))
 
         self.label = QLabel(text)
         self.rmbtn = QToolButton()
