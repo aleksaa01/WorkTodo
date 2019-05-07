@@ -115,6 +115,13 @@ class QueueStorage(object):
                 return index
         raise ValueError("Task with name: {}, doesn't exist.")
 
+    def pop_task(self, queue_name, task_index):
+        self.saved = False
+        return self._storage[queue_name].pop(task_index)
+
+    def insert_task(self, queue_name, task, index):
+        self._storage[queue_name].insert(index, task)
+        self.saved = False
 
     def save(self):
         with open(self.path, 'w') as f:
