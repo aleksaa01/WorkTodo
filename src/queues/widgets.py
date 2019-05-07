@@ -8,21 +8,20 @@ import time
 
 
 class CustomListWidget(QListWidget):
+    dragstarted = pyqtSignal(str, int)
+    internal_drop = pyqtSignal(int)
+    external_drop = pyqtSignal(int)
 
-    dropped = pyqtSignal(int)
-    dragstarted = pyqtSignal(int)
-
-    def __init__(self, parent=None):
+    def __init__(self, name, parent=None):
         super().__init__(parent)
 
+        self.name = name
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
     def dropEvent(self, event):
-        t1 = time.perf_counter()
         super().dropEvent(event)
         dropped_at_item = self.itemAt(event.pos())
         new_item_pos = self.indexFromItem(dropped_at_item).row()
-        t2 = time.perf_counter()
 
         drop_indicator = self.dropIndicatorPosition()
         if event.source() == self:
@@ -30,41 +29,30 @@ class CustomListWidget(QListWidget):
                 new_item_pos -= 1
             elif drop_indicator == 3:
                 new_item_pos = self.count() - 1
+
+            self.internal_drop.emit(new_item_pos)
         else:
             if drop_indicator == 2:
                 new_item_pos += 1
             elif drop_indicator == 3:
                 new_item_pos = self.count() - 1
 
-            t3 = time.perf_counter()
-
             item = self.item(new_item_pos)
             widget = TaskWidget(event.mimeData().text())
             self.setItemWidget(item, widget)
 
-        t4 = time.perf_counter()
-        print('First:', t2 - t1)
-        print('Second:', t3 - t2)
-        print('Third:', t4 - t3)
-        # TODO: Synchronize cross-widget drag-drop with storage.
+            self.external_drop.emit(new_item_pos)
 
     def dragEnterEvent(self, event):
-        t1 = time.perf_counter()
         super().dragEnterEvent(event)
         source = event.source()
         if isinstance(source, type(self)):
             event.accept()
         if source == self:
-            # item = self.takeItem(self.currentIndex().row())
             widget = self.itemWidget(self.item(self.currentIndex().row()))
             event.mimeData().setText(widget.label.text())
-        else:
-            text = event.mimeData().text()
-            print(text)
 
-        self.dragstarted.emit(self.currentIndex().row())
-        t2 = time.perf_counter()
-        print('Time took for dragEnterEvent:', t2 - t1)
+        self.dragstarted.emit(source.name, source.currentIndex().row())
 
 
 class QueueWidget(QWidget):
@@ -74,11 +62,14 @@ class QueueWidget(QWidget):
 
         self.name = name
         self.storage = storage
+
+        self.drag_source = ''
         self.drag_index = 0
 
-        self.lw = CustomListWidget(self)
+        self.lw = CustomListWidget(name, self)
         self.lw.dragstarted.connect(self.update_drag)
-        self.lw.dropped.connect(self.move_items)
+        self.lw.internal_drop.connect(self.move_item)
+        self.lw.external_drop.connect(self.migrate_item)
         self.lw.setDragDropMode(QAbstractItemView.DragDrop) #InternalMove
         self.lw.setDefaultDropAction(Qt.MoveAction)
         self.lw.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -89,11 +80,19 @@ class QueueWidget(QWidget):
         layout.addWidget(self.lw)
         self.setLayout(layout)
 
-    def update_drag(self, index):
+    def update_drag(self, source_name, index):
+        self.drag_source = source_name
         self.drag_index = index
 
-    def move_items(self, drop_index):
+    def move_item(self, drop_index):
+        print('Moving item:', self.name, self.drag_index, drop_index)
         self.storage.move_task_by_index(self.name, self.drag_index, drop_index)
+
+    def migrate_item(self, drop_index):
+        print('Migrating item:', self.name, self.drag_source, self.drag_index, drop_index)
+        task = self.storage.pop_task(self.drag_source, self.drag_index)
+        print('Migrated Task:', task)
+        self.storage.insert_task(self.name, task, drop_index)
 
     def load(self):
         t1 = time.perf_counter()
