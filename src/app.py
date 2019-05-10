@@ -1,7 +1,6 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QPushButton, QSizePolicy
 from PyQt5.QtGui import QIcon, QPixmap
-from widgets import Sidebar
-from queues.widgets import QueueWidget, QueueManager
+from queues.widgets import QueueWidget, QueueManager, QueueSidebar
 from storage import QueueStorage
 
 import random
@@ -19,7 +18,7 @@ class AppWindow(QMainWindow):
         self.layout = QVBoxLayout()
 
         self.colors = ['red', 'green', 'blue', 'yellow', 'orange']
-        self.sidebar = Sidebar(parent=self.cw)
+        self.sidebar = QueueSidebar(self.storage, self.cw)
         self.queue_manager = QueueManager(self.sidebar, self.storage, self.cw)
         self.load_pages()
 
@@ -46,8 +45,10 @@ class AppWindow(QMainWindow):
 if __name__ == '__main__':
     import time
     app_instance = QApplication([])
-    win = AppWindow()
+
     from resources import icons_rc
     # This actually loads resource file for the first time.
     QPixmap(':')
+
+    win = AppWindow()
     app_instance.exec_()
