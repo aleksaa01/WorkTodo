@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QLayout, QSizePolicy
+from PyQt5.QtWidgets import QWidget, QLayout
 from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal
 from PyQt5.QtGui import QPalette
 
