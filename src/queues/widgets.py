@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
 from PyQt5.QtCore import pyqtSignal, QSize, Qt
 from PyQt5.QtGui import QIcon, QPixmap, QPalette
 
+from widgets import Sidebar
+
 import time
 
 
@@ -387,3 +389,85 @@ class TaskWidget(QWidget):
         self.layout.removeWidget(self.checker)
         self.checker.deleteLater()
         self.checker = None
+
+
+class QueueSidebar(QWidget):
+
+    itemclicked = pyqtSignal(str)
+
+    def __init__(self, storage, parent=None):
+        super().__init__(parent)
+
+        self.storage = storage
+        self.sidebar = Sidebar(parent=self)
+        self.sidebar.itemclicked.connect(self.reemit)
+        self.add_queue_btn = QToolButton()
+        icon = QIcon()
+        icon.addPixmap(QPixmap(':/images/delete_icon.png'))
+        self.add_queue_btn.setIcon(QIcon(QPixmap(':/images/delete_icon.png')))
+        self.add_queue_btn.setIconSize(QSize(30, 30))
+        self.add_queue_btn.setAutoRaise(True)
+        self.add_queue_btn.clicked.connect(self.run_dialog)
+
+        mlayout = QHBoxLayout()
+        mlayout.addWidget(self.sidebar)
+        mlayout.addWidget(self.add_queue_btn)
+        self.setLayout(mlayout)
+
+    def add_widget(self, widget, name):
+        self.sidebar.add_widget(widget, name)
+
+    def reemit(self, name):
+        self.itemclicked.emit(name)
+
+    def run_dialog(self):
+        add_queue_dialog = AddQueueDialog(self.storage.queues())
+        add_queue_dialog.accepted.connect(self.add_queue)
+        add_queue_dialog.exec_()
+
+    def add_queue(self, name):
+        print('Adding:', name)
+        self.storage.add_queue(name)
+        widget = QPushButton(name)
+        widget.setFixedSize(80, 40)
+        self.sidebar.add_widget(widget, name)
+
+
+class AddQueueDialog(QDialog):
+
+    accepted = pyqtSignal(str)
+    rejected = pyqtSignal(bool)
+
+    def __init__(self, queue_names, parent=None):
+        super().__init__(parent)
+
+        self.queue_names = queue_names
+
+        self.qname = QLineEdit(self)
+        self.qname.setPlaceholderText('Queue Name')
+        self.ok_btn = QPushButton('OK')
+        self.ok_btn.clicked.connect(self.accept)
+        self.cancel_btn = QPushButton('Cancel')
+        self.cancel_btn.clicked.connect(self.close)
+
+        btn_layout = QHBoxLayout()
+        btn_layout.addWidget(self.ok_btn)
+        btn_layout.addWidget(self.cancel_btn)
+
+        mlayout = QVBoxLayout()
+        mlayout.addWidget(self.qname)
+        mlayout.addLayout(btn_layout)
+        self.setLayout(mlayout)
+
+    def accept(self):
+        queue_name = self.qname.text()
+        if queue_name in self.queue_names:
+            self.qname.setStyleSheet('border: 1px solid red;')
+            return
+
+        self.accepted.emit(queue_name)
+        super().accept()
+
+    def reject(self):
+        self.rejected.emit(True)
+        super().reject()
