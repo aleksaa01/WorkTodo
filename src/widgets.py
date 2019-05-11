@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QLayout, QPushButton
+from PyQt5.QtWidgets import QWidget, QLayout, QPushButton, QScrollArea, QSizePolicy
 from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal, QRectF
 from PyQt5.QtGui import QPalette, QPainter, QBrush, QPainterPath, QPen, QFont
 
@@ -111,19 +111,22 @@ class FlowLayout(QLayout):
         self.resize_layout(self.geometry())
 
 
-
-class Sidebar(QWidget):
-    """
-    You pass sidebar widget to managers, so manager widgets can react to itemclicked signal.
-    """
+class Sidebar(QScrollArea):
 
     itemclicked = pyqtSignal(str)
 
     def __init__(self, max_height=100, parent=None):
         super().__init__(parent)
 
-        self.layout = FlowLayout(max_height)
-        self.setLayout(self.layout)
+        self.setMaximumHeight(max_height)
+        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Maximum)
+        self.sidebar_widget = QWidget(self)
+        self.layout = FlowLayout()
+        self.sidebar_widget.setLayout(self.layout)
+        self.setWidget(self.sidebar_widget)
+        self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setFrameShape(QScrollArea.NoFrame)
 
     def add_widget(self, widget, name):
         print('Adding new widget...')
@@ -136,10 +139,11 @@ class Sidebar(QWidget):
     def mousePressEvent(self, event):
         palette = QPalette()
         palette.setColor(QPalette.Background, Qt.red)
-        self.setAutoFillBackground(True)
-        self.setPalette(palette)
+        self.sidebar_widget.setAutoFillBackground(True)
+        self.sidebar_widget.setPalette(palette)
 
     def mouseDoubleClickEvent(self, event):
+        self.sidebar_widget.setPalette(self.parent().palette())
         self.setPalette(self.parent().palette())
 
 
