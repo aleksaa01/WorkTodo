@@ -1,6 +1,8 @@
-from PyQt5.QtWidgets import QWidget, QLayout
-from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal
-from PyQt5.QtGui import QPalette
+from PyQt5.QtWidgets import QWidget, QLayout, QPushButton
+from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal, QRectF
+from PyQt5.QtGui import QPalette, QPainter, QBrush, QPainterPath, QPen, QFont
+
+import time
 
 
 class FlowLayout(QLayout):
@@ -123,11 +125,6 @@ class Sidebar(QWidget):
         self.layout = FlowLayout(max_height)
         self.setLayout(self.layout)
 
-        palette = QPalette()
-        palette.setColor(QPalette.Background, Qt.red)
-        self.setAutoFillBackground(True)
-        self.setPalette(palette)
-
     def add_widget(self, widget, name):
         print('Adding new widget...')
         widget.clicked.connect(lambda: self.item_clicked(name))
@@ -135,3 +132,12 @@ class Sidebar(QWidget):
 
     def item_clicked(self, name):
         self.itemclicked.emit(name)
+
+    def mousePressEvent(self, event):
+        palette = QPalette()
+        palette.setColor(QPalette.Background, Qt.red)
+        self.setAutoFillBackground(True)
+        self.setPalette(palette)
+
+    def mouseDoubleClickEvent(self, event):
+        self.setPalette(self.parent().palette())
