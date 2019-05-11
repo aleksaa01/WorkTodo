@@ -128,25 +128,22 @@ class Sidebar(QScrollArea):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setFrameShape(QScrollArea.NoFrame)
 
-        self.num_widgets = 0
-        self.name_to_index = {}
+        self.widgets = []
 
     def add_widget(self, widget, name):
         print('Adding new widget...')
         widget.clicked.connect(lambda: self.item_clicked(name))
         self.layout.addWidget(widget)
-        self.name_to_index[name] = self.num_widgets
-        # print('Added, number of widgets', name, self.num_widgets)
-        self.num_widgets += 1
+        self.widgets.append(widget)
 
     def remove_widget(self, name):
-        # TODO: Removal of widgets is unstable, fix it
-        index = self.name_to_index[name]
-        self.layout.takeAt(index).widget().deleteLater()
-        self.layout.update()
-        self.name_to_index.pop(name)
-        # print('Popped, number of widgets', name, self.num_widgets)
-        self.num_widgets -= 1
+        for idx, widget in enumerate(self.widgets):
+            if widget.name == name:
+                self.widgets.pop(idx)
+                widget.deleteLater()
+                return
+
+        assert False, 'Widget with name {} is not present'.format(name)
 
     def item_clicked(self, name):
         self.itemclicked.emit(name)
