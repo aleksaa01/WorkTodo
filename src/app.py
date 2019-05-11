@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QPu
 from PyQt5.QtGui import QIcon, QPixmap
 from queues.widgets import QueueWidget, QueueManager, QueueSidebar
 from storage import QueueStorage
+from widgets import SidebarButton
 
 import random
 
@@ -30,13 +31,15 @@ class AppWindow(QMainWindow):
         self.show()
 
     def load_pages(self):
+        t1 = time.time()
         for name in self.storage.queues():
             self.add_page(name)
+        t2 = time.time()
+        print('Loading pages took:', t2 - t1)
 
     def add_page(self, name):
-        widget = QPushButton(name)
-        widget.setFixedSize(80, 40)
-        widget.setStyleSheet('background: {}'.format(random.choice(self.colors)))
+        widget = SidebarButton(name)
+        widget.setFixedSize(80, 20)
         self.sidebar.add_widget(widget, name)
 
 
@@ -45,6 +48,8 @@ class AppWindow(QMainWindow):
 if __name__ == '__main__':
     import time
     app_instance = QApplication([])
+    app_instance.setStyleSheet(""".SidebarButton{background: transparent;border: 0px solid black; border-bottom: 1px solid red;}
+.SidebarButton:checked{border-bottom: 2px solid red; font-weight: 700}""")
 
     from resources import icons_rc
     # This actually loads resource file for the first time.
