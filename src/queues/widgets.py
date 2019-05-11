@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
 from PyQt5.QtCore import pyqtSignal, QSize, Qt
 from PyQt5.QtGui import QIcon, QPixmap, QPalette
 
-from widgets import Sidebar
+from widgets import Sidebar, SidebarButton
 
 import time
 
@@ -453,8 +453,8 @@ class QueueSidebar(QWidget):
     def add_queue(self, name):
         print('Adding:', name)
         self.storage.add_queue(name)
-        widget = QPushButton(name)
-        widget.setFixedSize(80, 40)
+        widget = SidebarButton(name)
+        widget.setFixedSize(80, 20)
         self.sidebar.add_widget(widget, name)
 
     def toggle_remove_mode(self):
