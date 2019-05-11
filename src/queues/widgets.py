@@ -413,6 +413,12 @@ class QueueSidebar(QWidget):
         mlayout.addWidget(self.sidebar)
         mlayout.addWidget(self.add_queue_btn)
         self.setLayout(mlayout)
+        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Maximum)
+
+        pal = QPalette()
+        pal.setColor(QPalette.Background, Qt.yellow)
+        self.setAutoFillBackground(True)
+        self.setPalette(pal)
 
     def add_widget(self, widget, name):
         self.sidebar.add_widget(widget, name)
