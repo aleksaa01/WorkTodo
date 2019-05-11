@@ -128,10 +128,25 @@ class Sidebar(QScrollArea):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setFrameShape(QScrollArea.NoFrame)
 
+        self.num_widgets = 0
+        self.name_to_index = {}
+
     def add_widget(self, widget, name):
         print('Adding new widget...')
         widget.clicked.connect(lambda: self.item_clicked(name))
         self.layout.addWidget(widget)
+        self.name_to_index[name] = self.num_widgets
+        # print('Added, number of widgets', name, self.num_widgets)
+        self.num_widgets += 1
+
+    def remove_widget(self, name):
+        # TODO: Removal of widgets is unstable, fix it
+        index = self.name_to_index[name]
+        self.layout.takeAt(index).widget().deleteLater()
+        self.layout.update()
+        self.name_to_index.pop(name)
+        # print('Popped, number of widgets', name, self.num_widgets)
+        self.num_widgets -= 1
 
     def item_clicked(self, name):
         self.itemclicked.emit(name)
@@ -144,14 +159,15 @@ class Sidebar(QScrollArea):
 
     def mouseDoubleClickEvent(self, event):
         self.sidebar_widget.setPalette(self.parent().palette())
-        self.setPalette(self.parent().palette())
 
 
 class SidebarButton(QPushButton):
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, name, parent=None):
+        # Name should be same as text
+        super().__init__(name, parent)
 
+        self.name = name
         self.setObjectName('SidebarButton')
         self.setCheckable(True)
 
