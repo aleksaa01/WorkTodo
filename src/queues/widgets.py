@@ -313,7 +313,8 @@ class QueueManager(QWidget):
         super().__init__(parent)
 
         self.sidebar = sidebar
-        self.sidebar.itemclicked.connect(self.check_existance)
+        self.sidebar.itemclicked.connect(self.display_or_remove)
+        self.sidebar.itemremoved.connect(self.remove_if_exists)
         self.storage = storage
         self.cq = None  # current queue
         self.queues = {}
@@ -321,11 +322,15 @@ class QueueManager(QWidget):
         self.queuelayout = QHBoxLayout()
         self.setLayout(self.queuelayout)
 
-    def check_existance(self, queue_name):
+    def display_or_remove(self, queue_name):
         if queue_name in self.queues:
             self.remove_queue(queue_name)
         else:
             self.display_queue(queue_name)
+
+    def remove_if_exists(self, queue_name):
+        if queue_name in self.queues:
+            self.remove_queue(queue_name)
 
     def display_queue(self, name):
         container = QWidget(self)
@@ -394,37 +399,51 @@ class TaskWidget(QWidget):
 class QueueSidebar(QWidget):
 
     itemclicked = pyqtSignal(str)
+    itemremoved = pyqtSignal(str)
 
     def __init__(self, storage, parent=None):
         super().__init__(parent)
 
         self.storage = storage
         self.sidebar = Sidebar(parent=self)
-        self.sidebar.itemclicked.connect(self.reemit)
-        self.add_queue_btn = QToolButton()
+        self.sidebar.itemclicked.connect(self.handle_item_clicked)
+
         icon = QIcon()
         icon.addPixmap(QPixmap(':/images/delete_icon.png'))
+
+        self.add_queue_btn = QToolButton()
         self.add_queue_btn.setIcon(QIcon(QPixmap(':/images/delete_icon.png')))
         self.add_queue_btn.setIconSize(QSize(30, 30))
         self.add_queue_btn.setAutoRaise(True)
         self.add_queue_btn.clicked.connect(self.run_dialog)
 
+        self.remove_mode_flag = False
+        self.remove_queue_btn = QToolButton()
+        self.remove_queue_btn.setIcon(icon)
+        self.remove_queue_btn.setIconSize(QSize(30, 30))
+        self.remove_queue_btn.setAutoRaise(True)
+        self.remove_queue_btn.clicked.connect(self.toggle_remove_mode)
+
+
         mlayout = QHBoxLayout()
         mlayout.addWidget(self.sidebar)
-        mlayout.addWidget(self.add_queue_btn)
+        btn_layout = QVBoxLayout()
+        btn_layout.addWidget(self.add_queue_btn)
+        btn_layout.addWidget(self.remove_queue_btn)
+        mlayout.addLayout(btn_layout)
         self.setLayout(mlayout)
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Maximum)
-
-        pal = QPalette()
-        pal.setColor(QPalette.Background, Qt.yellow)
-        self.setAutoFillBackground(True)
-        self.setPalette(pal)
 
     def add_widget(self, widget, name):
         self.sidebar.add_widget(widget, name)
 
-    def reemit(self, name):
-        self.itemclicked.emit(name)
+    def handle_item_clicked(self, name):
+        if self.remove_mode_flag:
+            self.sidebar.remove_widget(name)
+            self.storage.remove_queue(name)
+            self.itemremoved.emit(name)
+        else:
+            self.itemclicked.emit(name)
 
     def run_dialog(self):
         add_queue_dialog = AddQueueDialog(self.storage.queues())
@@ -437,6 +456,27 @@ class QueueSidebar(QWidget):
         widget = QPushButton(name)
         widget.setFixedSize(80, 40)
         self.sidebar.add_widget(widget, name)
+
+    def toggle_remove_mode(self):
+        self.remove_mode_flag = not self.remove_mode_flag
+        if self.remove_mode_flag:
+            self.add_queue_btn.setDisabled(True)
+        else:
+            self.add_queue_btn.setEnabled(True)
+
+    def mousePressEvent(self, event):
+        # If click was on child, don't change color
+        if self.childAt(event.pos()):
+            super().mousePressEvent(event)
+            return
+        pal = QPalette()
+        pal.setColor(QPalette.Window, Qt.yellow)
+        self.setAutoFillBackground(True)
+        self.setPalette(pal)
+
+    def mouseDoubleClickEvent(self, event):
+        # Don't call super() because for some reason it won't set the palette.
+        self.setPalette(self.parent().palette())
 
 
 class AddQueueDialog(QDialog):
