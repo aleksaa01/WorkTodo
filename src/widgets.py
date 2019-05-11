@@ -141,3 +141,26 @@ class Sidebar(QWidget):
 
     def mouseDoubleClickEvent(self, event):
         self.setPalette(self.parent().palette())
+
+
+class SidebarButton(QPushButton):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.setObjectName('SidebarButton')
+        self.setCheckable(True)
+
+    def setStyleSheet(self, p_str):
+        # TODO: Delete this method, this is just for performace testing
+        t1 = time.perf_counter()
+        super().setStyleSheet(p_str)
+        t2 = time.perf_counter()
+        print('Setting style of the widget took:', t2 - t1)
+
+    def paintEvent(self, pain_event):
+        # TODO: Delete this method, this is just for performace testing
+        t1 = time.perf_counter()
+        super().paintEvent(pain_event)
+        t2 = time.perf_counter()
+        print('Painting the widget took:', t2 - t1)
