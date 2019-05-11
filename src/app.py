@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QPushButton, QSizePolicy
+from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, \
+    QPushButton, QSizePolicy
 from PyQt5.QtGui import QIcon, QPixmap
 from queues.widgets import QueueWidget, QueueManager, QueueSidebar
 from storage import QueueStorage
@@ -49,7 +50,7 @@ if __name__ == '__main__':
     import time
     app_instance = QApplication([])
     app_instance.setStyleSheet(""".SidebarButton{background: transparent;border: 0px solid black; border-bottom: 1px solid red;}
-.SidebarButton:checked{border-bottom: 2px solid red; font-weight: 700}""")
+.SidebarButton:checked, SidebarButton:hover{border-bottom: 2px solid red; font-weight: 700}""")
 
     from resources import icons_rc
     # This actually loads resource file for the first time.
