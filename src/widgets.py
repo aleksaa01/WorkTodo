@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QLayout, QPushButton, QScrollArea, QSizePolicy
-from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal, QRectF
-from PyQt5.QtGui import QPalette, QPainter, QBrush, QPainterPath, QPen, QFont
+from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal
+from PyQt5.QtGui import QPalette
 
 import time
 
