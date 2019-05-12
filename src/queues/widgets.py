@@ -12,7 +12,7 @@ import time
 class CustomListWidget(QListWidget):
     dragstarted = pyqtSignal(str, int)
     internal_drop = pyqtSignal(int)
-    external_drop = pyqtSignal(int)
+    external_drop = pyqtSignal(int, str)
 
     def __init__(self, name, parent=None):
         super().__init__(parent)
@@ -39,11 +39,7 @@ class CustomListWidget(QListWidget):
             elif drop_indicator == 3:
                 new_item_pos = self.count() - 1
 
-            item = self.item(new_item_pos)
-            widget = TaskWidget(event.mimeData().text())
-            self.setItemWidget(item, widget)
-
-            self.external_drop.emit(new_item_pos)
+            self.external_drop.emit(new_item_pos, event.mimeData().text())
 
     def dragEnterEvent(self, event):
         super().dragEnterEvent(event)
@@ -71,7 +67,7 @@ class QueueWidget(QWidget):
         self.lw = CustomListWidget(name, self)
         self.lw.dragstarted.connect(self.update_drag)
         self.lw.internal_drop.connect(self.move_item)
-        self.lw.external_drop.connect(self.migrate_item)
+        self.lw.external_drop.connect(self.handle_external_drop)
         self.lw.setDragDropMode(QAbstractItemView.DragDrop) #InternalMove
         self.lw.setDefaultDropAction(Qt.MoveAction)
         self.lw.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -85,6 +81,13 @@ class QueueWidget(QWidget):
     def update_drag(self, source_name, index):
         self.drag_source = source_name
         self.drag_index = index
+
+    def handle_external_drop(self, drop_index, task_text):
+        item = self.lw.item(drop_index)
+        task = TaskWidget(task_text)
+        task.on_remove.connect(self.remove_task)
+        self.lw.setItemWidget(item, task)
+        self.migrate_item(drop_index)
 
     def move_item(self, drop_index):
         print('Moving item:', self.name, self.drag_index, drop_index)
@@ -104,6 +107,7 @@ class QueueWidget(QWidget):
         delete_icon.addPixmap(QPixmap(':/images/delete_icon.png'))
         for task in self.storage.tasks(self.name):
             widget = TaskWidget(task[0], delete_icon)
+            widget.on_remove.connect(self.remove_task)
 
             item = QListWidgetItem()
             item.setSizeHint(size)
@@ -119,6 +123,11 @@ class QueueWidget(QWidget):
 
     def remove(self, index):
         self.storage.remove_task_by_index(self.name, index)
+
+    def remove_task(self, name):
+        task_index = self.storage.find_task(self.name, name)
+        self.lw.takeItem(task_index)
+        self.storage.remove_task_by_index(self.name, task_index)
 
     def add(self, task):
         print('Adding new task')
@@ -151,6 +160,7 @@ class QueueWidget(QWidget):
         rows = self.get_selected_rows()
         print(rows)
         for index in range(len(rows) - 1, -1, -1):
+            # TODO: First update visuals then storage
             self.storage.remove_task_by_index(self.name, rows[index])
             self.lw.takeItem(rows[index])
 
@@ -359,6 +369,8 @@ class QueueManager(QWidget):
 
 class TaskWidget(QWidget):
 
+    on_remove = pyqtSignal(str)
+
     def __init__(self, text, icon=None, parent=None):
         super().__init__(parent)
 
@@ -375,6 +387,7 @@ class TaskWidget(QWidget):
         self.rmbtn.setIcon(icon)
         self.rmbtn.setFixedSize(25, 25)
         self.rmbtn.setAutoRaise(True)
+        self.rmbtn.clicked.connect(lambda: self.on_remove.emit(text))
 
         self.checker = None
 
