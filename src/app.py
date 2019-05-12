@@ -15,6 +15,7 @@ class AppWindow(QMainWindow):
         self.resize(width, height)
 
         self.storage = QueueStorage()
+        self.storage.debug = True
 
         self.cw = QWidget(self)  # central widget
         self.layout = QVBoxLayout()

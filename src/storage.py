@@ -24,6 +24,8 @@ class QueueStorage(object):
 
         # Check saved attribute to see if file content and storage object are synchronized.
         self.saved = True
+        # If debug is True, calling save() won't save anything.
+        self.debug = False
 
     def queues(self):
         return list(self._storage.keys())
@@ -124,6 +126,8 @@ class QueueStorage(object):
         self.saved = False
 
     def save(self):
+        if self.debug:
+            return
         with open(self.path, 'w') as f:
             json.dump(self._storage, f)
         self.saved = True
