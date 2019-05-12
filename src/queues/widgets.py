@@ -74,7 +74,7 @@ class QueueWidget(QWidget):
         self.lw.external_drop.connect(self.migrate_item)
         self.lw.setDragDropMode(QAbstractItemView.DragDrop) #InternalMove
         self.lw.setDefaultDropAction(Qt.MoveAction)
-        self.lw.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.lw.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         layout = QVBoxLayout()
@@ -253,6 +253,8 @@ class QueueActions(QWidget):
         self.queue_widget = queue_widget
         self.selection_flag = False
 
+        self.qname_lbl = QLabel(queue_widget.name)
+
         self.select = QToolButton(self)
         icon = QIcon()
         icon.addPixmap(QPixmap(':/images/delete_icon2.png'))
@@ -279,6 +281,7 @@ class QueueActions(QWidget):
         layout.setSpacing(2)
         layout.setContentsMargins(0, 0, 0, 0)
         ###
+        layout.addWidget(self.qname_lbl)
         layout.addStretch(1)
         layout.addWidget(self.select)
         layout.addWidget(self.delete)
