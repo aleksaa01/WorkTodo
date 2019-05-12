@@ -104,7 +104,7 @@ class QueueWidget(QWidget):
         size = QSize()
         size.setHeight(50)
         delete_icon = QIcon()
-        delete_icon.addPixmap(QPixmap(':/images/delete_icon.png'))
+        delete_icon.addPixmap(QPixmap(':/images/delete_icon2.png'))
         for task in self.storage.tasks(self.name):
             widget = TaskWidget(task[0], delete_icon)
             widget.on_remove.connect(self.remove_task)
@@ -265,23 +265,26 @@ class QueueActions(QWidget):
 
         self.select = QToolButton(self)
         icon = QIcon()
-        icon.addPixmap(QPixmap(':/images/delete_icon2.png'))
+        icon.addPixmap(QPixmap(':/images/select_icon.png'))
         self.select.setIcon(icon)
         self.select.setMaximumSize(20, 20)
+        self.select.setAutoRaise(True)
         self.select.clicked.connect(self.selection_triggered)
 
         self.delete = QToolButton(self)
         icon = QIcon()
-        icon.addPixmap(QPixmap(':/images/delete_icon2.png'))
+        icon.addPixmap(QPixmap(':/images/delete_icon.png'))
         self.delete.setIcon(icon)
         self.delete.setMaximumSize(20, 20)
+        self.delete.setAutoRaise(True)
         self.delete.clicked.connect(self.delete_triggered)
 
         self.add = QToolButton(self)
         icon = QIcon()
-        icon.addPixmap(QPixmap(':/images/delete_icon2.png'))
+        icon.addPixmap(QPixmap(':/images/add_icon.png'))
         self.add.setIcon(icon)
         self.add.setMaximumSize(20, 20)
+        self.add.setAutoRaise(True)
         self.add.clicked.connect(self.run_add_task_dialog)
 
         layout = QHBoxLayout(self)
@@ -383,7 +386,7 @@ class TaskWidget(QWidget):
         self.rmbtn.setIcon(icon)
         self.rmbtn.setIconSize(QSize(25, 25))
         self.rmbtn.setIcon(icon)
-        self.rmbtn.setFixedSize(25, 25)
+        self.rmbtn.setFixedSize(20, 20)
         self.rmbtn.setAutoRaise(True)
         self.rmbtn.clicked.connect(lambda: self.on_remove.emit(text))
 
@@ -422,18 +425,15 @@ class QueueSidebar(QWidget):
         self.sidebar = Sidebar(parent=self)
         self.sidebar.itemclicked.connect(self.handle_item_clicked)
 
-        icon = QIcon()
-        icon.addPixmap(QPixmap(':/images/delete_icon.png'))
-
         self.add_queue_btn = QToolButton()
-        self.add_queue_btn.setIcon(QIcon(QPixmap(':/images/delete_icon.png')))
+        self.add_queue_btn.setIcon(QIcon(QPixmap(':/images/add_icon.png')))
         self.add_queue_btn.setIconSize(QSize(30, 30))
         self.add_queue_btn.setAutoRaise(True)
         self.add_queue_btn.clicked.connect(self.run_dialog)
 
         self.remove_mode_flag = False
         self.remove_queue_btn = QToolButton()
-        self.remove_queue_btn.setIcon(icon)
+        self.remove_queue_btn.setIcon(QIcon(QPixmap(':/images/delete_icon.png')))
         self.remove_queue_btn.setIconSize(QSize(30, 30))
         self.remove_queue_btn.setAutoRaise(True)
         self.remove_queue_btn.clicked.connect(self.toggle_remove_mode)
