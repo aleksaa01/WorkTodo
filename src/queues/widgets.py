@@ -1,10 +1,11 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
     QDialog, QTextEdit, QLineEdit, QWidget, QListWidget, QListWidgetItem, \
-    QAbstractItemView, QToolButton, QCheckBox, QSizePolicy
+    QAbstractItemView, QToolButton, QCheckBox, QSizePolicy, QApplication
 from PyQt5.QtCore import pyqtSignal, QSize, Qt
-from PyQt5.QtGui import QIcon, QPixmap, QPalette
+from PyQt5.QtGui import QIcon, QPixmap, QPalette, QPainter
 
 from widgets import Sidebar, SidebarButton
+from resources.manager import resource
 
 import time
 
@@ -101,16 +102,13 @@ class QueueWidget(QWidget):
 
     def load(self):
         t1 = time.perf_counter()
-        size = QSize()
-        size.setHeight(50)
-        delete_icon = QIcon()
-        delete_icon.addPixmap(QPixmap(':/images/delete_icon.png'))
+        delete_icon = resource.get_icon('delete_icon')
         for task in self.storage.tasks(self.name):
             widget = TaskWidget(task[0], delete_icon)
             widget.on_remove.connect(self.remove_task)
 
             item = QListWidgetItem()
-            item.setSizeHint(size)
+            item.setSizeHint(widget.sizeHint())
 
             self.lw.addItem(item)
             self.lw.setItemWidget(item, widget)
@@ -194,12 +192,14 @@ class AddTaskDialog(QDialog):
         btnslayout = QHBoxLayout()
 
         namelbl = QLabel('Task Name:', self)
-        self.name_line_edit = QLineEdit(self)
+        self.name_line_edit = QTextEdit(self)
+        self.name_line_edit.setMaximumHeight(75)
         namelayout.addWidget(namelbl)
         namelayout.addWidget(self.name_line_edit)
 
         desclbl = QLabel('Description:', self)
         self.desc_text_edit = QTextEdit(self)
+        self.desc_text_edit.setMaximumHeight(100)
         desclayout.addWidget(desclbl)
         desclayout.addWidget(self.desc_text_edit)
 
@@ -229,7 +229,7 @@ class AddTaskDialog(QDialog):
         self.setLayout(mlayout)
 
     def accept(self):
-        task_name = self.name_line_edit.text()
+        task_name = self.name_line_edit.toPlainText()
         if task_name in self._task_list:
             self.name_line_edit.setStyleSheet('border: 1px solid red;')
             return
@@ -265,24 +265,21 @@ class QueueActions(QWidget):
         self.qname_lbl = QLabel(queue_widget.name)
 
         self.select = QToolButton(self)
-        icon = QIcon()
-        icon.addPixmap(QPixmap(':/images/select_icon.png'))
+        icon = resource.get_icon('select_icon')
         self.select.setIcon(icon)
         self.select.setMaximumSize(20, 20)
         self.select.setAutoRaise(True)
         self.select.clicked.connect(self.selection_triggered)
 
         self.delete = QToolButton(self)
-        icon = QIcon()
-        icon.addPixmap(QPixmap(':/images/delete_icon.png'))
+        icon = resource.get_icon('delete_icon')
         self.delete.setIcon(icon)
         self.delete.setMaximumSize(20, 20)
         self.delete.setAutoRaise(True)
         self.delete.clicked.connect(self.delete_triggered)
 
         self.add = QToolButton(self)
-        icon = QIcon()
-        icon.addPixmap(QPixmap(':/images/add_icon.png'))
+        icon = resource.get_icon('add_icon')
         self.add.setIcon(icon)
         self.add.setMaximumSize(20, 20)
         self.add.setAutoRaise(True)
@@ -373,20 +370,21 @@ class TaskWidget(QWidget):
 
     on_remove = pyqtSignal(str)
 
-    def __init__(self, text, icon=None, parent=None):
+    def __init__(self, text, icon=None, max_text_width=200, parent=None):
         super().__init__(parent)
 
         # creating icon every time is proximately 3 times slower than creating it once
         # and passing it many times
         if not icon:
-            icon = QIcon()
-            icon.addPixmap(QPixmap(':/images/delete_icon.png'))
+            icon = resource.get_icon('delete_icon')
 
-        self.label = QLabel(text)
+        self.label = QLabel(text * 20)
+        self.label.setMaximumWidth(max_text_width)
+        self.label.setWordWrap(True)
+        self.label.setStyleSheet('border: 1px solid red;')
         self.rmbtn = QToolButton()
         self.rmbtn.setIcon(icon)
         self.rmbtn.setIconSize(QSize(25, 25))
-        self.rmbtn.setIcon(icon)
         self.rmbtn.setFixedSize(20, 20)
         self.rmbtn.setAutoRaise(True)
         self.rmbtn.clicked.connect(lambda: self.on_remove.emit(text))
@@ -427,14 +425,14 @@ class QueueSidebar(QWidget):
         self.sidebar.itemclicked.connect(self.handle_item_clicked)
 
         self.add_queue_btn = QToolButton()
-        self.add_queue_btn.setIcon(QIcon(QPixmap(':/images/add_icon.png')))
+        self.add_queue_btn.setIcon(resource.get_icon('add_icon'))
         self.add_queue_btn.setIconSize(QSize(30, 30))
         self.add_queue_btn.setAutoRaise(True)
         self.add_queue_btn.clicked.connect(self.run_dialog)
 
         self.remove_mode_flag = False
         self.remove_queue_btn = QToolButton()
-        self.remove_queue_btn.setIcon(QIcon(QPixmap(':/images/delete_icon.png')))
+        self.remove_queue_btn.setIcon(resource.get_icon('delete_icon'))
         self.remove_queue_btn.setIconSize(QSize(30, 30))
         self.remove_queue_btn.setAutoRaise(True)
         self.remove_queue_btn.clicked.connect(self.toggle_remove_mode)
