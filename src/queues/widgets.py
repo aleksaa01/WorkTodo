@@ -104,7 +104,7 @@ class QueueWidget(QWidget):
         size = QSize()
         size.setHeight(50)
         delete_icon = QIcon()
-        delete_icon.addPixmap(QPixmap(':/images/delete_icon2.png'))
+        delete_icon.addPixmap(QPixmap(':/images/delete_icon.png'))
         for task in self.storage.tasks(self.name):
             widget = TaskWidget(task[0], delete_icon)
             widget.on_remove.connect(self.remove_task)
@@ -140,6 +140,7 @@ class QueueWidget(QWidget):
         self.storage.add_task(self.name, name, value)
 
         widget = TaskWidget(task[0])
+        widget.on_remove.connect(self.remove_task)
         item = QListWidgetItem()
         size = QSize()
         size.setHeight(50)
