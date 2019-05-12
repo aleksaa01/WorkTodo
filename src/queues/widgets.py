@@ -158,11 +158,9 @@ class QueueWidget(QWidget):
 
     def remove_selected_items(self):
         rows = self.get_selected_rows()
-        print(rows)
         for index in range(len(rows) - 1, -1, -1):
-            # TODO: First update visuals then storage
-            self.storage.remove_task_by_index(self.name, rows[index])
             self.lw.takeItem(rows[index])
+            self.storage.remove_task_by_index(self.name, rows[index])
 
     def turn_on_selection(self):
         items = self.lw.count()
