@@ -50,7 +50,8 @@ if __name__ == '__main__':
     import time
     app_instance = QApplication([])
     app_instance.setStyleSheet(""".SidebarButton{background: transparent;border: 0px solid black; border-bottom: 1px solid red;}
-.SidebarButton:checked, SidebarButton:hover{border-bottom: 2px solid red; font-weight: 700}""")
+.SidebarButton:checked{border-bottom: 2px solid red; font-weight: 700}
+SidebarButton:hover{border-bottom: 3px solid red;}""")
 
     from resources import icons_rc
     # This actually loads resource file for the first time.
