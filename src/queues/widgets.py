@@ -378,10 +378,9 @@ class TaskWidget(QWidget):
         if not icon:
             icon = resource.get_icon('delete_icon')
 
-        self.label = QLabel(text * 20)
+        self.label = QLabel(text)
         self.label.setMaximumWidth(max_text_width)
         self.label.setWordWrap(True)
-        self.label.setStyleSheet('border: 1px solid red;')
         self.rmbtn = QToolButton()
         self.rmbtn.setIcon(icon)
         self.rmbtn.setIconSize(QSize(25, 25))
