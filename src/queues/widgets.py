@@ -103,7 +103,8 @@ class QueueWidget(QWidget):
     def load(self):
         t1 = time.perf_counter()
         delete_icon = resource.get_icon('delete_icon')
-        for task in self.storage.tasks(self.name):
+        for task in self.storage.tasks(self.name) * 20:
+            QApplication.processEvents()
             widget = TaskWidget(task[0], delete_icon)
             widget.on_remove.connect(self.remove_task)
 
