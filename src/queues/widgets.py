@@ -103,7 +103,7 @@ class QueueWidget(QWidget):
     def load(self):
         t1 = time.perf_counter()
         delete_icon = resource.get_icon('delete_icon')
-        for task in self.storage.tasks(self.name) * 20:
+        for task in self.storage.tasks(self.name):
             QApplication.processEvents()
             widget = TaskWidget(task[0], delete_icon)
             widget.on_remove.connect(self.remove_task)
@@ -354,7 +354,7 @@ class QueueManager(QWidget):
         layout.addWidget(queue_actions)
         layout.addWidget(queue_widget)
         container.setLayout(layout)
-        container.setMaximumWidth(300)
+        container.setFixedWidth(300)
 
         self.queues[name] = container
         self.queuelayout.addWidget(container)
