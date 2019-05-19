@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, \
-    QPushButton, QSizePolicy
+    QPushButton, QSizePolicy, QScrollArea
 from PyQt5.QtGui import QIcon, QPixmap
 from queues.widgets import QueueWidget, QueueManager, QueueSidebar
 from storage import QueueStorage
@@ -22,11 +22,15 @@ class AppWindow(QMainWindow):
 
         self.colors = ['red', 'green', 'blue', 'yellow', 'orange']
         self.sidebar = QueueSidebar(self.storage, self.cw)
-        self.queue_manager = QueueManager(self.sidebar, self.storage, self.cw)
+        self.scrollarea = QScrollArea()
+        self.queue_manager = QueueManager(self.sidebar, self.storage, self.scrollarea)
+        self.scrollarea.setWidget(self.queue_manager)
+        self.scrollarea.setWidgetResizable(True)
+        self.scrollarea.setFrameStyle(QScrollArea.NoFrame)
         self.load_pages()
 
         self.layout.addWidget(self.sidebar)
-        self.layout.addWidget(self.queue_manager)
+        self.layout.addWidget(self.scrollarea)
         self.cw.setLayout(self.layout)
         self.setCentralWidget(self.cw)
 
