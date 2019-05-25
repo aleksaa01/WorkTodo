@@ -131,3 +131,4 @@ class QueueStorage(object):
         with open(self.path, 'w') as f:
             json.dump(self._storage, f)
         self.saved = True
+        print('Storage state saved!')
