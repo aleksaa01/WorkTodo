@@ -379,7 +379,6 @@ class TaskWidget(QWidget):
 
         self.label = QLabel(text)
         self.label.setMaximumWidth(max_text_width)
-        self.label.setWordWrap(True)
         self.rmbtn = QToolButton()
         self.rmbtn.setIcon(icon)
         self.rmbtn.setIconSize(QSize(25, 25))
@@ -408,6 +407,10 @@ class TaskWidget(QWidget):
         self.layout.removeWidget(self.checker)
         self.checker.deleteLater()
         self.checker = None
+
+    def mouseMoveEvent(self, event):
+        print('Label size:', self.label.sizeHint())
+        super().mouseMoveEvent(event)
 
 
 class QueueSidebar(QWidget):
