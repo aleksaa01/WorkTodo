@@ -141,9 +141,7 @@ class QueueWidget(QWidget):
         widget = TaskWidget(task[0])
         widget.on_remove.connect(self.remove_task)
         item = QListWidgetItem()
-        size = QSize()
-        size.setHeight(50)
-        item.setSizeHint(size)
+        item.setSizeHint(widget.sizeHint())
         self.lw.addItem(item)
         self.lw.setItemWidget(item, widget)
 
