@@ -52,7 +52,6 @@ class AppWindow(QMainWindow):
 
     def add_page(self, name):
         widget = SidebarButton(name)
-        print('Size hint', widget.sizeHint())
         min_width = 80
         preferred_width = widget.sizeHint().width() + 20
         width = max(min_width, preferred_width)
