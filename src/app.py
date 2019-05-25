@@ -5,6 +5,8 @@ from queues.widgets import QueueWidget, QueueManager, QueueSidebar
 from storage import QueueStorage
 from widgets import SidebarButton
 
+from shortcuts import set_shortcut
+
 import random
 
 
@@ -15,7 +17,12 @@ class AppWindow(QMainWindow):
         self.resize(width, height)
 
         self.storage = QueueStorage()
-        self.storage.debug = True
+        self.storage.debug = False
+
+        # Shortcuts
+        set_shortcut('save', self.storage.save, self)
+        set_shortcut('quit', self.close, self)
+        ###########
 
         self.cw = QWidget(self)  # central widget
         self.layout = QVBoxLayout()
