@@ -12,7 +12,7 @@ import random
 
 class AppWindow(QMainWindow):
 
-    def __init__(self, width=600, height=800):
+    def __init__(self, width=800, height=800):
         super().__init__(None)
         self.resize(width, height)
 
@@ -52,7 +52,12 @@ class AppWindow(QMainWindow):
 
     def add_page(self, name):
         widget = SidebarButton(name)
-        widget.setFixedSize(80, 20)
+        print('Size hint', widget.sizeHint())
+        min_width = 80
+        preferred_width = widget.sizeHint().width() + 20
+        width = max(min_width, preferred_width)
+        widget.setMinimumWidth(width)
+        widget.setMaximumHeight(20)
         self.sidebar.add_widget(widget, name)
 
 
