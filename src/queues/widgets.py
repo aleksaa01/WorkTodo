@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
     QDialog, QTextEdit, QLineEdit, QWidget, QListWidget, QListWidgetItem, \
-    QAbstractItemView, QToolButton, QCheckBox, QSizePolicy, QApplication
+    QAbstractItemView, QToolButton, QCheckBox, QSizePolicy, QApplication, \
+    QMenu
 from PyQt5.QtCore import pyqtSignal, QSize, Qt
 from PyQt5.QtGui import QIcon, QPixmap, QPalette, QPainter
 
@@ -368,6 +369,7 @@ class QueueManager(QWidget):
 class TaskWidget(QWidget):
 
     on_remove = pyqtSignal(str)
+    on_review = pyqtSignal(str)
 
     def __init__(self, text, icon=None, max_text_width=200, parent=None):
         super().__init__(parent)
@@ -408,9 +410,19 @@ class TaskWidget(QWidget):
         self.checker.deleteLater()
         self.checker = None
 
-    def mouseMoveEvent(self, event):
-        print('Label size:', self.label.sizeHint())
-        super().mouseMoveEvent(event)
+    def mousePressEvent(self, event):
+        if event.button() != Qt.RightButton:
+            super().mousePressEvent(event)
+            return
+
+        action_menu = QMenu()
+        delaction = action_menu.addAction('Delete')
+        reviewaction = action_menu.addAction('Review')
+        action = action_menu.exec_(self.mapToGlobal(event.pos()))
+        if action == delaction:
+            self.on_remove.emit(self.label.text())
+        elif action == reviewaction:
+            self.on_review.emit(self.label.text())
 
 
 class QueueSidebar(QWidget):
