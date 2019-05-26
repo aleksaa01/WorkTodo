@@ -9,6 +9,7 @@ from widgets import Sidebar, SidebarButton
 from resources.manager import resource
 
 import time
+# TODO: Decouple Tasks from Queues.
 
 
 class CustomListWidget(QListWidget):
@@ -88,6 +89,7 @@ class QueueWidget(QWidget):
         item = self.lw.item(drop_index)
         task = TaskWidget(task_text)
         task.on_remove.connect(self.remove_task)
+        task.on_review.connect(self.review_task)
         self.lw.setItemWidget(item, task)
         self.migrate_item(drop_index)
 
@@ -108,6 +110,7 @@ class QueueWidget(QWidget):
             QApplication.processEvents()
             widget = TaskWidget(task[0], delete_icon)
             widget.on_remove.connect(self.remove_task)
+            widget.on_review.connect(self.review_task)
 
             item = QListWidgetItem()
             item.setSizeHint(widget.sizeHint())
@@ -141,6 +144,7 @@ class QueueWidget(QWidget):
 
         widget = TaskWidget(task[0])
         widget.on_remove.connect(self.remove_task)
+        widget.on_review.connect(self.review_task)
         item = QListWidgetItem()
         item.setSizeHint(widget.sizeHint())
         self.lw.addItem(item)
@@ -172,6 +176,25 @@ class QueueWidget(QWidget):
         for idx in range(num_items):
             widget = self.lw.itemWidget(self.lw.item(idx))
             widget.remove_checker()
+
+    def review_task(self, name):
+        task = self.storage.get_task(self.name, name)
+        review_task_dialog = ReviewTaskDialog(task)
+        review_task_dialog.accepted.connect(self.update_task)
+        review_task_dialog.exec_()
+
+    def update_task(self, old_task, new_task):
+        task_widget = TaskWidget(new_task[0])
+        task_widget.on_remove.connect(self.remove_task)
+        task_widget.on_review.connect(self.review_task)
+
+        old_index = self.storage.find_task(self.name, old_task[0])
+        item = self.lw.item(old_index)
+        self.lw.setItemWidget(item, task_widget)
+
+        self.storage.update_task_at(self.name, old_index, new_task)
+
+
 
 
 class AddTaskDialog(QDialog):
@@ -208,7 +231,7 @@ class AddTaskDialog(QDialog):
         stimelayout.addWidget(stimelbl)
         stimelayout.addWidget(self.stime_line_edit)
 
-        etimelbl = QLabel('Start Time:', self)
+        etimelbl = QLabel('End Time:', self)
         self.etime_line_edit = QLineEdit(self)
         etimelayout.addWidget(etimelbl)
         etimelayout.addWidget(self.etime_line_edit)
@@ -247,6 +270,86 @@ class AddTaskDialog(QDialog):
         task = [task_name, {'description': description, 'start_time': start_time, 'end_time': end_time}]
 
         self.accepted.emit(task)
+        super().accept()
+
+    def reject(self):
+        self.rejected.emit(True)
+        super().reject()
+
+
+class ReviewTaskDialog(QDialog):
+    accepted = pyqtSignal(list, list)
+    rejected = pyqtSignal(bool)
+
+    def __init__(self, task, parent=None):
+        super().__init__(parent)
+
+        self.old_task = task
+
+        mlayout = QVBoxLayout()
+        namelayout = QHBoxLayout()
+        desclayout = QHBoxLayout()
+        stimelayout = QHBoxLayout()
+        etimelayout = QHBoxLayout()
+        btnslayout = QHBoxLayout()
+
+        namelbl = QLabel('Task Name:', self)
+        self.name_line_edit = QTextEdit(self)
+        self.name_line_edit.setMaximumHeight(75)
+        self.name_line_edit.setText(task[0])
+        namelayout.addWidget(namelbl)
+        namelayout.addWidget(self.name_line_edit)
+
+        desclbl = QLabel('Description:', self)
+        self.desc_text_edit = QTextEdit(self)
+        self.desc_text_edit.setMaximumHeight(100)
+        self.desc_text_edit.setPlainText(task[1].get('description', ''))
+        desclayout.addWidget(desclbl)
+        desclayout.addWidget(self.desc_text_edit)
+
+        stimelbl = QLabel('Start Time:', self)
+        self.stime_line_edit = QLineEdit(self)
+        self.stime_line_edit.setText(str(task[1]['start_time']))
+        stimelayout.addWidget(stimelbl)
+        stimelayout.addWidget(self.stime_line_edit)
+
+        etimelbl = QLabel('Start Time:', self)
+        self.etime_line_edit = QLineEdit(self)
+        self.etime_line_edit.setText(str(task[1]['end_time']))
+        etimelayout.addWidget(etimelbl)
+        etimelayout.addWidget(self.etime_line_edit)
+
+        self.ok_btn = QPushButton('OK')
+        self.ok_btn.clicked.connect(self.accept)
+        self.cancel_btn = QPushButton('Cancel')
+        self.cancel_btn.clicked.connect(self.reject)
+        btnslayout.addWidget(self.ok_btn)
+        btnslayout.addWidget(self.cancel_btn)
+
+        mlayout.addLayout(namelayout)
+        mlayout.addLayout(desclayout)
+        mlayout.addLayout(stimelayout)
+        mlayout.addLayout(etimelayout)
+        mlayout.addLayout(btnslayout)
+
+        self.setLayout(mlayout)
+
+    def accept(self):
+        task_name = self.name_line_edit.toPlainText()
+        description = self.desc_text_edit.toPlainText()
+        start_time = round(float(self.stime_line_edit.text()), 2)
+        end_time = round(float(self.etime_line_edit.text()), 2)
+
+        if not (0.00 <= start_time <= 24.00):
+            self.stime_line_edit.setStyleSheet('border: 1px solid red;')
+            return
+        if not (0.00 <= end_time <= 24.00):
+            self.etime_line_edit.setStyleSheet('border: 1px solid red;')
+            return
+
+        task = [task_name, {'description': description, 'start_time': start_time, 'end_time': end_time}]
+
+        self.accepted.emit(self.old_task, task)
         super().accept()
 
     def reject(self):
