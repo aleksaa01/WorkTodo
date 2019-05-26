@@ -125,6 +125,20 @@ class QueueStorage(object):
         self._storage[queue_name].insert(index, task)
         self.saved = False
 
+    def get_task(self, queue_name, task_name):
+        for task in self._storage[queue_name]:
+            if task[0] == task_name:
+                return task
+
+    def update_task(self, queue_name, old_task, new_task):
+        old_task_index = self.find_task(queue_name, old_task)
+        self._storage[queue_name][old_task_index] = new_task
+        print('Task at index {} has been updated.'.format(old_task_index))
+
+    def update_task_at(self, queue_name, index, new_task):
+        self._storage[queue_name][index] = new_task
+        print('Task at index {} has been updated.'.format(index))
+
     def save(self):
         if self.debug:
             return
