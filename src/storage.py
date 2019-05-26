@@ -115,7 +115,7 @@ class QueueStorage(object):
         for index, field in enumerate(self._storage[queue_name]):
             if task_name == field[0]:
                 return index
-        raise ValueError("Task with name: {}, doesn't exist.")
+        raise ValueError("Task with name: {}, doesn't exist.".format(task_name))
 
     def pop_task(self, queue_name, task_index):
         self.saved = False
