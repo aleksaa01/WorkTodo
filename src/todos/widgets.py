@@ -57,7 +57,7 @@ class CustomListWidget(QListWidget):
         self.dragstarted.emit(source.name, source.currentIndex().row())
 
 
-class QueueWidget(QWidget):
+class TodoWidget(QWidget):
 
     def __init__(self, name, storage, parent=None):
         super().__init__(parent)
@@ -195,7 +195,7 @@ class QueueWidget(QWidget):
 
 
 
-class QueueActions(QWidget):
+class TodoActions(QWidget):
 
     def __init__(self, queue_widget=None, parent=None):
         super().__init__(parent)
@@ -260,7 +260,7 @@ class QueueActions(QWidget):
 
 
 
-class QueueManager(QWidget):
+class TodoManager(QWidget):
 
     def __init__(self, sidebar, storage, parent=None):
         super().__init__(parent)
@@ -308,7 +308,7 @@ class QueueManager(QWidget):
 
 
 
-class QueueSidebar(QWidget):
+class TodoSidebar(QWidget):
 
     itemclicked = pyqtSignal(str)
     itemremoved = pyqtSignal(str)
@@ -388,7 +388,7 @@ class QueueSidebar(QWidget):
         self.setPalette(self.parent().palette())
 
 
-class AddQueueDialog(QDialog):
+class AddTodoDialog(QDialog):
 
     accepted = pyqtSignal(str)
     rejected = pyqtSignal(bool)
