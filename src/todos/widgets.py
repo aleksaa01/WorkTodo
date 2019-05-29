@@ -10,7 +10,6 @@ from tasks.widgets import AddTaskDialog, ReviewTaskDialog, TaskWidget
 from resources.manager import resource
 
 import time
-# TODO: Decouple Tasks from Queues.
 
 
 class CustomListWidget(QListWidget):
@@ -197,13 +196,13 @@ class TodoWidget(QWidget):
 
 class TodoActions(QWidget):
 
-    def __init__(self, queue_widget=None, parent=None):
+    def __init__(self, todo_widget=None, parent=None):
         super().__init__(parent)
 
-        self.queue_widget = queue_widget
+        self.todo_widget = todo_widget
         self.selection_flag = False
 
-        self.qname_lbl = QLabel(queue_widget.name)
+        self.todoname_lbl = QLabel(todo_widget.name)
 
         self.select = QToolButton(self)
         icon = resource.get_icon('select_icon')
@@ -231,7 +230,7 @@ class TodoActions(QWidget):
         layout.setSpacing(2)
         layout.setContentsMargins(0, 0, 0, 0)
         ###
-        layout.addWidget(self.qname_lbl)
+        layout.addWidget(self.todoname_lbl)
         layout.addStretch(1)
         layout.addWidget(self.select)
         layout.addWidget(self.delete)
@@ -241,21 +240,21 @@ class TodoActions(QWidget):
 
     def selection_triggered(self):
         if not self.selection_flag:
-            self.queue_widget.turn_on_selection()
+            self.todo_widget.turn_on_selection()
             self.selection_flag = True
             self.add.setDisabled(True)
         else:
-            self.queue_widget.turn_off_selection()
+            self.todo_widget.turn_off_selection()
             self.selection_flag = False
             self.add.setEnabled(True)
 
     def delete_triggered(self):
         if self.selection_flag:
-            self.queue_widget.remove_selected_items()
+            self.todo_widget.remove_selected_items()
 
     def run_add_task_dialog(self):
-        dialog = AddTaskDialog(self.queue_widget.task_names())
-        dialog.accepted.connect(self.queue_widget.add)
+        dialog = AddTaskDialog(self.todo_widget.task_names())
+        dialog.accepted.connect(self.todo_widget.add)
         dialog.exec_()
 
 
@@ -269,42 +268,42 @@ class TodoManager(QWidget):
         self.sidebar.itemclicked.connect(self.display_or_remove)
         self.sidebar.itemremoved.connect(self.remove_if_exists)
         self.storage = storage
-        self.cq = None  # current queue
-        self.queues = {}
+        self.cq = None  # current todo
+        self.todos = {}
 
-        self.queuelayout = QHBoxLayout()
-        self.setLayout(self.queuelayout)
+        self.todolayout = QHBoxLayout()
+        self.setLayout(self.todolayout)
 
-    def display_or_remove(self, queue_name):
-        if queue_name in self.queues:
-            self.remove_queue(queue_name)
+    def display_or_remove(self, todo_name):
+        if todo_name in self.todos:
+            self.remove_todo(todo_name)
         else:
-            self.display_queue(queue_name)
+            self.display_todo(todo_name)
 
-    def remove_if_exists(self, queue_name):
-        if queue_name in self.queues:
-            self.remove_queue(queue_name)
+    def remove_if_exists(self, todo_name):
+        if todo_name in self.todos:
+            self.remove_todo(todo_name)
 
-    def display_queue(self, name):
+    def display_todo(self, name):
         container = QWidget(self)
-        queue_widget = QueueWidget(name, self.storage, container)
-        queue_actions = QueueActions(queue_widget, container)
+        todo_widget = TodoWidget(name, self.storage, container)
+        todo_actions = TodoActions(todo_widget, container)
         layout = QVBoxLayout()
         layout.setSpacing(0)
-        layout.addWidget(queue_actions)
-        layout.addWidget(queue_widget)
+        layout.addWidget(todo_actions)
+        layout.addWidget(todo_widget)
         container.setLayout(layout)
         container.setFixedWidth(300)
 
-        self.queues[name] = container
-        self.queuelayout.addWidget(container)
-        queue_widget.load()
+        self.todos[name] = container
+        self.todolayout.addWidget(container)
+        todo_widget.load()
 
-    def remove_queue(self, name):
-        container = self.queues[name]
-        self.queuelayout.removeWidget(container)
+    def remove_todo(self, name):
+        container = self.todos[name]
+        self.todolayout.removeWidget(container)
         container.deleteLater()
-        self.queues.pop(name)
+        self.todos.pop(name)
 
 
 
@@ -320,25 +319,25 @@ class TodoSidebar(QWidget):
         self.sidebar = Sidebar(parent=self)
         self.sidebar.itemclicked.connect(self.handle_item_clicked)
 
-        self.add_queue_btn = QToolButton()
-        self.add_queue_btn.setIcon(resource.get_icon('add_icon'))
-        self.add_queue_btn.setIconSize(QSize(30, 30))
-        self.add_queue_btn.setAutoRaise(True)
-        self.add_queue_btn.clicked.connect(self.run_dialog)
+        self.add_todo_btn = QToolButton()
+        self.add_todo_btn.setIcon(resource.get_icon('add_icon'))
+        self.add_todo_btn.setIconSize(QSize(30, 30))
+        self.add_todo_btn.setAutoRaise(True)
+        self.add_todo_btn.clicked.connect(self.run_dialog)
 
         self.remove_mode_flag = False
-        self.remove_queue_btn = QToolButton()
-        self.remove_queue_btn.setIcon(resource.get_icon('delete_icon'))
-        self.remove_queue_btn.setIconSize(QSize(30, 30))
-        self.remove_queue_btn.setAutoRaise(True)
-        self.remove_queue_btn.clicked.connect(self.toggle_remove_mode)
+        self.remove_todo_btn = QToolButton()
+        self.remove_todo_btn.setIcon(resource.get_icon('delete_icon'))
+        self.remove_todo_btn.setIconSize(QSize(30, 30))
+        self.remove_todo_btn.setAutoRaise(True)
+        self.remove_todo_btn.clicked.connect(self.toggle_remove_mode)
 
 
         mlayout = QHBoxLayout()
         mlayout.addWidget(self.sidebar)
         btn_layout = QVBoxLayout()
-        btn_layout.addWidget(self.add_queue_btn)
-        btn_layout.addWidget(self.remove_queue_btn)
+        btn_layout.addWidget(self.add_todo_btn)
+        btn_layout.addWidget(self.remove_todo_btn)
         mlayout.addLayout(btn_layout)
         self.setLayout(mlayout)
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Maximum)
@@ -349,19 +348,19 @@ class TodoSidebar(QWidget):
     def handle_item_clicked(self, name):
         if self.remove_mode_flag:
             self.sidebar.remove_widget(name)
-            self.storage.remove_queue(name)
+            self.storage.remove_todo(name)
             self.itemremoved.emit(name)
         else:
             self.itemclicked.emit(name)
 
     def run_dialog(self):
-        add_queue_dialog = AddQueueDialog(self.storage.queues())
-        add_queue_dialog.accepted.connect(self.add_queue)
-        add_queue_dialog.exec_()
+        add_todo_dialog = AddTodoDialog(self.storage.todos())
+        add_todo_dialog.accepted.connect(self.add_todo)
+        add_todo_dialog.exec_()
 
-    def add_queue(self, name):
+    def add_todo(self, name):
         print('Adding:', name)
-        self.storage.add_queue(name)
+        self.storage.add_todo(name)
         widget = SidebarButton(name)
         widget.setFixedSize(80, 20)
         self.sidebar.add_widget(widget, name)
@@ -369,9 +368,9 @@ class TodoSidebar(QWidget):
     def toggle_remove_mode(self):
         self.remove_mode_flag = not self.remove_mode_flag
         if self.remove_mode_flag:
-            self.add_queue_btn.setDisabled(True)
+            self.add_todo_btn.setDisabled(True)
         else:
-            self.add_queue_btn.setEnabled(True)
+            self.add_todo_btn.setEnabled(True)
 
     def mousePressEvent(self, event):
         # If click was on child, don't change color
@@ -393,13 +392,13 @@ class AddTodoDialog(QDialog):
     accepted = pyqtSignal(str)
     rejected = pyqtSignal(bool)
 
-    def __init__(self, queue_names, parent=None):
+    def __init__(self, todo_names, parent=None):
         super().__init__(parent)
 
-        self.queue_names = queue_names
+        self.todo_names = todo_names
 
         self.qname = QLineEdit(self)
-        self.qname.setPlaceholderText('Queue Name')
+        self.qname.setPlaceholderText('Todo Name')
         self.ok_btn = QPushButton('OK')
         self.ok_btn.clicked.connect(self.accept)
         self.cancel_btn = QPushButton('Cancel')
@@ -415,12 +414,12 @@ class AddTodoDialog(QDialog):
         self.setLayout(mlayout)
 
     def accept(self):
-        queue_name = self.qname.text()
-        if queue_name in self.queue_names:
+        todo_name = self.qname.text()
+        if todo_name in self.todo_names:
             self.qname.setStyleSheet('border: 1px solid red;')
             return
 
-        self.accepted.emit(queue_name)
+        self.accepted.emit(todo_name)
         super().accept()
 
     def reject(self):

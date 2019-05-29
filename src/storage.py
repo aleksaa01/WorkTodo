@@ -6,7 +6,7 @@ import json
 STORAGE_NAME = 'storage.json'
 
 
-class QueueStorage(object):
+class TodoStorage(object):
 
     def __init__(self, filename=None, path=None):
         self.name = filename if filename else STORAGE_NAME
@@ -27,66 +27,66 @@ class QueueStorage(object):
         # If debug is True, calling save() won't save anything.
         self.debug = False
 
-    def queues(self):
+    def todos(self):
         return list(self._storage.keys())
 
-    def tasks(self, queue_name):
-        return self._storage[queue_name]
+    def tasks(self, todo_name):
+        return self._storage[todo_name]
 
-    def task_names(self, queue_name):
-        tasks = self.tasks(queue_name)
+    def task_names(self, todo_name):
+        tasks = self.tasks(todo_name)
         task_names = [''] * len(tasks)
         for index, task in enumerate(tasks):
             task_names[index] = task[0]
 
         return task_names
 
-    def add_queue(self, queue_name):
-        self._storage[queue_name] = []
+    def add_todo(self, todo_name):
+        self._storage[todo_name] = []
         self.saved = False
 
-    def add_task(self, queue_name, task_name, value):
+    def add_task(self, todo_name, task_name, value):
         if not isinstance(value, dict):
             raise TypeError('Task value must be of type dict, got {} instead.'.format(type(value)))
 
-        self._storage[queue_name].append([task_name, value])
+        self._storage[todo_name].append([task_name, value])
         self.saved = False
 
-    def remove_queue(self, queue_name):
-        self._storage.pop(queue_name)
+    def remove_todo(self, todo_name):
+        self._storage.pop(todo_name)
         self.saved = False
 
-    def remove_task(self, queue_name, task_name):
-        index = self.find_task(queue_name, task_name)
-        self._storage[queue_name].pop(index)
+    def remove_task(self, todo_name, task_name):
+        index = self.find_task(todo_name, task_name)
+        self._storage[todo_name].pop(index)
         self.saved = False
 
-    def remove_task_by_index(self, queue_name, task_index):
-        self._storage[queue_name].pop(task_index)
+    def remove_task_by_index(self, todo_name, task_index):
+        self._storage[todo_name].pop(task_index)
         self.saved = False
 
-    def move_task_up_by_name(self, queue_name, task_name, moves=1):
-        task_index = self.find_task(queue_name, task_name)
+    def move_task_up_by_name(self, todo_name, task_name, moves=1):
+        task_index = self.find_task(todo_name, task_name)
         end_index = task_name - moves
-        self._move_task_up(queue_name, task_index, end_index)
+        self._move_task_up(todo_name, task_index, end_index)
 
-    def move_task_down_by_name(self, queue_name, task_name, moves=1):
-        task_index = self.find_task(queue_name, task_name)
+    def move_task_down_by_name(self, todo_name, task_name, moves=1):
+        task_index = self.find_task(todo_name, task_name)
         end_index = task_index + moves
-        self._move_task_down(queue_name, task_index, end_index)
+        self._move_task_down(todo_name, task_index, end_index)
 
-    def move_task_by_index(self, queue_name, task_index, end_index):
+    def move_task_by_index(self, todo_name, task_index, end_index):
         print('Moving task with index {} to index {}'.format(task_index, end_index))
 
         if task_index <= end_index:
-            self._move_task_down(queue_name, task_index, end_index)
+            self._move_task_down(todo_name, task_index, end_index)
         else:
-            self._move_task_up(queue_name, task_index, end_index)
+            self._move_task_up(todo_name, task_index, end_index)
 
-        print(self.tasks(queue_name))
+        print(self.tasks(todo_name))
 
-    def _move_task_up(self, queue_name, task_index, end_index):
-        temp_tasks = self._storage[queue_name]
+    def _move_task_up(self, todo_name, task_index, end_index):
+        temp_tasks = self._storage[todo_name]
         task = temp_tasks[task_index]
         # check if end_index is out of range, and if it is set it to beginning of the list
         end_index = max(0, end_index)
@@ -94,12 +94,12 @@ class QueueStorage(object):
             temp_tasks[i] = temp_tasks[i - 1]
 
         temp_tasks[end_index] = task
-        self._storage[queue_name] = temp_tasks
+        self._storage[todo_name] = temp_tasks
 
         self.saved = False
 
-    def _move_task_down(self, queue_name, task_index, end_index):
-        temp_tasks = self._storage[queue_name]
+    def _move_task_down(self, todo_name, task_index, end_index):
+        temp_tasks = self._storage[todo_name]
         task = temp_tasks[task_index]
         # check if end_index is out of range, and if it is set it to end of the list
         end_index = min(len(temp_tasks) - 1, end_index)
@@ -107,36 +107,36 @@ class QueueStorage(object):
             temp_tasks[i] = temp_tasks[i + 1]
 
         temp_tasks[end_index] = task
-        self._storage[queue_name] = temp_tasks
+        self._storage[todo_name] = temp_tasks
 
         self.saved = False
 
-    def find_task(self, queue_name, task_name):
-        for index, field in enumerate(self._storage[queue_name]):
+    def find_task(self, todo_name, task_name):
+        for index, field in enumerate(self._storage[todo_name]):
             if task_name == field[0]:
                 return index
         raise ValueError("Task with name: {}, doesn't exist.".format(task_name))
 
-    def pop_task(self, queue_name, task_index):
+    def pop_task(self, todo_name, task_index):
         self.saved = False
-        return self._storage[queue_name].pop(task_index)
+        return self._storage[todo_name].pop(task_index)
 
-    def insert_task(self, queue_name, task, index):
-        self._storage[queue_name].insert(index, task)
+    def insert_task(self, todo_name, task, index):
+        self._storage[todo_name].insert(index, task)
         self.saved = False
 
-    def get_task(self, queue_name, task_name):
-        for task in self._storage[queue_name]:
+    def get_task(self, todo_name, task_name):
+        for task in self._storage[todo_name]:
             if task[0] == task_name:
                 return task
 
-    def update_task(self, queue_name, old_task, new_task):
-        old_task_index = self.find_task(queue_name, old_task)
-        self._storage[queue_name][old_task_index] = new_task
+    def update_task(self, todo_name, old_task, new_task):
+        old_task_index = self.find_task(todo_name, old_task)
+        self._storage[todo_name][old_task_index] = new_task
         print('Task at index {} has been updated.'.format(old_task_index))
 
-    def update_task_at(self, queue_name, index, new_task):
-        self._storage[queue_name][index] = new_task
+    def update_task_at(self, todo_name, index, new_task):
+        self._storage[todo_name][index] = new_task
         print('Task at index {} has been updated.'.format(index))
 
     def save(self):

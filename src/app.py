@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, \
     QPushButton, QSizePolicy, QScrollArea
 from PyQt5.QtGui import QIcon, QPixmap
-from queues.widgets import QueueWidget, QueueManager, QueueSidebar
-from storage import QueueStorage
+from todos.widgets import TodoWidget, TodoManager, TodoSidebar
+from storage import TodoStorage
 from widgets import SidebarButton
 
 from shortcuts import set_shortcut
@@ -16,7 +16,7 @@ class AppWindow(QMainWindow):
         super().__init__(None)
         self.resize(width, height)
 
-        self.storage = QueueStorage()
+        self.storage = TodoStorage()
         self.storage.debug = False
 
         # Shortcuts
@@ -28,10 +28,10 @@ class AppWindow(QMainWindow):
         self.layout = QVBoxLayout()
 
         self.colors = ['red', 'green', 'blue', 'yellow', 'orange']
-        self.sidebar = QueueSidebar(self.storage, self.cw)
+        self.sidebar = TodoSidebar(self.storage, self.cw)
         self.scrollarea = QScrollArea()
-        self.queue_manager = QueueManager(self.sidebar, self.storage, self.scrollarea)
-        self.scrollarea.setWidget(self.queue_manager)
+        self.todo_manager = TodoManager(self.sidebar, self.storage, self.scrollarea)
+        self.scrollarea.setWidget(self.todo_manager)
         self.scrollarea.setWidgetResizable(True)
         self.scrollarea.setFrameStyle(QScrollArea.NoFrame)
         self.load_pages()
@@ -45,7 +45,7 @@ class AppWindow(QMainWindow):
 
     def load_pages(self):
         t1 = time.time()
-        for name in self.storage.queues():
+        for name in self.storage.todos():
             self.add_page(name)
         t2 = time.time()
         print('Loading pages took:', t2 - t1)
