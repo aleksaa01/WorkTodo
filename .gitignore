@@ -4,3 +4,5 @@ __pycache__/
 notes.txt
 experiment.py
 storage.json
+Pipfile
+Pipfile.lock
