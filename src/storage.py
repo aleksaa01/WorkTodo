@@ -1,12 +1,13 @@
 import os
 import sqlite3
 import json
+from utils.singletons import GenericSingleton
 
 
 STORAGE_NAME = 'storage.json'
 
 
-class Storage(object):
+class Storage(object, metaclass=GenericSingleton):
 
     def __init__(self, filename=None, path=None):
         self.name = filename if filename else STORAGE_NAME
