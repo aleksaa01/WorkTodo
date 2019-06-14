@@ -7,9 +7,27 @@ from PyQt5.QtGui import QIcon, QPixmap, QPalette, QPainter
 
 from widgets import Sidebar, SidebarButton
 from tasks.widgets import AddTaskDialog, ReviewTaskDialog, TaskWidget
+from tasks.objects import TaskObject
 from resources.manager import resource
 
 import time
+
+
+class TodoWidgetItem(QListWidgetItem):
+
+    def __init__(self, task_object, parent=None):
+        super().__init__(parent)
+        if not isinstance(task_object, TaskObject):
+            raise TypeError('Wrong type. Expected {}, got {} instead.'.format(TaskObject, type(task_object)))
+        self._task = task_object
+
+    @property
+    def task(self):
+        return self._task
+
+    @task.setter
+    def task(self, new_task):
+        self._task = new_task
 
 
 class CustomListWidget(QListWidget):
@@ -108,7 +126,7 @@ class TodoWidget(QWidget):
             QApplication.processEvents()
             widget = self.create_task(task['name'], delete_icon)
 
-            item = QListWidgetItem()
+            item = TodoWidgetItem(TaskObject({'description': 'LULW', 'date': 1560541101.260335}))
             item.setSizeHint(widget.sizeHint())
 
             self.lw.addItem(item)
