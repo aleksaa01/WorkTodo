@@ -106,7 +106,7 @@ class TodoWidget(QWidget):
         delete_icon = resource.get_icon('delete_icon')
         for task in self.storage.tasks(self.name):
             QApplication.processEvents()
-            widget = self.create_task(task[0], delete_icon)
+            widget = self.create_task(task['name'], delete_icon)
 
             item = QListWidgetItem()
             item.setSizeHint(widget.sizeHint())
@@ -130,15 +130,14 @@ class TodoWidget(QWidget):
 
     def add(self, task):
         print('Adding new task')
-        name, value = task
 
-        if name in self.storage.task_names(self.name):
+        if task['name'] in self.storage.task_names(self.name):
             print('This task already exists')
             return
 
-        self.storage.add_task(self.name, name, value)
+        self.storage.add_task(self.name, task)
 
-        widget = self.create_task(task[0])
+        widget = self.create_task(task['name'])
         item = QListWidgetItem()
         item.setSizeHint(widget.sizeHint())
         self.lw.addItem(item)
@@ -178,9 +177,9 @@ class TodoWidget(QWidget):
         review_task_dialog.exec_()
 
     def update_task(self, old_task, new_task):
-        task_widget = self.create_task(new_task[0])
+        task_widget = self.create_task(new_task['name'])
 
-        old_index = self.storage.find_task(self.name, old_task[0])
+        old_index = self.storage.find_task(self.name, old_task['name'])
         item = self.lw.item(old_index)
         self.lw.setItemWidget(item, task_widget)
 
