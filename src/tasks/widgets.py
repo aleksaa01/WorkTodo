@@ -8,7 +8,7 @@ from resources.manager import resource
 
 class AddTaskDialog(QDialog):
 
-    accepted = pyqtSignal(list)
+    accepted = pyqtSignal(dict)
     rejected = pyqtSignal(bool)
 
     def __init__(self, task_list, parent=None):
@@ -76,7 +76,7 @@ class AddTaskDialog(QDialog):
             self.etime_line_edit.setStyleSheet('border: 1px solid red;')
             return
 
-        task = [task_name, {'description': description, 'start_time': start_time, 'end_time': end_time}]
+        task = {'name': task_name, 'description': description, 'start_time': start_time, 'end_time': end_time}
 
         self.accepted.emit(task)
         super().accept()
@@ -87,7 +87,7 @@ class AddTaskDialog(QDialog):
 
 
 class ReviewTaskDialog(QDialog):
-    accepted = pyqtSignal(list, list)
+    accepted = pyqtSignal(dict, dict)
     rejected = pyqtSignal(bool)
 
     def __init__(self, task, parent=None):
@@ -105,26 +105,26 @@ class ReviewTaskDialog(QDialog):
         namelbl = QLabel('Task Name:', self)
         self.name_line_edit = QTextEdit(self)
         self.name_line_edit.setMaximumHeight(75)
-        self.name_line_edit.setText(task[0])
+        self.name_line_edit.setText(task.get('name', ''))
         namelayout.addWidget(namelbl)
         namelayout.addWidget(self.name_line_edit)
 
         desclbl = QLabel('Description:', self)
         self.desc_text_edit = QTextEdit(self)
         self.desc_text_edit.setMaximumHeight(100)
-        self.desc_text_edit.setPlainText(task[1].get('description', ''))
+        self.desc_text_edit.setPlainText(task.get('description', ''))
         desclayout.addWidget(desclbl)
         desclayout.addWidget(self.desc_text_edit)
 
         stimelbl = QLabel('Start Time:', self)
         self.stime_line_edit = QLineEdit(self)
-        self.stime_line_edit.setText(str(task[1]['start_time']))
+        self.stime_line_edit.setText(str(task.get('start_time', '')))
         stimelayout.addWidget(stimelbl)
         stimelayout.addWidget(self.stime_line_edit)
 
         etimelbl = QLabel('Start Time:', self)
         self.etime_line_edit = QLineEdit(self)
-        self.etime_line_edit.setText(str(task[1]['end_time']))
+        self.etime_line_edit.setText(str(task.get('end_time', '')))
         etimelayout.addWidget(etimelbl)
         etimelayout.addWidget(self.etime_line_edit)
 
@@ -156,7 +156,7 @@ class ReviewTaskDialog(QDialog):
             self.etime_line_edit.setStyleSheet('border: 1px solid red;')
             return
 
-        task = [task_name, {'description': description, 'start_time': start_time, 'end_time': end_time}]
+        task = {'name': task_name, 'description': description, 'start_time': start_time, 'end_time': end_time}
 
         self.accepted.emit(self.old_task, task)
         super().accept()
