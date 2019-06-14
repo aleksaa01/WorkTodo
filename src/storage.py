@@ -37,7 +37,7 @@ class TodoStorage(object):
         tasks = self.tasks(todo_name)
         task_names = [''] * len(tasks)
         for index, task in enumerate(tasks):
-            task_names[index] = task[0]
+            task_names[index] = task['name']
 
         return task_names
 
@@ -45,11 +45,11 @@ class TodoStorage(object):
         self._storage[todo_name] = []
         self.saved = False
 
-    def add_task(self, todo_name, task_name, value):
-        if not isinstance(value, dict):
-            raise TypeError('Task value must be of type dict, got {} instead.'.format(type(value)))
+    def add_task(self, todo_name, task):
+        if not isinstance(task, dict):
+            raise TypeError('Task value must be of type dict, got {} instead.'.format(type(task)))
 
-        self._storage[todo_name].append([task_name, value])
+        self._storage[todo_name].append(task)
         self.saved = False
 
     def remove_todo(self, todo_name):
@@ -113,7 +113,7 @@ class TodoStorage(object):
 
     def find_task(self, todo_name, task_name):
         for index, field in enumerate(self._storage[todo_name]):
-            if task_name == field[0]:
+            if task_name == field['name']:
                 return index
         raise ValueError("Task with name: {}, doesn't exist.".format(task_name))
 
@@ -127,7 +127,7 @@ class TodoStorage(object):
 
     def get_task(self, todo_name, task_name):
         for task in self._storage[todo_name]:
-            if task[0] == task_name:
+            if task['name'] == task_name:
                 return task
 
     def update_task(self, todo_name, old_task, new_task):
