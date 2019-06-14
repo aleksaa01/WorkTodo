@@ -6,7 +6,7 @@ import json
 STORAGE_NAME = 'storage.json'
 
 
-class TodoStorage(object):
+class Storage(object):
 
     def __init__(self, filename=None, path=None):
         self.name = filename if filename else STORAGE_NAME
