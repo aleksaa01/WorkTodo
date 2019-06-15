@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, \
     QPushButton, QSizePolicy, QScrollArea
 from PyQt5.QtGui import QIcon, QPixmap
 from todos.widgets import TodoWidget, TodoManager, TodoSidebar
-from storage import TodoStorage
+from storage import Storage
 from widgets import SidebarButton
 
 from shortcuts import set_shortcut
@@ -16,7 +16,7 @@ class AppWindow(QMainWindow):
         super().__init__(None)
         self.resize(width, height)
 
-        self.storage = TodoStorage()
+        self.storage = Storage()
         self.storage.debug = False
 
         # Shortcuts
