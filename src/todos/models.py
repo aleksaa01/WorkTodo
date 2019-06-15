@@ -5,10 +5,9 @@ from ..storage import Storage
 
 class TodoModel(QObject):
 
-    def __init__(self, todo_name):
-        self.name = todo_name
+    def __init__(self):
         self._storage = Storage()
-        self._tasks = self._load_tasks()
+        self._todos = self._storage.todos()
 
-    def _load_tasks(self):
-        self._tasks = [TaskObject(raw_task) for raw_task in self._storage.tasks(self.name)]
+    def todos(self):
+        return self._todos
