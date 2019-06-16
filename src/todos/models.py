@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QObject
-from ..tasks.objects import TaskObject, create_task_object
-from ..storage import Storage
+from tasks.objects import TaskObject, create_task_object
+from storage import Storage
 
 
 class TodoModel(QObject):
