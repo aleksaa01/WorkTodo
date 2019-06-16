@@ -8,26 +8,162 @@ from PyQt5.QtGui import QIcon, QPixmap, QPalette, QPainter
 from widgets import Sidebar, SidebarButton
 from tasks.widgets import AddTaskDialog, ReviewTaskDialog, TaskWidget
 from tasks.objects import TaskObject
+from tasks.models import TasksModel
 from resources.manager import resource
 
 import time
 
 
-class TodoWidgetItem(QListWidgetItem):
+class CustomListWidgetManager(QWidget):
 
-    def __init__(self, task_object, parent=None):
+    def __init__(self, model=None, parent=None):
         super().__init__(parent)
-        if not isinstance(task_object, TaskObject):
-            raise TypeError('Wrong type. Expected {}, got {} instead.'.format(TaskObject, type(task_object)))
-        self._task = task_object
 
-    @property
-    def task(self):
-        return self._task
+        self.mlayout = QHBoxLayout()
+        self.setLayout(self.mlayout)
 
-    @task.setter
-    def task(self, new_task):
-        self._task = new_task
+        self._mapper = {}
+        self._model = model
+
+        self.drag_index = None
+        self.drag_source = None
+        self.drop_index = None
+        self.drop_source = None
+
+    def set_model(self, model):
+        self._model = model
+
+    def load(self):
+        for todo in self._model.todos():
+            todo_widget = CustomTodoWidget(todo)
+            todo_widget.drag_event.connect(self.update_drag)
+            todo_widget.drop_event.connect(self.update_drop)
+            self.mlayout.addWidget(todo_widget)
+            self._mapper[todo] = todo_widget
+
+    def update_drag(self, todo_name, index):
+        self.drag_source = self._mapper[todo_name]
+        self.drag_index = index
+
+    def update_drop(self, todo_name, index):
+        task_object = self.drag_source.pop_task(self.drag_index)
+        self._mapper[todo_name].insert_task(index, task_object)
+
+
+class CustomTodoWidget(QWidget):
+    drag_event = pyqtSignal(str, int)
+    drop_event = pyqtSignal(str, int)
+
+    def __init__(self, name, parent=None):
+        super().__init__(parent)
+        self.name = name
+
+        self.lw = NewCustomListWidget(self)
+        self.lw.drag_event.connect(self.emit_drag_event)
+        self.lw.drop_event.connect(self.emit_drop_event)
+        self.lw.clicked.connect(self._load)
+        self.lw.setDragDropMode(QAbstractItemView.DragDrop)  # InternalMove
+        self.lw.setDefaultDropAction(Qt.MoveAction)
+        self.lw.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.lw)
+        self.setLayout(layout)
+
+        self.model = TasksModel(self.name)
+        self.is_loaded = False
+
+    def emit_drag_event(self, index):
+        print('Drag emmited >>> ', index)
+        self.drag_event.emit(self.name, index)
+
+    def emit_drop_event(self, index):
+        print('Drop emmited >>> ', index)
+        self.drop_event.emit(self.name, index)
+
+    def _load(self):
+        if self.is_loaded:
+            return
+
+        t1 = time.perf_counter()
+
+        print('Loading data...')
+        for task_object in self.model.tasks():
+            task_widget = TaskWidget(task_object.description)
+            item = QListWidgetItem()
+            item.setSizeHint(task_widget.sizeHint())
+            self.lw.addItem(item)
+            self.lw.setItemWidget(item, task_widget)
+            QApplication.processEvents()
+        t2 = time.perf_counter()
+        print('Time took:', t2 - t1)
+
+        self.is_loaded = True
+
+    def get_task(self, index):
+        return self.model.get_task(index)
+
+    def pop_task(self, index):
+        return self.model.pop_task(index)
+
+    def insert_task(self, index, task_object):
+        # WARNING: Maybe we should first delete TaskWidget at the index, before
+        #   we create new one and do a setItemWidget.
+        self.model.insert_task(index, task_object)
+        task_widget = TaskWidget(task_object.description)
+        self.lw.setItemWidget(self.lw.item(index), task_widget)
+
+
+class NewCustomListWidget(QListWidget):
+    drag_event = pyqtSignal(int)
+    drop_event = pyqtSignal(int)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.current_drag_index = None
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setMinimumWidth(150)
+
+    def dropEvent(self, event):
+        super().dropEvent(event)
+        self.current_drag_index = None
+
+        new_item_pos = self.indexAt(event.pos()).row()
+
+        drop_indicator = self.dropIndicatorPosition()
+        if event.source() == self:
+            if drop_indicator == 3:
+                new_item_pos = self.count() - 1
+        else:
+            if drop_indicator == 2:
+                new_item_pos += 1
+            elif drop_indicator == 3:
+                new_item_pos = self.count() - 1
+
+        self.drop_event.emit(new_item_pos)
+
+    def dragEnterEvent(self, event):
+        super().dragEnterEvent(event)
+        source = event.source()
+        if isinstance(source, type(self)):
+            event.accept()
+        if source != self:
+            return
+
+        drag_index = self.currentIndex().row()
+        if drag_index != self.current_drag_index:
+            self.current_drag_index = drag_index
+            self.drag_event.emit(drag_index)
+
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+        self.clicked.emit(self.currentIndex())
+
+    def mouseDoubleClickEvent(self, event):
+        x = 42
 
 
 class CustomListWidget(QListWidget):
@@ -126,7 +262,7 @@ class TodoWidget(QWidget):
             QApplication.processEvents()
             widget = self.create_task(task['name'], delete_icon)
 
-            item = TodoWidgetItem(TaskObject({'description': 'LULW', 'date': 1560541101.260335}))
+            item = QListWidgetItem()
             item.setSizeHint(widget.sizeHint())
 
             self.lw.addItem(item)
