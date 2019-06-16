@@ -45,14 +45,27 @@ class CustomListWidgetManager(QWidget):
         self.drag_source = self._mapper[todo_name]
         self.drag_index = index
 
-    def update_drop(self, todo_name, index):
+    def update_drop(self, todo_name, drop_index, indicator):
+        drop_source = self._mapper[todo_name]
+        if self.drag_source == drop_source:
+            drop_index = self._fix_drop_offset(drop_index, indicator)
+
         task_object = self.drag_source.pop_task(self.drag_index)
-        self._mapper[todo_name].insert_task(index, task_object)
+        drop_source.insert_task(drop_index, task_object)
+
+    def _fix_drop_offset(self, drop_index, indicator):
+        if self.drag_index < drop_index:
+            if indicator == 1:
+                drop_index -= 1
+        elif self.drag_index > drop_index:
+            if indicator == 2:
+                drop_index += 1
+        return drop_index
 
 
 class CustomTodoWidget(QWidget):
     drag_event = pyqtSignal(str, int)
-    drop_event = pyqtSignal(str, int)
+    drop_event = pyqtSignal(str, int, int)
 
     def __init__(self, name, parent=None):
         super().__init__(parent)
@@ -63,6 +76,7 @@ class CustomTodoWidget(QWidget):
         self.lw.drop_event.connect(self.emit_drop_event)
         self.lw.clicked.connect(self._load)
         self.lw.setDragDropMode(QAbstractItemView.DragDrop)  # InternalMove
+        # You don't have to remove items yourself if you use MoveAction
         self.lw.setDefaultDropAction(Qt.MoveAction)
         self.lw.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -79,9 +93,9 @@ class CustomTodoWidget(QWidget):
         print('Drag emmited >>> ', index)
         self.drag_event.emit(self.name, index)
 
-    def emit_drop_event(self, index):
+    def emit_drop_event(self, index, indicator):
         print('Drop emmited >>> ', index)
-        self.drop_event.emit(self.name, index)
+        self.drop_event.emit(self.name, index, indicator)
 
     def _load(self):
         if self.is_loaded:
@@ -106,19 +120,32 @@ class CustomTodoWidget(QWidget):
         return self.model.get_task(index)
 
     def pop_task(self, index):
+        item = self.lw.takeItem(index)
+        del item
         return self.model.pop_task(index)
 
     def insert_task(self, index, task_object):
         # WARNING: Maybe we should first delete TaskWidget at the index, before
         #   we create new one and do a setItemWidget.
-        self.model.insert_task(index, task_object)
         task_widget = TaskWidget(task_object.description)
-        self.lw.setItemWidget(self.lw.item(index), task_widget)
+        item = QListWidgetItem()
+        item.setSizeHint(task_widget.sizeHint())
+        self.lw.insertItem(index, item)
+        self.lw.setItemWidget(item, task_widget)
+        self.model.insert_task(index, task_object)
+        self._sanity_check()
 
+    def _sanity_check(self):
+        for idx, task in enumerate(self.model.tasks()):
+            widget = self.lw.itemWidget(self.lw.item(idx))
+            if widget.label.text() == task.description:
+                continue
+            print('ALERT ! ALERT !  MODEL AND VIEW ARE OUT OF SYNC')
+            print('MODEL, ITEMS: ', [i.description for i in self.model.tasks()], [self.lw.itemWidget(self.lw.item(i)).label.text() for i in range(len(self.model.tasks()))])
 
 class NewCustomListWidget(QListWidget):
     drag_event = pyqtSignal(int)
-    drop_event = pyqtSignal(int)
+    drop_event = pyqtSignal(int, int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -127,36 +154,30 @@ class NewCustomListWidget(QListWidget):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMinimumWidth(150)
 
-    def dropEvent(self, event):
-        super().dropEvent(event)
-        self.current_drag_index = None
+    def startDrag(self, *args, **kwargs):
+        print('<DRAG STARTED> ', self.parent().name)
+        self.current_drag_index = self.currentIndex().row()
+        self.drag_event.emit(self.current_drag_index)
+        super().startDrag(*args, **kwargs)
 
+    def dropEvent(self, event):
         new_item_pos = self.indexAt(event.pos()).row()
+        print('1.)', new_item_pos)
 
         drop_indicator = self.dropIndicatorPosition()
+        print('2.)', drop_indicator)
         if event.source() == self:
             if drop_indicator == 3:
                 new_item_pos = self.count() - 1
+            print('3.)', new_item_pos)
         else:
             if drop_indicator == 2:
                 new_item_pos += 1
             elif drop_indicator == 3:
-                new_item_pos = self.count() - 1
+                new_item_pos = self.count()
+            print('4.)', new_item_pos)
 
-        self.drop_event.emit(new_item_pos)
-
-    def dragEnterEvent(self, event):
-        super().dragEnterEvent(event)
-        source = event.source()
-        if isinstance(source, type(self)):
-            event.accept()
-        if source != self:
-            return
-
-        drag_index = self.currentIndex().row()
-        if drag_index != self.current_drag_index:
-            self.current_drag_index = drag_index
-            self.drag_event.emit(drag_index)
+        self.drop_event.emit(new_item_pos, drop_indicator)
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
