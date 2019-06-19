@@ -115,7 +115,7 @@ class Sidebar(QScrollArea):
 
     itemclicked = pyqtSignal(str)
 
-    def __init__(self, max_height=100, parent=None):
+    def __init__(self, model=None, max_height=100, parent=None):
         super().__init__(parent)
 
         self.setMaximumHeight(max_height)
@@ -128,7 +128,20 @@ class Sidebar(QScrollArea):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setFrameShape(QScrollArea.NoFrame)
 
+        self.model = model
         self.widgets = []
+        self._load()
+
+    def _load(self):
+        for todo in self.model.todos():
+            widget = SidebarButton(todo)
+            min_width = 80
+            preferred_width = widget.sizeHint().width() + 20
+            width = max(min_width, preferred_width)
+            widget.setMinimumWidth(width)
+            widget.setMaximumHeight(20)
+
+            self.add_widget(widget, todo)
 
     def add_widget(self, widget, name):
         print('Adding new widget...')
@@ -156,6 +169,15 @@ class Sidebar(QScrollArea):
 
     def mouseDoubleClickEvent(self, event):
         self.sidebar_widget.setPalette(self.parent().palette())
+
+    def add_page(self, name):
+        widget = SidebarButton(name)
+        min_width = 80
+        preferred_width = widget.sizeHint().width() + 20
+        width = max(min_width, preferred_width)
+        widget.setMinimumWidth(width)
+        widget.setMaximumHeight(20)
+        self.add_widget(widget, name)
 
 
 class SidebarButton(QPushButton):
