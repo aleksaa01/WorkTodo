@@ -202,7 +202,7 @@ class NewCustomListWidget(QListWidget):
 
         self.current_drag_index = None
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.setMinimumWidth(300)
+        self.setMaximumWidth(300)
 
     def startDrag(self, *args, **kwargs):
         print('<DRAG STARTED> ', self.parent().name)
