@@ -1,9 +1,10 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, \
     QPushButton, QSizePolicy, QScrollArea
 from PyQt5.QtGui import QIcon, QPixmap
-from todos.widgets import TodoWidget, TodoManager, TodoSidebar
+from todos.widgets import TodoWidget, TodoManager, TodoSidebar, CustomListWidgetManager
+from todos.models import TodoModel
 from storage import Storage
-from widgets import SidebarButton
+from widgets import SidebarButton, Sidebar
 
 from shortcuts import set_shortcut
 
@@ -28,38 +29,16 @@ class AppWindow(QMainWindow):
         self.layout = QVBoxLayout()
 
         self.colors = ['red', 'green', 'blue', 'yellow', 'orange']
-        self.sidebar = TodoSidebar(self.storage, self.cw)
-        self.scrollarea = QScrollArea()
-        self.todo_manager = TodoManager(self.sidebar, self.storage, self.scrollarea)
-        self.scrollarea.setWidget(self.todo_manager)
-        self.scrollarea.setWidgetResizable(True)
-        self.scrollarea.setFrameStyle(QScrollArea.NoFrame)
-        self.load_pages()
+        todo_model = TodoModel()
+        self.sidebar = Sidebar(model=todo_model, parent=self.cw)
+        self.manager = CustomListWidgetManager(todo_model, self.sidebar, self.cw)
 
         self.layout.addWidget(self.sidebar)
-        self.layout.addWidget(self.scrollarea)
+        self.layout.addWidget(self.manager)
         self.cw.setLayout(self.layout)
         self.setCentralWidget(self.cw)
 
         self.show()
-
-    def load_pages(self):
-        t1 = time.time()
-        for name in self.storage.todos():
-            self.add_page(name)
-        t2 = time.time()
-        print('Loading pages took:', t2 - t1)
-
-    def add_page(self, name):
-        widget = SidebarButton(name)
-        min_width = 80
-        preferred_width = widget.sizeHint().width() + 20
-        width = max(min_width, preferred_width)
-        widget.setMinimumWidth(width)
-        widget.setMaximumHeight(20)
-        self.sidebar.add_widget(widget, name)
-
-
 
 
 if __name__ == '__main__':
