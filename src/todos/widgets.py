@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
     QDialog, QTextEdit, QLineEdit, QWidget, QListWidget, QListWidgetItem, \
     QAbstractItemView, QToolButton, QCheckBox, QSizePolicy, QApplication, \
-    QMenu
+    QMenu, QScrollArea
 from PyQt5.QtCore import pyqtSignal, QSize, Qt
 from PyQt5.QtGui import QIcon, QPixmap, QPalette, QPainter
 
@@ -14,14 +14,26 @@ from resources.manager import resource
 import time
 
 
-class CustomListWidgetManager(QWidget):
+class CustomListWidgetManager(QScrollArea):
 
-    def __init__(self, model=None, parent=None):
+    def __init__(self, model, sidebar, parent=None):
         super().__init__(parent)
 
-        self.mlayout = QHBoxLayout()
-        self.setLayout(self.mlayout)
+        # self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # self.setFixedSize(500, 500)
 
+        self.sidebar = sidebar
+        self.sidebar.itemclicked.connect(self.display_or_remove)
+
+        self.mwidget = QWidget()
+        self.mlayout = QHBoxLayout()
+        self.mwidget.setLayout(self.mlayout)
+        self.setWidget(self.mwidget)
+        self.setWidgetResizable(True)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setFrameShape(QScrollArea.NoFrame)
+
+        # TODO: Rename to self._todo_mapper
         self._mapper = {}
         self._model = model
 
@@ -32,6 +44,43 @@ class CustomListWidgetManager(QWidget):
 
     def set_model(self, model):
         self._model = model
+
+    def display_or_remove(self, todo_name):
+        if todo_name in self._mapper:
+            self.remove_todo(todo_name)
+        else:
+            self.display_todo(todo_name)
+
+    def remove_if_exists(self, todo_name):
+        if todo_name in self._mapper:
+            self.remove_todo(todo_name)
+
+    def remove_todo(self, todo_name):
+        todo_widget = self._mapper[todo_name]
+        self.mlayout.removeWidget(todo_widget)
+        # FIXME: Deleting a parent seems like a weird thing to do,
+        #   but having container complicates things, because you now
+        #   you have to get a todo_widget from a container somehow or
+        #   you have to store containers too. Just make a new widget that
+        #   will hold both todo_widget and todo_actions.
+        todo_widget.parent().deleteLater()
+        self._mapper.pop(todo_name)
+
+    def display_todo(self, todo_name):
+        container = QWidget(self)
+        todo_widget = CustomTodoWidget(todo_name, container)
+        todo_widget.drag_event.connect(self.update_drag)
+        todo_widget.drop_event.connect(self.update_drop)
+        todo_actions = TodoActions(todo_widget, container)
+        layout = QVBoxLayout()
+        layout.setSpacing(0)
+        layout.addWidget(todo_actions)
+        layout.addWidget(todo_widget)
+        container.setLayout(layout)
+        container.setFixedWidth(300)
+
+        self._mapper[todo_name] = todo_widget
+        self.mlayout.addWidget(container)
 
     def load(self):
         for todo in self._model.todos():
@@ -143,6 +192,7 @@ class CustomTodoWidget(QWidget):
             print('ALERT ! ALERT !  MODEL AND VIEW ARE OUT OF SYNC')
             print('MODEL, ITEMS: ', [i.description for i in self.model.tasks()], [self.lw.itemWidget(self.lw.item(i)).label.text() for i in range(len(self.model.tasks()))])
 
+
 class NewCustomListWidget(QListWidget):
     drag_event = pyqtSignal(int)
     drop_event = pyqtSignal(int, int)
@@ -152,7 +202,7 @@ class NewCustomListWidget(QListWidget):
 
         self.current_drag_index = None
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.setMinimumWidth(150)
+        self.setMinimumWidth(300)
 
     def startDrag(self, *args, **kwargs):
         print('<DRAG STARTED> ', self.parent().name)
