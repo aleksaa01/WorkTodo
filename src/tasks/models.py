@@ -25,3 +25,9 @@ class TasksModel(QObject):
 
     def pop_task(self, index):
         return self._tasks.pop(index)
+
+    def find_task(self, text):
+        for idx, task in enumerate(self._tasks):
+            if task.description == text:
+                return idx
+        return -1
