@@ -9,6 +9,7 @@ from widgets import Sidebar, SidebarButton
 from tasks.widgets import AddTaskDialog, ReviewTaskDialog, TaskWidget
 from tasks.objects import TaskObject
 from tasks.models import TasksModel
+from tasks.actions import Action
 from resources.manager import resource
 
 import time
@@ -153,8 +154,14 @@ class CustomTodoWidget(QWidget):
         t1 = time.perf_counter()
 
         print('Loading data...')
+
+        action_remove = Action('Remove', resource.get_icon('delete_icon'))
+        action_remove.signal.connect(self.find_and_remove)
+        # action_review = Action('Review')
+        # action_review.signal.connect(self.find_and_remove)
+        self.actions = [action_remove]
         for task_object in self.model.tasks():
-            task_widget = TaskWidget(task_object.description)
+            task_widget = TaskWidget(task_object.description, self.actions)
             item = QListWidgetItem()
             item.setSizeHint(task_widget.sizeHint())
             self.lw.addItem(item)
@@ -173,10 +180,16 @@ class CustomTodoWidget(QWidget):
         del item
         return self.model.pop_task(index)
 
+    def find_and_remove(self, text):
+        idx = self.model.find_task(text)
+        assert idx != -1  # fail if task wasn't found
+        print('idx >>>', idx)
+        self.pop_task(idx)
+
     def insert_task(self, index, task_object):
         # WARNING: Maybe we should first delete TaskWidget at the index, before
         #   we create new one and do a setItemWidget.
-        task_widget = TaskWidget(task_object.description)
+        task_widget = TaskWidget(task_object.description, self.actions)
         item = QListWidgetItem()
         item.setSizeHint(task_widget.sizeHint())
         self.lw.insertItem(index, item)
