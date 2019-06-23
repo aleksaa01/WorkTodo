@@ -172,29 +172,19 @@ class TaskWidget(QWidget):
     on_remove = pyqtSignal(str)
     on_review = pyqtSignal(str)
 
-    def __init__(self, text, icon=None, max_text_width=200, parent=None):
+    def __init__(self, text, actions, max_text_width=200, parent=None):
         super().__init__(parent)
-
-        # creating icon every time is proximately 3 times slower than creating it once
-        # and passing it many times
-        if not icon:
-            icon = resource.get_icon('delete_icon')
+        import sys
+        self.actions = actions
 
         self.label = QLabel(text)
+        self.label.setStyleSheet('border: 1px solid red;')
         self.label.setMaximumWidth(max_text_width)
-        self.rmbtn = QToolButton()
-        self.rmbtn.setIcon(icon)
-        self.rmbtn.setIconSize(QSize(25, 25))
-        self.rmbtn.setFixedSize(20, 20)
-        self.rmbtn.setAutoRaise(True)
-        self.rmbtn.clicked.connect(lambda: self.on_remove.emit(text))
 
         self.checker = None
 
         self.layout = QHBoxLayout()
         self.layout.addWidget(self.label)
-        self.layout.addStretch()
-        self.layout.addWidget(self.rmbtn)
 
         self.setLayout(self.layout)
 
@@ -212,15 +202,17 @@ class TaskWidget(QWidget):
         self.checker = None
 
     def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+
         if event.button() != Qt.RightButton:
             super().mousePressEvent(event)
             return
 
         action_menu = QMenu()
-        delaction = action_menu.addAction('Delete')
-        reviewaction = action_menu.addAction('Review')
-        action = action_menu.exec_(self.mapToGlobal(event.pos()))
-        if action == delaction:
-            self.on_remove.emit(self.label.text())
-        elif action == reviewaction:
-            self.on_review.emit(self.label.text())
+        action_map = {}
+        for action in self.actions:
+            a = action_menu.addAction(action.icon, action.text)
+            action_map[a] = action
+
+        chosen_action = action_menu.exec_(self.mapToGlobal(event.pos()))
+        action_map[chosen_action].signal.emit(self.label.text())
