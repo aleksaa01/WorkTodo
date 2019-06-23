@@ -205,6 +205,40 @@ class CustomTodoWidget(QWidget):
             print('ALERT ! ALERT !  MODEL AND VIEW ARE OUT OF SYNC')
             print('MODEL, ITEMS: ', [i.description for i in self.model.tasks()], [self.lw.itemWidget(self.lw.item(i)).label.text() for i in range(len(self.model.tasks()))])
 
+    def turn_on_selection(self):
+        for idx in range(len(self.model)):
+            widget = self.lw.itemWidget(self.lw.item(idx))
+            widget.add_checker()
+
+    def turn_off_selection(self):
+        for idx in range(len(self.model)):
+            widget = self.lw.itemWidget(self.lw.item(idx))
+            widget.remove_checker()
+
+    def remove_selected_items(self):
+        selected_rows = self.get_selected_rows()
+        for idx in range(len(selected_rows) - 1, -1, -1):
+            self.pop_task(selected_rows[idx])
+
+    def get_selected_rows(self):
+        selected_rows = []
+        for idx in range(len(self.model)):
+            widget = self.lw.itemWidget(self.lw.item(idx))
+            if widget.checker.isChecked():
+                selected_rows.append(idx)
+
+        return selected_rows
+
+    def task_names(self):
+        names = []
+        for task in self.model.tasks():
+            names.append(task.description)
+
+        return names
+
+    def add(self, task_object):
+        self.insert_task(len(self.model), task_object)
+
 
 class NewCustomListWidget(QListWidget):
     drag_event = pyqtSignal(int)
