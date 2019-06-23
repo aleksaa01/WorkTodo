@@ -31,3 +31,6 @@ class TasksModel(QObject):
             if task.description == text:
                 return idx
         return -1
+
+    def __len__(self):
+        return len(self._tasks)
