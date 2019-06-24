@@ -229,12 +229,12 @@ class CustomTodoWidget(QWidget):
 
         return selected_rows
 
-    def task_names(self):
-        names = []
+    def task_descs(self):
+        descs = []
         for task in self.model.tasks():
-            names.append(task.description)
+            descs.append(task.description)
 
-        return names
+        return descs
 
     def add(self, task_object):
         self.insert_task(len(self.model), task_object)
@@ -524,7 +524,7 @@ class TodoActions(QWidget):
             self.todo_widget.remove_selected_items()
 
     def run_add_task_dialog(self):
-        dialog = AddTaskDialog(self.todo_widget.task_names())
+        dialog = AddTaskDialog(self.todo_widget.task_descs())
         dialog.accepted.connect(self.todo_widget.add)
         dialog.exec_()
 
