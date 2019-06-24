@@ -5,7 +5,7 @@ class Action(QObject):
 
     signal = pyqtSignal(str)
 
-    def __init__(self, text, icon=None, parent=None):
+    def __init__(self, text, icon=None):
         super().__init__(None)
         self.text = text
         self.icon = icon
