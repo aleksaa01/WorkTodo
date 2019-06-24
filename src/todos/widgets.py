@@ -82,14 +82,7 @@ class CustomListWidgetManager(QScrollArea):
 
         self._mapper[todo_name] = todo_widget
         self.mlayout.addWidget(container)
-
-    def load(self):
-        for todo in self._model.todos():
-            todo_widget = CustomTodoWidget(todo)
-            todo_widget.drag_event.connect(self.update_drag)
-            todo_widget.drop_event.connect(self.update_drop)
-            self.mlayout.addWidget(todo_widget)
-            self._mapper[todo] = todo_widget
+        todo_widget.load()
 
     def update_drag(self, todo_name, index):
         self.drag_source = self._mapper[todo_name]
@@ -124,7 +117,6 @@ class CustomTodoWidget(QWidget):
         self.lw = NewCustomListWidget(self)
         self.lw.drag_event.connect(self.emit_drag_event)
         self.lw.drop_event.connect(self.emit_drop_event)
-        self.lw.clicked.connect(self._load)
         self.lw.setDragDropMode(QAbstractItemView.DragDrop)  # InternalMove
         # You don't have to remove items yourself if you use MoveAction
         self.lw.setDefaultDropAction(Qt.MoveAction)
@@ -137,7 +129,6 @@ class CustomTodoWidget(QWidget):
         self.setLayout(layout)
 
         self.model = TasksModel(self.name)
-        self.is_loaded = False
 
     def emit_drag_event(self, index):
         print('Drag emmited >>> ', index)
@@ -147,13 +138,9 @@ class CustomTodoWidget(QWidget):
         print('Drop emmited >>> ', index)
         self.drop_event.emit(self.name, index, indicator)
 
-    def _load(self):
-        if self.is_loaded:
-            return
-
-        t1 = time.perf_counter()
-
+    def load(self):
         print('Loading data...')
+        t1 = time.perf_counter()
 
         action_remove = Action('Remove', resource.get_icon('delete_icon'))
         action_remove.signal.connect(self.find_and_remove)
@@ -169,8 +156,6 @@ class CustomTodoWidget(QWidget):
             QApplication.processEvents()
         t2 = time.perf_counter()
         print('Time took:', t2 - t1)
-
-        self.is_loaded = True
 
     def get_task(self, index):
         return self.model.get_task(index)
@@ -275,10 +260,6 @@ class NewCustomListWidget(QListWidget):
             print('4.)', new_item_pos)
 
         self.drop_event.emit(new_item_pos, drop_indicator)
-
-    def mousePressEvent(self, event):
-        super().mousePressEvent(event)
-        self.clicked.emit(self.currentIndex())
 
     def mouseDoubleClickEvent(self, event):
         x = 42

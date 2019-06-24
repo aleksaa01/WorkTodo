@@ -20,6 +20,7 @@ class AppWindow(QMainWindow):
         self.storage = Storage()
         self.storage.debug = False
 
+        # FIXME: Storage is not synchronized with models.
         # Shortcuts
         set_shortcut('save', self.storage.save, self)
         set_shortcut('quit', self.close, self)
