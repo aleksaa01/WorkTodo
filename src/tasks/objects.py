@@ -2,9 +2,11 @@ import datetime
 
 
 def create_task_object(description):
-    task_object = TaskObject()
-    task_object.description = description
-    task_object.date = datetime.datetime.now().timestamp()
+    json_object = {
+        'description': description,
+        'date': datetime.datetime.now().timestamp()
+    }
+    task_object = TaskObject(json_object)
     return task_object
 
 
