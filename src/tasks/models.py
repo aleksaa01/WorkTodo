@@ -5,8 +5,8 @@ from storage import Storage
 
 class TasksModel(QObject):
 
-    def __init__(self, todo_name):
-        self.name = todo_name
+    def __init__(self, card_name):
+        self.name = card_name
         self._storage = Storage()
         self._tasks = None
         self._load_tasks()

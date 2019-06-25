@@ -1,9 +1,8 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, \
     QPushButton, QSizePolicy, QScrollArea
 from PyQt5.QtGui import QIcon, QPixmap
-from todos.widgets import TodoWidget, TodoManager, TodoSidebar, CustomListWidgetManager, \
-    TodoSidebar
-from todos.models import TodoModel
+from cards.widgets import CardWidget, CardWidgetManager, CardSidebar
+from cards.models import CardModel
 from storage import Storage
 
 from shortcuts import set_shortcut
@@ -20,7 +19,6 @@ class AppWindow(QMainWindow):
         self.storage = Storage()
         self.storage.debug = False
 
-        # FIXME: Storage is not synchronized with models.
         # Shortcuts
         set_shortcut('save', self.storage.save, self)
         set_shortcut('quit', self.close, self)
@@ -29,10 +27,9 @@ class AppWindow(QMainWindow):
         self.cw = QWidget(self)  # central widget
         self.layout = QVBoxLayout()
 
-        self.colors = ['red', 'green', 'blue', 'yellow', 'orange']
-        todo_model = TodoModel()
-        self.sidebar = TodoSidebar(model=todo_model, parent=self.cw)
-        self.manager = CustomListWidgetManager(todo_model, self.sidebar, self.cw)
+        card_model = CardModel()
+        self.sidebar = CardSidebar(model=card_model, parent=self.cw)
+        self.manager = CardWidgetManager(card_model, self.sidebar, self.cw)
 
         self.layout.addWidget(self.sidebar)
         self.layout.addWidget(self.manager)

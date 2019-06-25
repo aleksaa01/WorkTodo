@@ -123,6 +123,7 @@ class TaskWidget(QWidget):
 
         self.layout = QHBoxLayout()
         self.layout.addWidget(self.label)
+        self.layout.addStretch(0)
         self.setLayout(self.layout)
 
     def add_checker(self):

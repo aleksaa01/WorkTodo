@@ -7,6 +7,7 @@ from utils.singletons import GenericSingleton
 STORAGE_NAME = 'storage.json'
 
 
+# FIXME: All methods that ask for task_name are obsolete, as there is no more name field in tasks.
 class Storage(object, metaclass=GenericSingleton):
 
     def __init__(self, filename=None, path=None):
@@ -28,66 +29,66 @@ class Storage(object, metaclass=GenericSingleton):
         # If debug is True, calling save() won't save anything.
         self.debug = False
 
-    def todos(self):
+    def cards(self):
         return list(self._storage.keys())
 
-    def tasks(self, todo_name):
-        return self._storage[todo_name]
+    def tasks(self, card_name):
+        return self._storage[card_name]
 
-    def task_names(self, todo_name):
-        tasks = self.tasks(todo_name)
+    def task_names(self, card_name):
+        tasks = self.tasks(card_name)
         task_names = [''] * len(tasks)
         for index, task in enumerate(tasks):
             task_names[index] = task['name']
 
         return task_names
 
-    def add_todo(self, todo_name):
-        self._storage[todo_name] = []
+    def add_card(self, card_name):
+        self._storage[card_name] = []
         self.saved = False
 
-    def add_task(self, todo_name, task):
+    def add_task(self, card_name, task):
         if not isinstance(task, dict):
             raise TypeError('Task value must be of type dict, got {} instead.'.format(type(task)))
 
-        self._storage[todo_name].append(task)
+        self._storage[card_name].append(task)
         self.saved = False
 
-    def remove_todo(self, todo_name):
-        self._storage.pop(todo_name)
+    def remove_card(self, card_name):
+        self._storage.pop(card_name)
         self.saved = False
 
-    def remove_task(self, todo_name, task_name):
-        index = self.find_task(todo_name, task_name)
-        self._storage[todo_name].pop(index)
+    def remove_task(self, card_name, task_name):
+        index = self.find_task(card_name, task_name)
+        self._storage[card_name].pop(index)
         self.saved = False
 
-    def remove_task_by_index(self, todo_name, task_index):
-        self._storage[todo_name].pop(task_index)
+    def remove_task_by_index(self, card_name, task_index):
+        self._storage[card_name].pop(task_index)
         self.saved = False
 
-    def move_task_up_by_name(self, todo_name, task_name, moves=1):
-        task_index = self.find_task(todo_name, task_name)
+    def move_task_up_by_name(self, card_name, task_name, moves=1):
+        task_index = self.find_task(card_name, task_name)
         end_index = task_name - moves
-        self._move_task_up(todo_name, task_index, end_index)
+        self._move_task_up(card_name, task_index, end_index)
 
-    def move_task_down_by_name(self, todo_name, task_name, moves=1):
-        task_index = self.find_task(todo_name, task_name)
+    def move_task_down_by_name(self, card_name, task_name, moves=1):
+        task_index = self.find_task(card_name, task_name)
         end_index = task_index + moves
-        self._move_task_down(todo_name, task_index, end_index)
+        self._move_task_down(card_name, task_index, end_index)
 
-    def move_task_by_index(self, todo_name, task_index, end_index):
+    def move_task_by_index(self, card_name, task_index, end_index):
         print('Moving task with index {} to index {}'.format(task_index, end_index))
 
         if task_index <= end_index:
-            self._move_task_down(todo_name, task_index, end_index)
+            self._move_task_down(card_name, task_index, end_index)
         else:
-            self._move_task_up(todo_name, task_index, end_index)
+            self._move_task_up(card_name, task_index, end_index)
 
-        print(self.tasks(todo_name))
+        print(self.tasks(card_name))
 
-    def _move_task_up(self, todo_name, task_index, end_index):
-        temp_tasks = self._storage[todo_name]
+    def _move_task_up(self, card_name, task_index, end_index):
+        temp_tasks = self._storage[card_name]
         task = temp_tasks[task_index]
         # check if end_index is out of range, and if it is set it to beginning of the list
         end_index = max(0, end_index)
@@ -95,12 +96,12 @@ class Storage(object, metaclass=GenericSingleton):
             temp_tasks[i] = temp_tasks[i - 1]
 
         temp_tasks[end_index] = task
-        self._storage[todo_name] = temp_tasks
+        self._storage[card_name] = temp_tasks
 
         self.saved = False
 
-    def _move_task_down(self, todo_name, task_index, end_index):
-        temp_tasks = self._storage[todo_name]
+    def _move_task_down(self, card_name, task_index, end_index):
+        temp_tasks = self._storage[card_name]
         task = temp_tasks[task_index]
         # check if end_index is out of range, and if it is set it to end of the list
         end_index = min(len(temp_tasks) - 1, end_index)
@@ -108,36 +109,36 @@ class Storage(object, metaclass=GenericSingleton):
             temp_tasks[i] = temp_tasks[i + 1]
 
         temp_tasks[end_index] = task
-        self._storage[todo_name] = temp_tasks
+        self._storage[card_name] = temp_tasks
 
         self.saved = False
 
-    def find_task(self, todo_name, task_name):
-        for index, field in enumerate(self._storage[todo_name]):
+    def find_task(self, card_name, task_name):
+        for index, field in enumerate(self._storage[card_name]):
             if task_name == field['name']:
                 return index
         raise ValueError("Task with name: {}, doesn't exist.".format(task_name))
 
-    def pop_task(self, todo_name, task_index):
+    def pop_task(self, card_name, task_index):
         self.saved = False
-        return self._storage[todo_name].pop(task_index)
+        return self._storage[card_name].pop(task_index)
 
-    def insert_task(self, todo_name, task, index):
-        self._storage[todo_name].insert(index, task)
+    def insert_task(self, card_name, task, index):
+        self._storage[card_name].insert(index, task)
         self.saved = False
 
-    def get_task(self, todo_name, task_name):
-        for task in self._storage[todo_name]:
+    def get_task(self, card_name, task_name):
+        for task in self._storage[card_name]:
             if task['name'] == task_name:
                 return task
 
-    def update_task(self, todo_name, old_task, new_task):
-        old_task_index = self.find_task(todo_name, old_task)
-        self._storage[todo_name][old_task_index] = new_task
+    def update_task(self, card_name, old_task, new_task):
+        old_task_index = self.find_task(card_name, old_task)
+        self._storage[card_name][old_task_index] = new_task
         print('Task at index {} has been updated.'.format(old_task_index))
 
-    def update_task_at(self, todo_name, index, new_task):
-        self._storage[todo_name][index] = new_task
+    def update_task_at(self, card_name, index, new_task):
+        self._storage[card_name][index] = new_task
         print('Task at index {} has been updated.'.format(index))
 
     def save(self):
