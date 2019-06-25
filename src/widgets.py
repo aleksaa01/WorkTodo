@@ -169,12 +169,6 @@ class Sidebar(QScrollArea):
     def item_clicked(self, name):
         self.itemclicked.emit(name)
 
-    def mousePressEvent(self, event):
-        palette = QPalette()
-        palette.setColor(QPalette.Background, Qt.red)
-        self.sidebar_widget.setAutoFillBackground(True)
-        self.sidebar_widget.setPalette(palette)
-
     def display_widget(self, name):
         widget = SidebarButton(name)
         min_width = 80
