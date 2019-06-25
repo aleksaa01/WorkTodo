@@ -14,11 +14,12 @@ class AddTaskDialog(QDialog):
 
     def __init__(self, tasks_descriptions, parent=None):
         super().__init__(parent)
+        self.setWindowTitle("Create new task")
 
         self._tasks_descriptions = tasks_descriptions
 
         mlayout = QVBoxLayout()
-        desclayout = QHBoxLayout()
+        desclayout = QVBoxLayout()
         btnslayout = QHBoxLayout()
 
         desclbl = QLabel('Description:', self)
@@ -28,11 +29,15 @@ class AddTaskDialog(QDialog):
         desclayout.addWidget(self.desc_text_edit)
 
         self.ok_btn = QPushButton('OK')
+        self.ok_btn.setMaximumWidth(100)
         self.ok_btn.clicked.connect(self.accept)
         self.cancel_btn = QPushButton('Cancel')
+        self.cancel_btn.setMaximumWidth(100)
         self.cancel_btn.clicked.connect(self.reject)
+
         btnslayout.addWidget(self.ok_btn)
         btnslayout.addWidget(self.cancel_btn)
+        btnslayout.setContentsMargins(0, 20, 0, 0)
 
         mlayout.addLayout(desclayout)
         mlayout.addLayout(btnslayout)
@@ -60,6 +65,7 @@ class ReviewTaskDialog(QDialog):
 
     def __init__(self, task_object, parent=None):
         super().__init__(parent)
+        self.setWindowTitle("Review Task")
 
         self.old_task = task_object
 
@@ -75,11 +81,15 @@ class ReviewTaskDialog(QDialog):
         desclayout.addWidget(self.desc_text_edit)
 
         self.ok_btn = QPushButton('OK')
+        self.ok_btn.setMaximumWidth(100)
         self.ok_btn.clicked.connect(self.accept)
         self.cancel_btn = QPushButton('Cancel')
+        self.cancel_btn.setMaximumWidth(100)
         self.cancel_btn.clicked.connect(self.reject)
+
         btnslayout.addWidget(self.ok_btn)
         btnslayout.addWidget(self.cancel_btn)
+        btnslayout.setContentsMargins(0, 30, 0, 0)
 
         mlayout.addLayout(desclayout)
         mlayout.addLayout(btnslayout)
@@ -104,18 +114,15 @@ class TaskWidget(QWidget):
 
     def __init__(self, text, actions, max_text_width=200, parent=None):
         super().__init__(parent)
-        import sys
         self.actions = actions
 
         self.label = QLabel(text)
-        self.label.setStyleSheet('border: 1px solid red;')
         self.label.setMaximumWidth(max_text_width)
 
         self.checker = None
 
         self.layout = QHBoxLayout()
         self.layout.addWidget(self.label)
-
         self.setLayout(self.layout)
 
     def add_checker(self):
@@ -135,7 +142,6 @@ class TaskWidget(QWidget):
         super().mousePressEvent(event)
 
         if event.button() != Qt.RightButton:
-            super().mousePressEvent(event)
             return
 
         action_menu = QMenu()
