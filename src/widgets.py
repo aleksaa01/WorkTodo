@@ -148,7 +148,7 @@ class Sidebar(QScrollArea):
 
     def _load(self):
         for todo in self.model.todos():
-            self.add_widget(todo)
+            self.display_widget(todo)
 
     def setup_widget(self, widget, name):
         print('Adding new widget...')
@@ -161,6 +161,7 @@ class Sidebar(QScrollArea):
             if widget.name == name:
                 self.widgets.pop(idx)
                 widget.deleteLater()
+                self.model.remove_todo(name)
                 return
 
         assert False, 'Widget with name {} is not present'.format(name)
@@ -177,7 +178,7 @@ class Sidebar(QScrollArea):
     def mouseDoubleClickEvent(self, event):
         self.sidebar_widget.setPalette(self.parent().palette())
 
-    def add_widget(self, name):
+    def display_widget(self, name):
         widget = SidebarButton(name)
         min_width = 80
         preferred_width = widget.sizeHint().width() + 20
@@ -185,6 +186,10 @@ class Sidebar(QScrollArea):
         widget.setMinimumWidth(width)
         widget.setMaximumHeight(20)
         self.setup_widget(widget, name)
+
+    def add_widget(self, name):
+        self.display_widget(name)
+        self.model.add_todo(name)
 
     def widget_names(self):
         return self.model.todos()

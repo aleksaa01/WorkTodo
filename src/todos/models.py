@@ -11,3 +11,11 @@ class TodoModel(QObject):
 
     def todos(self):
         return self._todos
+
+    def add_todo(self, todo_name):
+        self._todos.append(todo_name)
+        self._storage.add_todo(todo_name)
+
+    def remove_todo(self, todo_name):
+        self._todos.remove(todo_name)
+        self._storage.remove_todo(todo_name)
