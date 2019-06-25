@@ -1,6 +1,9 @@
-from PyQt5.QtWidgets import QWidget, QLayout, QPushButton, QScrollArea, QSizePolicy
+from PyQt5.QtWidgets import QWidget, QLayout, QPushButton, QScrollArea, QSizePolicy, \
+    QHBoxLayout, QVBoxLayout, QToolButton
 from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal
 from PyQt5.QtGui import QPalette
+
+from resources.manager import resource
 
 import time
 
@@ -111,6 +114,17 @@ class FlowLayout(QLayout):
         self.resize_layout(self.geometry())
 
 
+class SidebarButton(QPushButton):
+
+    def __init__(self, name, parent=None):
+        # Name should be same as text
+        super().__init__(name, parent)
+
+        self.name = name
+        self.setObjectName('SidebarButton')
+        self.setCheckable(True)
+
+
 class Sidebar(QScrollArea):
 
     itemclicked = pyqtSignal(str)
@@ -134,16 +148,9 @@ class Sidebar(QScrollArea):
 
     def _load(self):
         for todo in self.model.todos():
-            widget = SidebarButton(todo)
-            min_width = 80
-            preferred_width = widget.sizeHint().width() + 20
-            width = max(min_width, preferred_width)
-            widget.setMinimumWidth(width)
-            widget.setMaximumHeight(20)
+            self.add_widget(todo)
 
-            self.add_widget(widget, todo)
-
-    def add_widget(self, widget, name):
+    def setup_widget(self, widget, name):
         print('Adding new widget...')
         widget.clicked.connect(lambda: self.item_clicked(name))
         self.layout.addWidget(widget)
@@ -170,22 +177,15 @@ class Sidebar(QScrollArea):
     def mouseDoubleClickEvent(self, event):
         self.sidebar_widget.setPalette(self.parent().palette())
 
-    def add_page(self, name):
+    def add_widget(self, name):
         widget = SidebarButton(name)
         min_width = 80
         preferred_width = widget.sizeHint().width() + 20
         width = max(min_width, preferred_width)
         widget.setMinimumWidth(width)
         widget.setMaximumHeight(20)
-        self.add_widget(widget, name)
+        self.setup_widget(widget, name)
 
+    def widget_names(self):
+        return self.model.todos()
 
-class SidebarButton(QPushButton):
-
-    def __init__(self, name, parent=None):
-        # Name should be same as text
-        super().__init__(name, parent)
-
-        self.name = name
-        self.setObjectName('SidebarButton')
-        self.setCheckable(True)
