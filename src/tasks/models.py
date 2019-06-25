@@ -21,10 +21,13 @@ class TasksModel(QObject):
         return self._tasks[index]
 
     def insert_task(self, index, task_object):
-        return self._tasks.insert(index, task_object)
+        self._tasks.insert(index, task_object)
+        self._storage.insert_task(self.name, task_object.to_json(), index)
 
     def pop_task(self, index):
-        return self._tasks.pop(index)
+        task =  self._tasks.pop(index)
+        self._storage.pop_task(self.name, index)
+        return task
 
     def find_task(self, text):
         for idx, task in enumerate(self._tasks):
