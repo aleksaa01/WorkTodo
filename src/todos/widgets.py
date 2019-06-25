@@ -24,7 +24,8 @@ class CustomListWidgetManager(QScrollArea):
         # self.setFixedSize(500, 500)
 
         self.sidebar = sidebar
-        self.sidebar.itemclicked.connect(self.display_or_remove)
+        self.sidebar.item_clicked.connect(self.display_or_remove)
+        self.sidebar.item_removed.connect(self.remove_if_exists)
 
         self.mwidget = QWidget()
         self.mlayout = QHBoxLayout()
@@ -558,85 +559,66 @@ class TodoManager(QWidget):
         self.todos.pop(name)
 
 
-
 class TodoSidebar(QWidget):
 
-    itemclicked = pyqtSignal(str)
-    itemremoved = pyqtSignal(str)
+    item_clicked = pyqtSignal(str)
+    item_removed = pyqtSignal(str)
 
-    def __init__(self, storage, parent=None):
+    def __init__(self, model, max_size=100, parent=None):
         super().__init__(parent)
 
-        self.storage = storage
-        self.sidebar = Sidebar(parent=self)
+        self.mlayout = QHBoxLayout()
+
+        self.sidebar = Sidebar(model, max_size, self)
         self.sidebar.itemclicked.connect(self.handle_item_clicked)
 
-        self.add_todo_btn = QToolButton()
-        self.add_todo_btn.setIcon(resource.get_icon('add_icon'))
-        self.add_todo_btn.setIconSize(QSize(30, 30))
-        self.add_todo_btn.setAutoRaise(True)
-        self.add_todo_btn.clicked.connect(self.run_dialog)
+        self.add_btn = QToolButton(self)
+        icon = resource.get_icon('add_icon')
+        self.add_btn.setIcon(icon)
+        self.add_btn.setIconSize(QSize(30, 30))
+        self.add_btn.setMaximumSize(30, 30)
+        self.add_btn.setAutoRaise(True)
+        self.add_btn.clicked.connect(self.run_add_dialog)
 
-        self.remove_mode_flag = False
-        self.remove_todo_btn = QToolButton()
-        self.remove_todo_btn.setIcon(resource.get_icon('delete_icon'))
-        self.remove_todo_btn.setIconSize(QSize(30, 30))
-        self.remove_todo_btn.setAutoRaise(True)
-        self.remove_todo_btn.clicked.connect(self.toggle_remove_mode)
+        self.remove_btn = QToolButton(self)
+        icon = resource.get_icon('delete_icon')
+        self.remove_btn.setIcon(icon)
+        self.remove_btn.setIconSize(QSize(30, 30))
+        self.remove_btn.setMaximumSize(30, 30)
+        self.remove_btn.setAutoRaise(True)
+        self.remove_btn.clicked.connect(self.toggle_remove_mode)
 
+        layout = QVBoxLayout()
+        layout.addWidget(self.add_btn)
+        layout.addWidget(self.remove_btn)
 
-        mlayout = QHBoxLayout()
-        mlayout.addWidget(self.sidebar)
-        btn_layout = QVBoxLayout()
-        btn_layout.addWidget(self.add_todo_btn)
-        btn_layout.addWidget(self.remove_todo_btn)
-        mlayout.addLayout(btn_layout)
-        self.setLayout(mlayout)
-        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Maximum)
+        self.mlayout.addWidget(self.sidebar)
+        self.mlayout.addLayout(layout)
+        self.setLayout(self.mlayout)
 
-    def add_widget(self, widget, name):
-        self.sidebar.add_widget(widget, name)
+        self.in_remove_mode = False
 
-    def handle_item_clicked(self, name):
-        if self.remove_mode_flag:
-            self.sidebar.remove_widget(name)
-            self.storage.remove_todo(name)
-            self.itemremoved.emit(name)
+    def handle_item_clicked(self, str):
+        if self.in_remove_mode:
+            self.sidebar.remove_widget(str)
+            self.item_removed.emit(str)
         else:
-            self.itemclicked.emit(name)
+            self.item_clicked.emit(str)
 
-    def run_dialog(self):
-        add_todo_dialog = AddTodoDialog(self.storage.todos())
-        add_todo_dialog.accepted.connect(self.add_todo)
-        add_todo_dialog.exec_()
+    def run_add_dialog(self):
+        dialog = AddTodoDialog(self.sidebar.widget_names())
+        dialog.accepted.connect(self.add_widget)
+        dialog.exec_()
 
-    def add_todo(self, name):
-        print('Adding:', name)
-        self.storage.add_todo(name)
-        widget = SidebarButton(name)
-        widget.setFixedSize(80, 20)
-        self.sidebar.add_widget(widget, name)
+    def add_widget(self, widget_name):
+        self.sidebar.add_widget(widget_name)
 
     def toggle_remove_mode(self):
-        self.remove_mode_flag = not self.remove_mode_flag
-        if self.remove_mode_flag:
-            self.add_todo_btn.setDisabled(True)
+        self.in_remove_mode = not self.in_remove_mode
+        if self.in_remove_mode:
+            self.add_btn.setDisabled(True)
         else:
-            self.add_todo_btn.setEnabled(True)
-
-    def mousePressEvent(self, event):
-        # If click was on child, don't change color
-        if self.childAt(event.pos()):
-            super().mousePressEvent(event)
-            return
-        pal = QPalette()
-        pal.setColor(QPalette.Window, Qt.yellow)
-        self.setAutoFillBackground(True)
-        self.setPalette(pal)
-
-    def mouseDoubleClickEvent(self, event):
-        # Don't call super() because for some reason it won't set the palette.
-        self.setPalette(self.parent().palette())
+            self.add_btn.setEnabled(True)
 
 
 class AddTodoDialog(QDialog):

@@ -1,10 +1,10 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, \
     QPushButton, QSizePolicy, QScrollArea
 from PyQt5.QtGui import QIcon, QPixmap
-from todos.widgets import TodoWidget, TodoManager, TodoSidebar, CustomListWidgetManager
+from todos.widgets import TodoWidget, TodoManager, TodoSidebar, CustomListWidgetManager, \
+    TodoSidebar
 from todos.models import TodoModel
 from storage import Storage
-from widgets import SidebarButton, Sidebar
 
 from shortcuts import set_shortcut
 
@@ -31,7 +31,7 @@ class AppWindow(QMainWindow):
 
         self.colors = ['red', 'green', 'blue', 'yellow', 'orange']
         todo_model = TodoModel()
-        self.sidebar = Sidebar(model=todo_model, parent=self.cw)
+        self.sidebar = TodoSidebar(model=todo_model, parent=self.cw)
         self.manager = CustomListWidgetManager(todo_model, self.sidebar, self.cw)
 
         self.layout.addWidget(self.sidebar)
