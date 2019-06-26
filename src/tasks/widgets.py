@@ -149,4 +149,6 @@ class TaskWidget(QWidget):
             action_map[a] = action
 
         chosen_action = action_menu.exec_(self.mapToGlobal(event.pos()))
+        if chosen_action is None:
+            return
         action_map[chosen_action].signal.emit(self.label.text())
