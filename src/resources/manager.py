@@ -17,6 +17,7 @@ class ResourceManager(metaclass=Singleton):
             'delete_icon': None,
             'add_icon': None,
             'select_icon': None,
+            'rules_icon': None,
         }
 
     def icon_exists(self, icon_name):
