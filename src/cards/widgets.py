@@ -1,13 +1,11 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
-    QDialog, QTextEdit, QLineEdit, QWidget, QListWidget, QListWidgetItem, \
-    QAbstractItemView, QToolButton, QCheckBox, QSizePolicy, QApplication, \
-    QMenu, QScrollArea
+    QDialog, QLineEdit, QWidget, QListWidget, QListWidgetItem, \
+    QAbstractItemView, QToolButton, QSizePolicy, QApplication, \
+    QScrollArea
 from PyQt5.QtCore import pyqtSignal, QSize, Qt
-from PyQt5.QtGui import QIcon, QPixmap, QPalette, QPainter
 
-from widgets import Sidebar, SidebarButton
-from tasks.widgets import AddTaskDialog, ReviewTaskDialog, TaskWidget
-from tasks.objects import TaskObject
+from widgets import Sidebar
+from tasks.widgets import AddTaskDialog, TaskWidget
 from tasks.models import TasksModel
 from tasks.actions import Action
 from resources.manager import resource

@@ -1,11 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QLayout, QPushButton, QScrollArea, QSizePolicy, \
-    QHBoxLayout, QVBoxLayout, QToolButton
+from PyQt5.QtWidgets import QWidget, QLayout, QPushButton, QScrollArea, QSizePolicy
 from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal
-from PyQt5.QtGui import QPalette
-
-from resources.manager import resource
-
-import time
 
 
 class FlowLayout(QLayout):

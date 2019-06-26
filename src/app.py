@@ -1,13 +1,9 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, \
-    QPushButton, QSizePolicy, QScrollArea
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout
+from PyQt5.QtGui import QPixmap
 from cards.widgets import CardWidget, CardWidgetManager, CardSidebar
 from cards.models import CardModel
 from storage import Storage
-
 from shortcuts import set_shortcut
-
-import random
 
 
 class AppWindow(QMainWindow):
@@ -40,7 +36,6 @@ class AppWindow(QMainWindow):
 
 
 if __name__ == '__main__':
-    import time
     app_instance = QApplication([])
     app_instance.setStyleSheet(""".SidebarButton{background: transparent;border: 0px solid black; border-bottom: 1px solid red;}
 .SidebarButton:checked{border-bottom: 2px solid red; font-weight: 700}

@@ -1,9 +1,6 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
-    QDialog, QTextEdit, QLineEdit, QWidget, QListWidget, QListWidgetItem, \
-    QAbstractItemView, QToolButton, QCheckBox, QSizePolicy, QApplication, \
-    QMenu
-from PyQt5.QtCore import pyqtSignal, QSize, Qt
-from resources.manager import resource
+    QDialog, QTextEdit, QWidget, QCheckBox, QMenu
+from PyQt5.QtCore import pyqtSignal, Qt
 from tasks.objects import create_task_object, TaskObject
 
 

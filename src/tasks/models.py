@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QObject
-from tasks.objects import TaskObject, create_task_object
+from tasks.objects import TaskObject
 from storage import Storage
 
 
