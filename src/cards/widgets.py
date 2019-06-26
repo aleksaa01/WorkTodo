@@ -277,6 +277,13 @@ class CardActions(QWidget):
         self.add.setAutoRaise(True)
         self.add.clicked.connect(self.run_add_task_dialog)
 
+        self.rules = QToolButton(self)
+        icon = resource.get_icon('rules_icon')
+        self.rules.setIcon(icon)
+        self.rules.setMaximumSize(20, 20)
+        self.rules.setAutoRaise(True)
+        # self.rules.clicked.connect()
+
         layout = QHBoxLayout(self)
         # Set spacing and margins instead of widget size
         layout.setSpacing(2)
@@ -287,6 +294,7 @@ class CardActions(QWidget):
         layout.addWidget(self.select)
         layout.addWidget(self.delete)
         layout.addWidget(self.add)
+        layout.addWidget(self.rules)
         layout.addStretch(1)
         self.setLayout(layout)
 
