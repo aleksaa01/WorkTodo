@@ -9,8 +9,10 @@ from tasks.widgets import AddTaskDialog, TaskWidget
 from tasks.models import TasksModel
 from tasks.actions import Action
 from resources.manager import resource
+from cards.rules import Rules
 
 import time
+import datetime
 
 
 class CardWidgetManager(QScrollArea):
@@ -121,6 +123,10 @@ class CardWidget(QWidget):
 
         self.model = TasksModel(self.name)
 
+        self.rules = Rules(self.name)
+        self.rules_warning_icon = resource.get_icon('warning_icon')
+        self.rules_danger_icon = resource.get_icon('danger_icon')
+
     def emit_drag_event(self, index):
         print('Drag emmited >>> ', index)
         self.drag_event.emit(self.name, index)
@@ -138,8 +144,19 @@ class CardWidget(QWidget):
         # action_review = Action('Review')
         # action_review.signal.connect(self.find_and_remove)
         self.actions = [action_remove]
+        if self.rules.isset():
+            warning_time = self.rules["warning"]
+            danger_time = self.rules["danger"]
+        current_time = datetime.datetime.now().timestamp()
         for task_object in self.model.tasks():
-            task_widget = TaskWidget(task_object.description, self.actions)
+            icon = None
+            if self.rules.isset():
+                if task_object.date + danger_time <= current_time:
+                    icon = self.rules_danger_icon
+                elif task_object.date + warning_time <= current_time:
+                    icon = self.rules_warning_icon
+
+            task_widget = TaskWidget(task_object.description, self.actions, icon)
             item = QListWidgetItem()
             item.setSizeHint(task_widget.sizeHint())
             self.lw.addItem(item)

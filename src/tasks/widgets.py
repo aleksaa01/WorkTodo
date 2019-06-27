@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
-    QDialog, QTextEdit, QWidget, QCheckBox, QMenu
+    QDialog, QTextEdit, QWidget, QCheckBox, QMenu, QToolButton
 from PyQt5.QtCore import pyqtSignal, Qt
 from tasks.objects import create_task_object, TaskObject
 
@@ -109,17 +109,24 @@ class TaskWidget(QWidget):
     on_remove = pyqtSignal(str)
     on_review = pyqtSignal(str)
 
-    def __init__(self, text, actions, max_text_width=200, parent=None):
+    def __init__(self, text, actions, icon=None, max_text_width=200, parent=None):
         super().__init__(parent)
         self.actions = actions
 
         self.label = QLabel(text)
         self.label.setMaximumWidth(max_text_width)
+        if icon:
+            self.icon = QToolButton()
+            self.icon.setIcon(icon)
+            self.icon.setMaximumSize(20, 20)
+            self.icon.setAutoRaise(True)
 
         self.checker = None
 
         self.layout = QHBoxLayout()
         self.layout.addWidget(self.label)
+        if icon:
+            self.layout.addWidget(self.icon)
         self.layout.addStretch(0)
         self.setLayout(self.layout)
 
