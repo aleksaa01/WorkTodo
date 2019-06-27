@@ -6,7 +6,6 @@ from utils.singletons import GenericSingleton
 STORAGE_NAME = 'storage.json'
 
 
-# FIXME: All methods that ask for task_name are obsolete, as there is no more name field in tasks.
 class Storage(object, metaclass=GenericSingleton):
 
     def __init__(self, filename=None, path=None):
@@ -57,67 +56,6 @@ class Storage(object, metaclass=GenericSingleton):
         self._storage.pop(card_name)
         self.saved = False
 
-    def remove_task(self, card_name, task_name):
-        index = self.find_task(card_name, task_name)
-        self._storage[card_name].pop(index)
-        self.saved = False
-
-    def remove_task_by_index(self, card_name, task_index):
-        self._storage[card_name].pop(task_index)
-        self.saved = False
-
-    def move_task_up_by_name(self, card_name, task_name, moves=1):
-        task_index = self.find_task(card_name, task_name)
-        end_index = task_name - moves
-        self._move_task_up(card_name, task_index, end_index)
-
-    def move_task_down_by_name(self, card_name, task_name, moves=1):
-        task_index = self.find_task(card_name, task_name)
-        end_index = task_index + moves
-        self._move_task_down(card_name, task_index, end_index)
-
-    def move_task_by_index(self, card_name, task_index, end_index):
-        print('Moving task with index {} to index {}'.format(task_index, end_index))
-
-        if task_index <= end_index:
-            self._move_task_down(card_name, task_index, end_index)
-        else:
-            self._move_task_up(card_name, task_index, end_index)
-
-        print(self.tasks(card_name))
-
-    def _move_task_up(self, card_name, task_index, end_index):
-        temp_tasks = self._storage[card_name]
-        task = temp_tasks[task_index]
-        # check if end_index is out of range, and if it is set it to beginning of the list
-        end_index = max(0, end_index)
-        for i in range(task_index, end_index, -1):
-            temp_tasks[i] = temp_tasks[i - 1]
-
-        temp_tasks[end_index] = task
-        self._storage[card_name] = temp_tasks
-
-        self.saved = False
-
-    def _move_task_down(self, card_name, task_index, end_index):
-        temp_tasks = self._storage[card_name]
-        task = temp_tasks[task_index]
-        # check if end_index is out of range, and if it is set it to end of the list
-        end_index = min(len(temp_tasks) - 1, end_index)
-        for i in range(task_index, end_index):
-            temp_tasks[i] = temp_tasks[i + 1]
-
-        temp_tasks[end_index] = task
-        self._storage[card_name] = temp_tasks
-
-        self.saved = False
-
-    def find_task(self, card_name, task_name):
-        for index, field in enumerate(self._storage[card_name]):
-            if task_name == field['name']:
-                return index
-        raise ValueError("Task with name: {}, doesn't exist.".format(task_name))
-
     def pop_task(self, card_name, task_index):
         self.saved = False
         return self._storage[card_name].pop(task_index)
@@ -130,11 +68,6 @@ class Storage(object, metaclass=GenericSingleton):
         for task in self._storage[card_name]:
             if task['name'] == task_name:
                 return task
-
-    def update_task(self, card_name, old_task, new_task):
-        old_task_index = self.find_task(card_name, old_task)
-        self._storage[card_name][old_task_index] = new_task
-        print('Task at index {} has been updated.'.format(old_task_index))
 
     def update_task_at(self, card_name, index, new_task):
         self._storage[card_name][index] = new_task
