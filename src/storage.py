@@ -45,7 +45,7 @@ class Storage(object, metaclass=GenericSingleton):
         return task_names
 
     def add_card(self, card_name):
-        self._storage[card_name] = []
+        self._storage[card_name] = {"tasks": [], "rules": {}}
         self.saved = False
 
     def add_task(self, card_name, task):
