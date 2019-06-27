@@ -25,7 +25,7 @@ class AppWindow(QMainWindow):
 
         card_model = CardModel()
         self.sidebar = CardSidebar(model=card_model, parent=self.cw)
-        self.manager = CardWidgetManager(card_model, self.sidebar, self.cw)
+        self.manager = CardWidgetManager(self.sidebar, self.cw)
 
         self.layout.addWidget(self.sidebar)
         self.layout.addWidget(self.manager)

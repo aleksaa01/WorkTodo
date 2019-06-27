@@ -15,7 +15,7 @@ import time
 
 class CardWidgetManager(QScrollArea):
 
-    def __init__(self, model, sidebar, parent=None):
+    def __init__(self, sidebar, parent=None):
         super().__init__(parent)
 
         self.sidebar = sidebar
@@ -31,15 +31,11 @@ class CardWidgetManager(QScrollArea):
         self.setFrameShape(QScrollArea.NoFrame)
         
         self._card_mapper = {}
-        self._model = model
 
         self.drag_index = None
         self.drag_source = None
         self.drop_index = None
         self.drop_source = None
-
-    def set_model(self, model):
-        self._model = model
 
     def display_or_remove(self, card_name):
         if card_name in self._card_mapper:
