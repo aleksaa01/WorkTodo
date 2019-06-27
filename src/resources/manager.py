@@ -18,6 +18,8 @@ class ResourceManager(metaclass=Singleton):
             'add_icon': None,
             'select_icon': None,
             'rules_icon': None,
+            'warning_icon': None,
+            'danger_icon': None,
         }
 
     def icon_exists(self, icon_name):
@@ -40,5 +42,4 @@ class ResourceManager(metaclass=Singleton):
 
 
 if __name__ != '__main__':
-    print('Called another time')
     resource = ResourceManager()
