@@ -3,7 +3,7 @@ import json
 from utils.singletons import GenericSingleton
 
 
-STORAGE_NAME = 'storage.json'
+STORAGE_NAME = "storage.json"
 
 
 class Storage(object, metaclass=GenericSingleton):
@@ -31,13 +31,16 @@ class Storage(object, metaclass=GenericSingleton):
         return list(self._storage.keys())
 
     def tasks(self, card_name):
-        return self._storage[card_name]
+        return self._storage[card_name]["tasks"]
+    
+    def rules(self, card_name):
+        return self._storage[card_name].get("rules", None)
 
     def task_names(self, card_name):
         tasks = self.tasks(card_name)
         task_names = [''] * len(tasks)
         for index, task in enumerate(tasks):
-            task_names[index] = task['name']
+            task_names[index] = task["name"]
 
         return task_names
 
@@ -47,9 +50,9 @@ class Storage(object, metaclass=GenericSingleton):
 
     def add_task(self, card_name, task):
         if not isinstance(task, dict):
-            raise TypeError('Task value must be of type dict, got {} instead.'.format(type(task)))
+            raise TypeError("Task value must be of type dict, got {} instead.".format(type(task)))
 
-        self._storage[card_name].append(task)
+        self._storage[card_name]["tasks"].append(task)
         self.saved = False
 
     def remove_card(self, card_name):
@@ -58,20 +61,40 @@ class Storage(object, metaclass=GenericSingleton):
 
     def pop_task(self, card_name, task_index):
         self.saved = False
-        return self._storage[card_name].pop(task_index)
+        return self._storage[card_name]["tasks"].pop(task_index)
 
     def insert_task(self, card_name, task, index):
-        self._storage[card_name].insert(index, task)
+        self._storage[card_name]["tasks"].insert(index, task)
         self.saved = False
 
     def get_task(self, card_name, task_name):
-        for task in self._storage[card_name]:
-            if task['name'] == task_name:
+        for task in self._storage[card_name]["tasks"]:
+            if task["name"] == task_name:
                 return task
 
     def update_task_at(self, card_name, index, new_task):
-        self._storage[card_name][index] = new_task
-        print('Task at index {} has been updated.'.format(index))
+        self._storage[card_name]["tasks"][index] = new_task
+        print("Task at index {} has been updated.".format(index))
+        self.saved = False
+    
+    def add_rules(self, card_name, rules):
+        if not isinstance(rules, dict):
+            raise TypeError("Rules value must be of type dict, got {} instead.".format(type(rules)))
+
+        self._storage[card_name]["rules"] = rules
+        self.saved = False
+
+    def update_rules(self, card_name, rules):
+        if not isinstance(rules, dict):
+            raise TypeError("Rules value must be of type dict, got {} instead.".format(type(rules)))
+
+        rules = self._storage[card_name].get("rules")
+        # Checks if rules is either None or {}
+        if not rules:
+            raise KeyError("Card {}, doesn't have rules.".format(card_name))
+
+        self._storage[card_name]["rules"] = rules
+        self.saved = False
 
     def save(self):
         if self.debug:
@@ -79,4 +102,4 @@ class Storage(object, metaclass=GenericSingleton):
         with open(self.path, 'w') as f:
             json.dump(self._storage, f)
         self.saved = True
-        print('Storage state saved!')
+        print("Storage state saved!")
