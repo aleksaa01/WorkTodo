@@ -1,8 +1,7 @@
-from PyQt5.QtCore import QObject
 from storage import Storage
 
 
-class CardModel(QObject):
+class CardModel(object):
 
     def __init__(self):
         self._storage = Storage()
