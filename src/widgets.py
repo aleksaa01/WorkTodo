@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QLayout, QPushButton, QScrollArea, QSizePolicy
+from PyQt5.QtWidgets import QWidget, QLayout, QPushButton, QScrollArea, QSizePolicy, \
+    QHBoxLayout, QSpinBox, QLabel
 from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal
 
 
@@ -179,3 +180,43 @@ class Sidebar(QScrollArea):
     def widget_names(self):
         return self.model.cards()
 
+
+class TimeEdit(QWidget):
+
+    def __init__(self, seconds, parent=None):
+        super().__init__(parent)
+
+        hours, minutes = 0, 0
+        if seconds > 0:
+            hours = seconds // 3600
+            seconds -= (hours * 3600)
+        if seconds > 0:
+            minutes = seconds // 60
+            seconds -= (minutes * 60)
+
+        self._hours = QSpinBox(self)
+        self._hours.setValue(hours)
+        self._minutes = QSpinBox(self)
+        self._minutes.setValue(minutes)
+        self._seconds = QSpinBox(self)
+        self._seconds.setValue(seconds)
+
+        mlayout = QHBoxLayout()
+        mlayout.addWidget(QLabel("Hours:"))
+        mlayout.addWidget(self._hours)
+        mlayout.addWidget(QLabel("Minutes:"))
+        mlayout.addWidget(self._minutes)
+        mlayout.addWidget(QLabel("Seconds:"))
+        mlayout.addWidget(self._seconds)
+        self.setLayout(mlayout)
+
+    def time(self):
+        h = int(self._hours.text())
+        m = int(self._minutes.text())
+        s = int(self._seconds.text())
+
+        return (h, m, s)
+
+    def seconds(self):
+        h, m, s = self.time()
+        return s + m * 60 + h * 3600
