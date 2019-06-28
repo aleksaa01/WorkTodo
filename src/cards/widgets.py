@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
     QScrollArea
 from PyQt5.QtCore import pyqtSignal, QSize, Qt
 
-from widgets import Sidebar
+from widgets import Sidebar, TimeEdit
 from tasks.widgets import AddTaskDialog, TaskWidget
 from tasks.models import TasksModel
 from tasks.actions import Action
@@ -293,7 +293,7 @@ class CardActions(QWidget):
         self.rules.setIcon(icon)
         self.rules.setMaximumSize(20, 20)
         self.rules.setAutoRaise(True)
-        # self.rules.clicked.connect()
+        self.rules.clicked.connect(self.run_rules_dialog)
 
         layout = QHBoxLayout(self)
         # Set spacing and margins instead of widget size
@@ -326,6 +326,14 @@ class CardActions(QWidget):
     def run_add_task_dialog(self):
         dialog = AddTaskDialog(self.card_widget.task_descs())
         dialog.accepted.connect(self.card_widget.add)
+        dialog.exec_()
+
+    def change_rules(self, rules={}):
+        self.card_widget.rules = rules
+
+    def run_rules_dialog(self):
+        dialog = RulesDialog(self.card_widget.rules())
+        dialog.accepted.connect(self.change_rules)
         dialog.exec_()
 
 
@@ -429,3 +437,29 @@ class AddCardDialog(QDialog):
     def reject(self):
         self.rejected.emit(True)
         super().reject()
+
+
+class RulesDialog(QDialog):
+
+    def __init__(self, rules, parent=None):
+        super().__init__(parent)
+
+        self.rules = rules
+
+        self.warning_lbl = QLabel('Mark as warning after how many seconds')
+        self.danger_lbl = QLabel('Mark as danger after how many seconds')
+        self.warning_time = TimeEdit(self.rules["warning"], self)
+        self.danger_time = TimeEdit(self.rules["danger"], self)
+
+        mlayout = QVBoxLayout()
+        lay1 = QVBoxLayout()
+        lay1.addWidget(self.warning_lbl)
+        lay1.addWidget(self.warning_time)
+        lay2 = QVBoxLayout()
+        lay2.addWidget(self.danger_lbl)
+        lay2.addWidget(self.danger_time)
+
+        mlayout.addLayout(lay1)
+        mlayout.addLayout(lay2)
+        self.setLayout(mlayout)
+
