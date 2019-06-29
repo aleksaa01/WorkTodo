@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
     QDialog, QLineEdit, QWidget, QListWidget, QListWidgetItem, \
     QAbstractItemView, QToolButton, QSizePolicy, QApplication, \
-    QScrollArea
+    QScrollArea, QMessageBox
 from PyQt5.QtCore import pyqtSignal, QSize, Qt
 
 from widgets import Sidebar, TimeEdit
@@ -164,6 +164,10 @@ class CardWidget(QWidget):
             QApplication.processEvents()
         t2 = time.perf_counter()
         print('Time took:', t2 - t1)
+
+    def reload(self):
+        self.lw.clear()
+        self.load()
 
     def get_task(self, index):
         return self.model.get_task(index)
@@ -329,10 +333,11 @@ class CardActions(QWidget):
         dialog.exec_()
 
     def change_rules(self, rules={}):
-        self.card_widget.rules = rules
+        self.card_widget.rules.update(rules)
+        self.card_widget.reload()
 
     def run_rules_dialog(self):
-        dialog = RulesDialog(self.card_widget.rules())
+        dialog = RulesDialog(self.card_widget.rules)
         dialog.accepted.connect(self.change_rules)
         dialog.exec_()
 
@@ -441,15 +446,26 @@ class AddCardDialog(QDialog):
 
 class RulesDialog(QDialog):
 
+    accepted = pyqtSignal(dict)
+    rejected = pyqtSignal(bool)
+
     def __init__(self, rules, parent=None):
         super().__init__(parent)
 
         self.rules = rules
 
+        warning = self.rules.get("warning", 0)
+        danger = self.rules.get("danger", 0)
+
         self.warning_lbl = QLabel('Mark as warning after how many seconds')
         self.danger_lbl = QLabel('Mark as danger after how many seconds')
-        self.warning_time = TimeEdit(self.rules["warning"], self)
-        self.danger_time = TimeEdit(self.rules["danger"], self)
+        self.warning_time = TimeEdit(warning, self)
+        self.danger_time = TimeEdit(danger, self)
+
+        self.ok_btn = QPushButton("OK")
+        self.ok_btn.clicked.connect(self.accept)
+        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn.clicked.connect(self.reject)
 
         mlayout = QVBoxLayout()
         lay1 = QVBoxLayout()
@@ -459,7 +475,27 @@ class RulesDialog(QDialog):
         lay2.addWidget(self.danger_lbl)
         lay2.addWidget(self.danger_time)
 
+        lay3 = QHBoxLayout()
+        lay3.addWidget(self.ok_btn)
+        lay3.addWidget(self.cancel_btn)
+
         mlayout.addLayout(lay1)
         mlayout.addLayout(lay2)
+        mlayout.addLayout(lay3)
         self.setLayout(mlayout)
 
+    def accept(self):
+        rules = {}
+        wtime = self.warning_time.seconds()
+        dtime = self.danger_time.seconds()
+        if wtime == 0 or dtime == 0:
+            QMessageBox.warning(self, "warning", "Invalid time! Time can't be 0.")
+            return
+        rules["warning"] = wtime
+        rules["danger"] = dtime
+        self.accepted.emit(rules)
+        super().accept()
+
+    def reject(self):
+        self.rejected.emit(True)
+        super().reject()
