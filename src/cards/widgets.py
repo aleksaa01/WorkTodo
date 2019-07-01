@@ -328,7 +328,7 @@ class CardActions(QWidget):
             self.card_widget.remove_selected_items()
 
     def run_add_task_dialog(self):
-        dialog = AddTaskDialog(self.card_widget.task_descs())
+        dialog = AddTaskDialog()
         dialog.accepted.connect(self.card_widget.add)
         dialog.exec_()
 

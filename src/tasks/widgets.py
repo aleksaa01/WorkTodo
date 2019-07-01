@@ -9,11 +9,9 @@ class AddTaskDialog(QDialog):
     accepted = pyqtSignal(TaskObject)
     rejected = pyqtSignal(bool)
 
-    def __init__(self, tasks_descriptions, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Create new task")
-
-        self._tasks_descriptions = tasks_descriptions
 
         mlayout = QVBoxLayout()
         desclayout = QVBoxLayout()
@@ -42,10 +40,6 @@ class AddTaskDialog(QDialog):
 
     def accept(self):
         description = self.desc_text_edit.toPlainText()
-        if description in self._tasks_descriptions:
-            self.desc_text_edit.setStyleSheet('border: 1px solid red;')
-            return
-
         task = create_task_object(description)
 
         self.accepted.emit(task)
