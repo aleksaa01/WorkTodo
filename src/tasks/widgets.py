@@ -114,7 +114,8 @@ class TaskWidget(QWidget):
         self.actions = actions
 
         self.label = QLabel(text)
-        self.label.setMaximumWidth(max_text_width)
+        self.label.setWordWrap(True)
+        self.label.setFixedWidth(max_text_width)
         if icon:
             self.icon = QToolButton()
             self.icon.setIcon(icon)
