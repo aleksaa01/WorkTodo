@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QLayout, QPushButton, QScrollArea, QSizePolicy, \
-    QHBoxLayout, QSpinBox, QLabel
+    QHBoxLayout, QSpinBox, QLabel, QDialog, QVBoxLayout
 from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal
 
 
@@ -220,3 +220,25 @@ class TimeEdit(QWidget):
     def seconds(self):
         h, m, s = self.time()
         return s + m * 60 + h * 3600
+
+
+class SaveDialog(QDialog):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.message = QLabel("You have unsaved changes.")
+
+        self.savebtn = QPushButton("Save")
+        self.savebtn.clicked.connect(self.accept)
+        self.cancelbtn = QPushButton("Don't save")
+        self.cancelbtn.clicked.connect(self.reject)
+
+        btnlayout = QHBoxLayout()
+        btnlayout.addWidget(self.savebtn)
+        btnlayout.addWidget(self.cancelbtn)
+
+        mlayout = QVBoxLayout()
+        mlayout.addWidget(self.message)
+        mlayout.addLayout(btnlayout)
+        self.setLayout(mlayout)

@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout
 from PyQt5.QtGui import QPixmap
 from cards.widgets import CardWidget, CardWidgetManager, CardSidebar
 from cards.models import CardModel
+from widgets import SaveDialog
 from storage import Storage
 from shortcuts import set_shortcut
 
@@ -33,6 +34,14 @@ class AppWindow(QMainWindow):
         self.setCentralWidget(self.cw)
 
         self.show()
+
+    def closeEvent(self, event):
+        if self.storage.saved is False:
+            dialog = SaveDialog(self)
+            dialog.accepted.connect(self.storage.save)
+            dialog.exec()
+
+        super().closeEvent(event)
 
 
 if __name__ == '__main__':
