@@ -50,13 +50,13 @@ class AddTaskDialog(QDialog):
         super().reject()
 
 
-class ReviewTaskDialog(QDialog):
-    accepted = pyqtSignal(dict, dict)
+class EditTaskDialog(QDialog):
+    accepted = pyqtSignal(object)
     rejected = pyqtSignal(bool)
 
     def __init__(self, task_object, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Review Task")
+        self.setWindowTitle("Edit Task")
 
         self.old_task = task_object
 
@@ -90,7 +90,7 @@ class ReviewTaskDialog(QDialog):
         description = self.desc_text_edit.toPlainText()
         task = create_task_object(description)
 
-        self.accepted.emit(self.old_task, task)
+        self.accepted.emit(task)
         super().accept()
 
     def reject(self):
@@ -138,6 +138,9 @@ class TaskWidget(QWidget):
         self.checker.deleteLater()
         self.checker = None
 
+    def set_text(self, text):
+        self.label.setText(text)
+
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
 
@@ -147,7 +150,10 @@ class TaskWidget(QWidget):
         action_menu = QMenu()
         action_map = {}
         for action in self.actions:
-            a = action_menu.addAction(action.icon, action.text)
+            if action.icon is None:
+                a = action_menu.addAction(action.text)
+            else:
+                a = action_menu.addAction(action.icon, action.text)
             action_map[a] = action
 
         chosen_action = action_menu.exec_(self.mapToGlobal(event.pos()))
