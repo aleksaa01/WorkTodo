@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
 from PyQt5.QtCore import pyqtSignal, QSize, Qt
 
 from widgets import Sidebar, TimeEdit
-from tasks.widgets import AddTaskDialog, TaskWidget
+from tasks.widgets import TaskWidget, AddTaskDialog, EditTaskDialog
 from tasks.models import TasksModel
 from tasks.actions import Action
 from resources.manager import resource
@@ -141,9 +141,9 @@ class CardWidget(QWidget):
 
         action_remove = Action('Remove', resource.get_icon('delete_icon'))
         action_remove.signal.connect(self.find_and_remove)
-        # action_review = Action('Review')
-        # action_review.signal.connect(self.find_and_remove)
-        self.actions = [action_remove]
+        action_edit = Action('Edit')
+        action_edit.signal.connect(self.run_edit_task_dialog)
+        self.actions = [action_remove, action_edit]
         if self.rules.isset():
             warning_time = self.rules["warning"]
             danger_time = self.rules["danger"]
@@ -226,6 +226,19 @@ class CardWidget(QWidget):
 
     def add(self, task_object):
         self.insert_task(len(self.model), task_object)
+
+    def run_edit_task_dialog(self, text):
+        index = self.model.find_task(text)
+        dialog = EditTaskDialog(self.model.get_task(index))
+        dialog.accepted.connect(lambda new_task: self.edit_task(index, new_task))
+        dialog.exec_()
+
+    def edit_task(self, index, new_task):
+        self.model.update_task(index, new_task)
+        item = self.lw.item(index)
+        widget = self.lw.itemWidget(item)
+        widget.set_text(new_task.description)
+        item.setSizeHint(widget.sizeHint())
 
 
 class CustomListWidget(QListWidget):

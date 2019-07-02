@@ -35,5 +35,9 @@ class TasksModel(QObject):
                 return idx
         return -1
 
+    def update_task(self, index, new_task):
+        self._tasks[index] = new_task
+        self._storage.update_task_at(self.name, index, new_task.to_json())
+
     def __len__(self):
         return len(self._tasks)
