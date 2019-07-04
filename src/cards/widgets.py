@@ -156,7 +156,9 @@ class CardWidget(QWidget):
                 elif task_object.date + warning_time <= current_time:
                     icon = self.rules_warning_icon
 
-            task_widget = TaskWidget(task_object.description, self.actions, icon)
+            dt = datetime.datetime.fromtimestamp(task_object.date)
+            text = "{}\n({}.{}.{})".format(task_object.description, dt.day, dt.month, dt.year)
+            task_widget = TaskWidget(text, self.actions, icon)
             item = QListWidgetItem()
             item.setSizeHint(task_widget.sizeHint())
             self.lw.addItem(item)
@@ -186,7 +188,7 @@ class CardWidget(QWidget):
     def insert_task(self, index, task_object):
         # WARNING: Maybe we should first delete TaskWidget at the index, before
         #   we create new one and do a setItemWidget.
-        task_widget = TaskWidget(task_object.description, self.actions)
+        task_widget = TaskWidget(task_object, self.actions)
         item = QListWidgetItem()
         item.setSizeHint(task_widget.sizeHint())
         self.lw.insertItem(index, item)
@@ -306,7 +308,7 @@ class CardActions(QWidget):
         self.add.clicked.connect(self.run_add_task_dialog)
 
         self.rules = QToolButton(self)
-        icon = resource.get_icon('rules_icon')
+        icon = resource.get_icon('preferences_icon')
         self.rules.setIcon(icon)
         self.rules.setMaximumSize(20, 20)
         self.rules.setAutoRaise(True)
