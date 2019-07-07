@@ -34,9 +34,9 @@ class Storage(object, metaclass=GenericSingleton):
 
     def tasks(self, card_name):
         return self._cards[card_name]["tasks"]
-    
-    def rules(self, card_name):
-        return self._preferences[card_name].get("rules", None)
+
+    def preferences(self, card_name):
+        return self._preferences[card_name]
 
     def task_names(self, card_name):
         tasks = self.tasks(card_name)
