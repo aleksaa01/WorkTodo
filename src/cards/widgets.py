@@ -9,7 +9,7 @@ from tasks.widgets import TaskWidget, AddTaskDialog, EditTaskDialog
 from tasks.models import TasksModel
 from tasks.actions import Action
 from resources.manager import resource
-from cards.rules import Rules
+from cards.preferences import Preferences
 
 import time
 import datetime
