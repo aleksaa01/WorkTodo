@@ -123,9 +123,9 @@ class CardWidget(QWidget):
 
         self.model = TasksModel(self.name)
 
-        self.rules = Rules(self.name)
-        self.rules_warning_icon = resource.get_icon('warning_icon')
-        self.rules_danger_icon = resource.get_icon('danger_icon')
+        self.prefs = Preferences(self.name)
+        self.prefs_warning_icon = resource.get_icon('warning_icon')
+        self.prefs_danger_icon = resource.get_icon('danger_icon')
 
     def emit_drag_event(self, index):
         print('Drag emmited >>> ', index)
@@ -144,17 +144,18 @@ class CardWidget(QWidget):
         action_edit = Action('Edit')
         action_edit.signal.connect(self.run_edit_task_dialog)
         self.actions = [action_remove, action_edit]
-        if self.rules.isset():
-            warning_time = self.rules["warning"]
-            danger_time = self.rules["danger"]
+
+        if not (self.prefs.expiration is None):
+            warning_time = self.prefs["warning"]
+            danger_time = self.prefs["danger"]
         current_time = datetime.datetime.now().timestamp()
         for task_object in self.model.tasks():
             icon = None
-            if self.rules.isset():
+            if not (self.prefs.expiration is None):
                 if task_object.date + danger_time <= current_time:
-                    icon = self.rules_danger_icon
+                    icon = self.prefs_danger_icon
                 elif task_object.date + warning_time <= current_time:
-                    icon = self.rules_warning_icon
+                    icon = self.prefs_warning_icon
 
             dt = datetime.datetime.fromtimestamp(task_object.date)
             text = "{}\n({}.{}.{})".format(task_object.description, dt.day, dt.month, dt.year)
