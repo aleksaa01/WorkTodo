@@ -12,8 +12,8 @@ class Preferences(object):
 
         self._load()
 
-    def _load(self, preferences):
-        for item, value in self._storage.preferences(self.card_name):
+    def _load(self):
+        for item, value in self._storage.preferences(self.card_name).items():
             if getattr(self, item, '\0') == '\0':
                 raise AttributeError("Unkown preference attribute: {}".format(item))
             else:
