@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
     QDialog, QLineEdit, QWidget, QListWidget, QListWidgetItem, \
     QAbstractItemView, QToolButton, QSizePolicy, QApplication, \
-    QScrollArea, QMessageBox
+    QScrollArea, QMessageBox, QFrame, QCheckBox
 from PyQt5.QtCore import pyqtSignal, QSize, Qt
 
 from widgets import Sidebar, TimeEdit
@@ -146,25 +146,32 @@ class CardWidget(QWidget):
         self.actions = [action_remove, action_edit]
 
         if not (self.prefs.expiration is None):
-            warning_time = self.prefs["warning"]
-            danger_time = self.prefs["danger"]
+            warning_time = self.prefs.expiration["warning"]
+            danger_time = self.prefs.expiration["danger"]
         current_time = datetime.datetime.now().timestamp()
+
         for task_object in self.model.tasks():
             icon = None
-            if not (self.prefs.expiration is None):
-                if task_object.date + danger_time <= current_time:
+            if self.prefs.expiration:
+                if danger_time and task_object.date + danger_time <= current_time:
                     icon = self.prefs_danger_icon
-                elif task_object.date + warning_time <= current_time:
+                elif warning_time and task_object.date + warning_time <= current_time:
                     icon = self.prefs_warning_icon
 
-            dt = datetime.datetime.fromtimestamp(task_object.date)
-            text = "{}\n({}.{}.{})".format(task_object.description, dt.day, dt.month, dt.year)
+            if self.prefs.show_date is True:
+                dt = datetime.datetime.fromtimestamp(task_object.date)
+                text = "{}\n({}.{}.{})".format(task_object.description, dt.day, dt.month, dt.year)
+            else:
+                text = task_object.description
+
             task_widget = TaskWidget(text, self.actions, icon)
             item = QListWidgetItem()
             item.setSizeHint(task_widget.sizeHint())
             self.lw.addItem(item)
             self.lw.setItemWidget(item, task_widget)
+
             QApplication.processEvents()
+
         t2 = time.perf_counter()
         print('Time took:', t2 - t1)
 
@@ -189,7 +196,7 @@ class CardWidget(QWidget):
     def insert_task(self, index, task_object):
         # WARNING: Maybe we should first delete TaskWidget at the index, before
         #   we create new one and do a setItemWidget.
-        task_widget = TaskWidget(task_object, self.actions)
+        task_widget = TaskWidget(task_object.description, self.actions)
         item = QListWidgetItem()
         item.setSizeHint(task_widget.sizeHint())
         self.lw.insertItem(index, item)
@@ -308,12 +315,12 @@ class CardActions(QWidget):
         self.add.setAutoRaise(True)
         self.add.clicked.connect(self.run_add_task_dialog)
 
-        self.rules = QToolButton(self)
+        self.preferences = QToolButton(self)
         icon = resource.get_icon('preferences_icon')
-        self.rules.setIcon(icon)
-        self.rules.setMaximumSize(20, 20)
-        self.rules.setAutoRaise(True)
-        self.rules.clicked.connect(self.run_rules_dialog)
+        self.preferences.setIcon(icon)
+        self.preferences.setMaximumSize(20, 20)
+        self.preferences.setAutoRaise(True)
+        self.preferences.clicked.connect(self.run_preferences_dialog)
 
         layout = QHBoxLayout(self)
         # Set spacing and margins instead of widget size
@@ -325,7 +332,7 @@ class CardActions(QWidget):
         layout.addWidget(self.select)
         layout.addWidget(self.delete)
         layout.addWidget(self.add)
-        layout.addWidget(self.rules)
+        layout.addWidget(self.preferences)
         layout.addStretch(1)
         self.setLayout(layout)
 
@@ -348,13 +355,12 @@ class CardActions(QWidget):
         dialog.accepted.connect(self.card_widget.add)
         dialog.exec_()
 
-    def change_rules(self, rules={}):
-        self.card_widget.rules.update(rules)
+    def preferences_changed(self):
         self.card_widget.reload()
 
-    def run_rules_dialog(self):
-        dialog = RulesDialog(self.card_widget.rules)
-        dialog.accepted.connect(self.change_rules)
+    def run_preferences_dialog(self):
+        dialog = RulesDialog(self.card_widget.prefs)
+        dialog.accepted.connect(self.preferences_changed)
         dialog.exec_()
 
 
@@ -462,28 +468,24 @@ class AddCardDialog(QDialog):
 
 class RulesDialog(QDialog):
 
-    accepted = pyqtSignal(dict)
-    rejected = pyqtSignal(bool)
+    accepted = pyqtSignal()
+    rejected = pyqtSignal()
 
-    def __init__(self, rules, parent=None):
+    def __init__(self, preferences, parent=None):
         super().__init__(parent)
 
-        self.rules = rules
+        self.prefs = preferences
 
-        warning = self.rules.get("warning", 0)
-        danger = self.rules.get("danger", 0)
-
+        warning = self.prefs.expiration.get("warning", 0)
+        danger = self.prefs.expiration.get("danger", 0)
         self.warning_lbl = QLabel('Mark as warning after how many seconds')
         self.danger_lbl = QLabel('Mark as danger after how many seconds')
         self.warning_time = TimeEdit(warning, self)
         self.danger_time = TimeEdit(danger, self)
-
         self.ok_btn = QPushButton("OK")
         self.ok_btn.clicked.connect(self.accept)
         self.cancel_btn = QPushButton("Cancel")
         self.cancel_btn.clicked.connect(self.reject)
-
-        mlayout = QVBoxLayout()
         lay1 = QVBoxLayout()
         lay1.addWidget(self.warning_lbl)
         lay1.addWidget(self.warning_time)
@@ -491,27 +493,44 @@ class RulesDialog(QDialog):
         lay2.addWidget(self.danger_lbl)
         lay2.addWidget(self.danger_time)
 
-        lay3 = QHBoxLayout()
-        lay3.addWidget(self.ok_btn)
-        lay3.addWidget(self.cancel_btn)
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameStyle(QFrame.Sunken)
 
+        show_date_lbl = QLabel("Show date of task creation.")
+        self.show_date_checkbox = QCheckBox()
+        if self.prefs.show_date:
+            self.show_date_checkbox.setChecked(True)
+        else:
+            self.show_date_checkbox.setChecked(False)
+        lay3 = QHBoxLayout()
+        lay3.addWidget(show_date_lbl)
+        lay3.addWidget(self.show_date_checkbox)
+
+        lay4 = QHBoxLayout()
+        lay4.addWidget(self.ok_btn)
+        lay4.addWidget(self.cancel_btn)
+        lay4.setContentsMargins(10, 20, 10, 10)
+
+        mlayout = QVBoxLayout()
         mlayout.addLayout(lay1)
         mlayout.addLayout(lay2)
+        mlayout.addWidget(line)
         mlayout.addLayout(lay3)
+        mlayout.addLayout(lay4)
         self.setLayout(mlayout)
 
     def accept(self):
-        rules = {}
         wtime = self.warning_time.seconds()
         dtime = self.danger_time.seconds()
-        if wtime == 0 or dtime == 0:
-            QMessageBox.warning(self, "warning", "Invalid time! Time can't be 0.")
-            return
-        rules["warning"] = wtime
-        rules["danger"] = dtime
-        self.accepted.emit(rules)
+        wtime = wtime if wtime > 0 else None
+        dtime = dtime if dtime > 0 else None
+        expiration = {"warning": wtime, "danger": dtime}
+        self.prefs.expiration = expiration
+        self.prefs.show_date = self.show_date_checkbox.isChecked()
+        self.accepted.emit()
         super().accept()
 
     def reject(self):
-        self.rejected.emit(True)
+        self.rejected.emit()
         super().reject()
