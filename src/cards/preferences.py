@@ -29,6 +29,7 @@ class Preferences(object):
             return TypeError("expiration value must be of type dict, "
                              "got {} instead.".format(type(value)))
         self._expiration = value
+        self._storage.update_preference(self.card_name, "expiration", value)
 
     @property
     def show_date(self):
@@ -40,3 +41,4 @@ class Preferences(object):
             return TypeError("show_date value must be of type bool, "
                              "got {} instead.".format(type(value)))
         self._show_date = value
+        self._storage.update_preference(self.card_name, "show_date", value)
