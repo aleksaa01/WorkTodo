@@ -359,7 +359,7 @@ class CardActions(QWidget):
         self.card_widget.reload()
 
     def run_preferences_dialog(self):
-        dialog = RulesDialog(self.card_widget.prefs)
+        dialog = PreferencesDialog(self.card_widget.prefs)
         dialog.accepted.connect(self.preferences_changed)
         dialog.exec_()
 
@@ -466,7 +466,7 @@ class AddCardDialog(QDialog):
         super().reject()
 
 
-class RulesDialog(QDialog):
+class PreferencesDialog(QDialog):
 
     accepted = pyqtSignal()
     rejected = pyqtSignal()
