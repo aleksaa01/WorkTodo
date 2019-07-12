@@ -21,7 +21,7 @@ class Storage(object, metaclass=GenericSingleton):
         with open(self.path, 'r') as f:
             storage = json.load(f)
 
-        self._cards = storage["data"]
+        self._cards = storage["cards"]
         self._preferences = storage["preferences"]
 
         # Check saved attribute to see if file content and storage object are synchronized.
@@ -81,23 +81,8 @@ class Storage(object, metaclass=GenericSingleton):
         print("Task at index {} has been updated.".format(index))
         self.saved = False
     
-    def add_rules(self, card_name, rules):
-        if not isinstance(rules, dict):
-            raise TypeError("Rules value must be of type dict, got {} instead.".format(type(rules)))
-
-        self._preferences[card_name]["rules"] = rules
-        self.saved = False
-
-    def update_rules(self, card_name, rules):
-        if not isinstance(rules, dict):
-            raise TypeError("Rules value must be of type dict, got {} instead.".format(type(rules)))
-
-        rules = self._preferences[card_name].get("rules")
-        # Checks if rules is either None or {}
-        if not rules:
-            raise KeyError("Card {}, doesn't have rules.".format(card_name))
-
-        self._preferences[card_name]["rules"] = rules
+    def update_preference(self, card_name, preference, new_value):
+        self._preferences[card_name][preference] = new_value
         self.saved = False
 
     def save(self):
