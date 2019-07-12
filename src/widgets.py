@@ -185,6 +185,8 @@ class TimeEdit(QWidget):
 
     def __init__(self, seconds, parent=None):
         super().__init__(parent)
+        if seconds is None:
+            seconds = 0
 
         hours, minutes = 0, 0
         if seconds > 0:
