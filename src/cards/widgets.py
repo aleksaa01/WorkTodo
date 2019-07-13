@@ -145,7 +145,7 @@ class CardWidget(QWidget):
         action_edit.signal.connect(self.run_edit_task_dialog)
         self.actions = [action_remove, action_edit]
 
-        if not (self.prefs.expiration is None):
+        if self.prefs.expiration:
             warning_time = self.prefs.expiration["warning"]
             danger_time = self.prefs.expiration["danger"]
         current_time = datetime.datetime.now().timestamp()
@@ -158,7 +158,7 @@ class CardWidget(QWidget):
                 elif warning_time and task_object.date + warning_time <= current_time:
                     icon = self.prefs_warning_icon
 
-            if self.prefs.show_date is True:
+            if self.prefs.show_date:
                 dt = datetime.datetime.fromtimestamp(task_object.date)
                 text = "{}\n({}.{}.{})".format(task_object.description, dt.day, dt.month, dt.year)
             else:
