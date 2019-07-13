@@ -10,7 +10,12 @@ class Preferences(object):
         self._expiration = None
         self._show_date = None
 
+        # self.loaded is a workaround for avoiding changing the storage
+        # when loading preferences from it. This happens because we are
+        # dynamically setting the instance variables which also have to be checked.
+        self.loaded = False
         self._load()
+        self.loaded = True
 
     def _load(self):
         for item, value in self._storage.preferences(self.card_name).items():
@@ -18,6 +23,11 @@ class Preferences(object):
                 raise AttributeError("Unkown preference attribute: {}".format(item))
             else:
                 setattr(self, item, value)
+
+    def _update_preference(self, name, value):
+        if not self.loaded:
+            return
+        self._storage.update_preference(self.card_name, name, value)
 
     @property
     def expiration(self):
@@ -29,7 +39,7 @@ class Preferences(object):
             return TypeError("expiration value must be of type dict, "
                              "got {} instead.".format(type(value)))
         self._expiration = value
-        self._storage.update_preference(self.card_name, "expiration", value)
+        self._update_preference("expiration", value)
 
     @property
     def show_date(self):
@@ -41,4 +51,4 @@ class Preferences(object):
             return TypeError("show_date value must be of type bool, "
                              "got {} instead.".format(type(value)))
         self._show_date = value
-        self._storage.update_preference(self.card_name, "show_date", value)
+        self._update_preference("show_date", value)
