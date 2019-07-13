@@ -196,7 +196,12 @@ class CardWidget(QWidget):
     def insert_task(self, index, task_object):
         # WARNING: Maybe we should first delete TaskWidget at the index, before
         #   we create new one and do a setItemWidget.
-        task_widget = TaskWidget(task_object.description, self.actions)
+        if self.prefs.show_date:
+            dt = datetime.datetime.fromtimestamp(task_object.date)
+            text = "{}\n({}.{}.{})".format(task_object.description, dt.day, dt.month, dt.year)
+        else:
+            text = task_object.description
+        task_widget = TaskWidget(text, self.actions)
         item = QListWidgetItem()
         item.setSizeHint(task_widget.sizeHint())
         self.lw.insertItem(index, item)
