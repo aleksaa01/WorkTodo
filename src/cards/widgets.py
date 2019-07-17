@@ -266,6 +266,7 @@ class CustomListWidget(QListWidget):
         self.current_drag_index = None
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMaximumWidth(300)
+        self.setSpacing(2.5)
 
     def startDrag(self, *args, **kwargs):
         print('<DRAG STARTED> ', self.parent().name)
@@ -287,6 +288,24 @@ class CustomListWidget(QListWidget):
                 new_item_pos = self.count()
 
         self.drop_event.emit(new_item_pos, drop_indicator)
+
+    # def mouseMoveEvent(self, event):
+    #     print('--------LULW--------')
+    #     print(self.underMouse())
+    #     item = self.itemAt(event.pos())
+    #     if item:
+    #         widget = self.itemWidget(item)
+    #         print(widget.label.text())
+    #     print('--------END--------')
+
+    def leaveEvent(self, event):
+        print("MOUSE LEAVE EVENT")
+        # super().leaveEvent(event)
+
+    def enterEvent(self, event):
+        print("MOUSE ENTER EVENT")
+        # super().enterEvent(event)
+
 
 
 class CardActions(QWidget):
