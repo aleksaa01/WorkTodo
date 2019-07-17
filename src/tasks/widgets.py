@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
-    QDialog, QTextEdit, QWidget, QCheckBox, QMenu, QToolButton
-from PyQt5.QtCore import pyqtSignal, Qt
+    QDialog, QTextEdit, QWidget, QCheckBox, QMenu, QToolButton, QFrame
+from PyQt5.QtCore import pyqtSignal, Qt, QPropertyAnimation, QRect
 from tasks.objects import create_task_object, TaskObject
 
 
@@ -98,7 +98,7 @@ class EditTaskDialog(QDialog):
         super().reject()
 
 
-class TaskWidget(QWidget):
+class TaskWidget(QFrame):
 
     on_remove = pyqtSignal(str)
     on_review = pyqtSignal(str)
@@ -106,7 +106,9 @@ class TaskWidget(QWidget):
     def __init__(self, text, actions, icon=None, max_text_width=200, parent=None):
         super().__init__(parent)
         self.actions = actions
+        self.setObjectName("TaskWidget")
 
+        # self.setStyleSheet("")
         self.label = QLabel(text)
         self.label.setWordWrap(True)
         self.label.setFixedWidth(max_text_width)
@@ -125,6 +127,22 @@ class TaskWidget(QWidget):
         self.layout.addStretch(0)
         self.setLayout(self.layout)
 
+        # Event can't be passed to parent if task widget is not set to receive move events
+        self.setMouseTracking(True)
+        self._animating_enter = False
+        self._animating_leave = False
+
+        self.on_mouseover_anim = QPropertyAnimation(self, b"geometry")
+        self.on_mouseover_anim.setDuration(100)
+        self.on_mouseover_anim.finished.connect(self._enter_animation_done)
+
+        self.on_mouseleave_anim = QPropertyAnimation(self, b"geometry")
+        self.on_mouseleave_anim.setDuration(100)
+        self.on_mouseleave_anim.finished.connect(self._leave_animation_done)
+
+        self.start_pos = None
+        self.diff = 5
+
     def add_checker(self):
         # if checker is present just return
         if self.checker:
@@ -141,22 +159,46 @@ class TaskWidget(QWidget):
     def set_text(self, text):
         self.label.setText(text)
 
-    def mousePressEvent(self, event):
-        super().mousePressEvent(event)
-
-        if event.button() != Qt.RightButton:
+    def enterEvent(self, event):
+        print("TASK ENTER")
+        if self._animating_enter:
             return
 
-        action_menu = QMenu()
-        action_map = {}
-        for action in self.actions:
-            if action.icon is None:
-                a = action_menu.addAction(action.text)
-            else:
-                a = action_menu.addAction(action.icon, action.text)
-            action_map[a] = action
+        self._animating_leave = False
+        self._animating_enter = True
+        self.start_pos = QRect(self.x(), self.y(), self.width(), self.height())
+        end_pos = QRect(self.start_pos.x(), self.start_pos.y() - self.diff, self.width(), self.height())
+        print('>>>', self.start_pos, end_pos)
+        self.on_mouseover_anim.setStartValue(self.start_pos)
+        self.on_mouseover_anim.setEndValue(end_pos)
+        self.on_mouseover_anim.start()
 
-        chosen_action = action_menu.exec_(self.mapToGlobal(event.pos()))
-        if chosen_action is None:
+    def leaveEvent(self, event):
+        print("TASK LEAVE", self.on_mouseover_anim.currentTime())
+        if self._animating_leave:
             return
-        action_map[chosen_action].signal.emit(self.label.text())
+
+        if (self.y() + self.diff) < 0 or (self.y() + self.diff) > self.parent().height():
+            print("SHIT IT'S LESS THAN 0")
+            start_pos = QRect(self.x(), self.y(), self.width(), self.height())
+            end_pos = QRect(self.x(), self.y() + self.diff, self.width(), self.height())
+        else:
+            start_pos = self.on_mouseover_anim.currentValue()
+            end_pos = QRect(self.start_pos)
+        print("startpos, endpos:", start_pos, end_pos)
+
+        self._animating_enter = False
+        self._animating_leave = True
+        # start_pos = QRect(self.x(), self.y(), self.width(), self.height())
+        # end_pos = QRect(start_pos.x(), start_pos.y() + self.diff, self.width(), self.height())
+        self.on_mouseleave_anim.setStartValue(start_pos)
+        self.on_mouseleave_anim.setEndValue(end_pos)
+        self.on_mouseleave_anim.start()
+
+    def _enter_animation_done(self):
+        print("Enter animation done !")
+        self._animating_enter = False
+
+    def _leave_animation_done(self):
+        print("Leave animation done !")
+        self._animating_leave = False
