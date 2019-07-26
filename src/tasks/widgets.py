@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
     QDialog, QTextEdit, QWidget, QCheckBox, QMenu, QToolButton, QFrame
 from PyQt5.QtCore import pyqtSignal, Qt, QPropertyAnimation, QRect
+from PyQt5.QtGui import QPalette, QColor
 from tasks.objects import create_task_object, TaskObject
 
 
@@ -98,7 +99,7 @@ class EditTaskDialog(QDialog):
         super().reject()
 
 
-class TaskWidget(QFrame):
+class TaskWidget(QWidget):
 
     on_remove = pyqtSignal(str)
     on_review = pyqtSignal(str)
@@ -141,7 +142,8 @@ class TaskWidget(QFrame):
         self.on_mouseleave_anim.finished.connect(self._leave_animation_done)
 
         self.start_pos = None
-        self.diff = 5
+        self.diff = 3
+        self.setAutoFillBackground(True)
 
     def add_checker(self):
         # if checker is present just return
@@ -159,46 +161,70 @@ class TaskWidget(QFrame):
     def set_text(self, text):
         self.label.setText(text)
 
-    def enterEvent(self, event):
-        print("TASK ENTER")
+    def animate_mouse_over(self, start_pos):
+        palette = QPalette()
+        palette.setColor(QPalette.Base, QColor.fromRgb(220, 220, 220))
+        palette.setColor(QPalette.Highlight, Qt.black)
+        palette.setColor(QPalette.HighlightedText, Qt.black)
+        self.setPalette(palette)
+
         if self._animating_enter:
             return
+        self.on_mouseleave_anim.stop()
+
+        current_pos = self.on_mouseleave_anim.currentValue()
+        if current_pos is None:
+            current_pos = start_pos
 
         self._animating_leave = False
         self._animating_enter = True
-        self.start_pos = QRect(self.x(), self.y(), self.width(), self.height())
-        end_pos = QRect(self.start_pos.x(), self.start_pos.y() - self.diff, self.width(), self.height())
-        print('>>>', self.start_pos, end_pos)
-        self.on_mouseover_anim.setStartValue(self.start_pos)
+        end_pos = QRect(start_pos.x(), start_pos.y() - self.diff, self.width(), self.height())
+        print("Animating ENTER from {} to {}".format(current_pos, end_pos))
+        self.on_mouseover_anim.setStartValue(current_pos)
         self.on_mouseover_anim.setEndValue(end_pos)
         self.on_mouseover_anim.start()
 
-    def leaveEvent(self, event):
-        print("TASK LEAVE", self.on_mouseover_anim.currentTime())
+    def animate_mouse_leave(self, start_pos):
+        pal = QPalette()
+        pal.setColor(QPalette.Base, QColor.fromRgb(255, 255, 255))
+        self.setPalette(pal)
         if self._animating_leave:
             return
-
-        if (self.y() + self.diff) < 0 or (self.y() + self.diff) > self.parent().height():
-            print("SHIT IT'S LESS THAN 0")
-            start_pos = QRect(self.x(), self.y(), self.width(), self.height())
-            end_pos = QRect(self.x(), self.y() + self.diff, self.width(), self.height())
-        else:
-            start_pos = self.on_mouseover_anim.currentValue()
-            end_pos = QRect(self.start_pos)
-        print("startpos, endpos:", start_pos, end_pos)
+        self.on_mouseover_anim.stop()
+        current_pos = self.on_mouseover_anim.currentValue()
+        print("CUR: ", self.on_mouseover_anim.currentValue())
+        if current_pos is None:
+            current_pos = QRect(self.rect())
+        end_pos = QRect(start_pos)
 
         self._animating_enter = False
         self._animating_leave = True
         # start_pos = QRect(self.x(), self.y(), self.width(), self.height())
         # end_pos = QRect(start_pos.x(), start_pos.y() + self.diff, self.width(), self.height())
-        self.on_mouseleave_anim.setStartValue(start_pos)
+        print("Animating LEAVE from {} to {}".format(current_pos, end_pos))
+        self.on_mouseleave_anim.setStartValue(current_pos)
         self.on_mouseleave_anim.setEndValue(end_pos)
         self.on_mouseleave_anim.start()
 
     def _enter_animation_done(self):
-        print("Enter animation done !")
+        print("enter animation done.")
         self._animating_enter = False
 
     def _leave_animation_done(self):
-        print("Leave animation done !")
+        print("leave animation done.")
         self._animating_leave = False
+
+    def snapBack(self):
+        pal = QPalette()
+        pal.setColor(QPalette.Base, QColor.fromRgb(255, 255, 255))
+        self.setPalette(pal)
+        print("New: ", self.x(), self.y(), self.on_mouseover_anim.currentValue())
+        self.setGeometry(self.start_pos)
+        print("New + snap back: ", self.x(), self.y())
+
+    def snapTo(self, rect):
+        pal = QPalette()
+        pal.setColor(QPalette.Base, QColor.fromRgb(255, 255, 255))
+        self.setPalette(pal)
+        print("rect, startpos:", rect, self.start_pos)
+        self.setGeometry(rect)
