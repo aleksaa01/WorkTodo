@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
     QAbstractItemView, QToolButton, QSizePolicy, QApplication, \
     QScrollArea, QMessageBox, QFrame, QCheckBox
 from PyQt5.QtCore import pyqtSignal, QSize, Qt
+from PyQt5.QtGui import QColor, QPalette, QBrush
 
 from widgets import Sidebar, TimeEdit
 from tasks.widgets import TaskWidget, AddTaskDialog, EditTaskDialog
@@ -274,10 +275,14 @@ class CustomListWidget(QListWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.setMouseTracking(True)
         self.current_drag_index = None
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMaximumWidth(300)
         self.setSpacing(2.5)
+
+        self.previ = None
+        self.prevw = None
 
     def startDrag(self, *args, **kwargs):
         print('<DRAG STARTED> ', self.parent().name)
@@ -290,6 +295,8 @@ class CustomListWidget(QListWidget):
 
         drop_indicator = self.dropIndicatorPosition()
         if event.source() == self:
+            # FIXME: indicator can be 3 if you drop widget in between 2 widgets where the
+            #   spacing is big enough.
             if drop_indicator == 3:
                 new_item_pos = self.count() - 1
         else:
@@ -300,23 +307,40 @@ class CustomListWidget(QListWidget):
 
         self.drop_event.emit(new_item_pos, drop_indicator)
 
-    # def mouseMoveEvent(self, event):
-    #     print('--------LULW--------')
-    #     print(self.underMouse())
-    #     item = self.itemAt(event.pos())
-    #     if item:
-    #         widget = self.itemWidget(item)
-    #         print(widget.label.text())
-    #     print('--------END--------')
-
     def leaveEvent(self, event):
-        print("MOUSE LEAVE EVENT")
+        # print("MOUSE LEAVE EVENT")
+        if self.prevw:
+            self.prevw.animate_mouse_leave(self.visualItemRect(self.previ))
+            self.prevw = None
+            self.previ = None
         # super().leaveEvent(event)
 
     def enterEvent(self, event):
-        print("MOUSE ENTER EVENT")
-        # super().enterEvent(event)
+        # print("MOUSE ENTER EVENT")
+        super().enterEvent(event)
 
+    def mouseMoveEvent(self, event):
+        super().mouseMoveEvent(event)
+
+        item = self.itemAt(event.pos())
+        if not item or item == self.previ:
+            return
+        if self.prevw:
+            self.prevw.animate_mouse_leave(self.visualItemRect(self.previ))
+        self.previ = item
+        widget = self.itemWidget(item)
+        self.prevw = widget
+        widget.animate_mouse_over(self.visualItemRect(item))
+
+    def wheelEvent(self, event):
+        print("WHEEL EVENT")
+        if self.previ and self.prevw:
+            self.prevw.on_mouseover_anim.stop()
+            self.prevw.on_mouseleave_anim.stop()
+            self.prevw.snapTo(self.visualItemRect(self.previ))
+            self.prevw = None
+            self.previ = None
+        super().wheelEvent(event)
 
 
 class CardActions(QWidget):
