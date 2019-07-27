@@ -109,7 +109,6 @@ class TaskWidget(QWidget):
         self.actions = actions
         self.setObjectName("TaskWidget")
 
-        # self.setStyleSheet("")
         self.label = QLabel(text)
         self.label.setWordWrap(True)
         self.label.setFixedWidth(max_text_width)
@@ -128,23 +127,6 @@ class TaskWidget(QWidget):
         self.layout.addStretch(0)
         self.setLayout(self.layout)
 
-        # Event can't be passed to parent if task widget is not set to receive move events
-        self.setMouseTracking(True)
-        self._animating_enter = False
-        self._animating_leave = False
-
-        self.on_mouseover_anim = QPropertyAnimation(self, b"geometry")
-        self.on_mouseover_anim.setDuration(100)
-        self.on_mouseover_anim.finished.connect(self._enter_animation_done)
-
-        self.on_mouseleave_anim = QPropertyAnimation(self, b"geometry")
-        self.on_mouseleave_anim.setDuration(100)
-        self.on_mouseleave_anim.finished.connect(self._leave_animation_done)
-
-        self.start_pos = None
-        self.diff = 3
-        self.setAutoFillBackground(True)
-
     def add_checker(self):
         # if checker is present just return
         if self.checker:
@@ -160,71 +142,3 @@ class TaskWidget(QWidget):
 
     def set_text(self, text):
         self.label.setText(text)
-
-    def animate_mouse_over(self, start_pos):
-        palette = QPalette()
-        palette.setColor(QPalette.Base, QColor.fromRgb(220, 220, 220))
-        palette.setColor(QPalette.Highlight, Qt.black)
-        palette.setColor(QPalette.HighlightedText, Qt.black)
-        self.setPalette(palette)
-
-        if self._animating_enter:
-            return
-        self.on_mouseleave_anim.stop()
-
-        current_pos = self.on_mouseleave_anim.currentValue()
-        if current_pos is None:
-            current_pos = start_pos
-
-        self._animating_leave = False
-        self._animating_enter = True
-        end_pos = QRect(start_pos.x(), start_pos.y() - self.diff, self.width(), self.height())
-        print("Animating ENTER from {} to {}".format(current_pos, end_pos))
-        self.on_mouseover_anim.setStartValue(current_pos)
-        self.on_mouseover_anim.setEndValue(end_pos)
-        self.on_mouseover_anim.start()
-
-    def animate_mouse_leave(self, start_pos):
-        pal = QPalette()
-        pal.setColor(QPalette.Base, QColor.fromRgb(255, 255, 255))
-        self.setPalette(pal)
-        if self._animating_leave:
-            return
-        self.on_mouseover_anim.stop()
-        current_pos = self.on_mouseover_anim.currentValue()
-        print("CUR: ", self.on_mouseover_anim.currentValue())
-        if current_pos is None:
-            current_pos = QRect(self.rect())
-        end_pos = QRect(start_pos)
-
-        self._animating_enter = False
-        self._animating_leave = True
-        # start_pos = QRect(self.x(), self.y(), self.width(), self.height())
-        # end_pos = QRect(start_pos.x(), start_pos.y() + self.diff, self.width(), self.height())
-        print("Animating LEAVE from {} to {}".format(current_pos, end_pos))
-        self.on_mouseleave_anim.setStartValue(current_pos)
-        self.on_mouseleave_anim.setEndValue(end_pos)
-        self.on_mouseleave_anim.start()
-
-    def _enter_animation_done(self):
-        print("enter animation done.")
-        self._animating_enter = False
-
-    def _leave_animation_done(self):
-        print("leave animation done.")
-        self._animating_leave = False
-
-    def snapBack(self):
-        pal = QPalette()
-        pal.setColor(QPalette.Base, QColor.fromRgb(255, 255, 255))
-        self.setPalette(pal)
-        print("New: ", self.x(), self.y(), self.on_mouseover_anim.currentValue())
-        self.setGeometry(self.start_pos)
-        print("New + snap back: ", self.x(), self.y())
-
-    def snapTo(self, rect):
-        pal = QPalette()
-        pal.setColor(QPalette.Base, QColor.fromRgb(255, 255, 255))
-        self.setPalette(pal)
-        print("rect, startpos:", rect, self.start_pos)
-        self.setGeometry(rect)

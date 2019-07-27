@@ -275,14 +275,9 @@ class CustomListWidget(QListWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.setMouseTracking(True)
         self.current_drag_index = None
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMaximumWidth(300)
-        self.setSpacing(2.5)
-
-        self.previ = None
-        self.prevw = None
 
     def startDrag(self, *args, **kwargs):
         print('<DRAG STARTED> ', self.parent().name)
@@ -306,41 +301,6 @@ class CustomListWidget(QListWidget):
                 new_item_pos = self.count()
 
         self.drop_event.emit(new_item_pos, drop_indicator)
-
-    def leaveEvent(self, event):
-        # print("MOUSE LEAVE EVENT")
-        if self.prevw:
-            self.prevw.animate_mouse_leave(self.visualItemRect(self.previ))
-            self.prevw = None
-            self.previ = None
-        # super().leaveEvent(event)
-
-    def enterEvent(self, event):
-        # print("MOUSE ENTER EVENT")
-        super().enterEvent(event)
-
-    def mouseMoveEvent(self, event):
-        super().mouseMoveEvent(event)
-
-        item = self.itemAt(event.pos())
-        if not item or item == self.previ:
-            return
-        if self.prevw:
-            self.prevw.animate_mouse_leave(self.visualItemRect(self.previ))
-        self.previ = item
-        widget = self.itemWidget(item)
-        self.prevw = widget
-        widget.animate_mouse_over(self.visualItemRect(item))
-
-    def wheelEvent(self, event):
-        print("WHEEL EVENT")
-        if self.previ and self.prevw:
-            self.prevw.on_mouseover_anim.stop()
-            self.prevw.on_mouseleave_anim.stop()
-            self.prevw.snapTo(self.visualItemRect(self.previ))
-            self.prevw = None
-            self.previ = None
-        super().wheelEvent(event)
 
 
 class CardActions(QWidget):
