@@ -1,10 +1,11 @@
 
-DOMAIN = 'http://127.0.0.1/'
+DOMAIN = 'http://127.0.0.1'
+PORT = 8000
 
 
 def prepend_domain(urls):
     for key, value in urls.items():
-        urls[key] = DOMAIN + value
+        urls[key] = DOMAIN + ':' + str(PORT) + '/' + value
 
 
 urls = {
@@ -12,7 +13,7 @@ urls = {
     'tasks': 'api/tasks/',
     'preferences': 'api/preferences/',
     'register': 'api/register',
-    'authenticate': '/api-token-auth/'
+    'authenticate': 'api/token-auth/'
 }
 
 prepend_domain(urls)
