@@ -5,15 +5,6 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 
 
-def _create_task(task, token):
-    url = urls['tasks']
-    data = task.to_json()
-    response = requests.post(url, headers={'Authorization': 'Token {}'.format(token)}, json=data)
-    sc = response.status_code
-    assert sc == 201, 'Unable to create task, got {} status code instead of 201'.format(sc)
-    return TaskResource.from_json(json.loads(response.content))
-
-
 def _get_cards(token):
     url = urls['cards']
     response = requests.get(url, headers={'Authorization': 'Token {}'.format(token)})
@@ -50,6 +41,17 @@ def _create_card(token, card):
     url = urls['cards']
     data = card.to_json()
     response = requests.post(url, headers={'Authorization': 'Token {}'.format(token)}, json=data)
+    sc = response.status_code
+    assert sc == 201, 'Unable to create card, got {} status code instead of 201'.format(sc)
+
+
+def _create_task(task, token):
+    url = urls['tasks']
+    data = task.to_json()
+    response = requests.post(url, headers={'Authorization': 'Token {}'.format(token)}, json=data)
+    sc = response.status_code
+    assert sc == 201, 'Unable to create task, got {} status code instead of 201'.format(sc)
+    return TaskResource.from_json(json.loads(response.content))
 
 
 class Dispatcher(object):
@@ -90,7 +92,7 @@ class ResourceBase(object):
         return cls(**json_resource)
 
     def to_json(self):
-        return {k: v for k, v in vars(self) if k != 'id'}
+        return vars(self)
 
 
 
