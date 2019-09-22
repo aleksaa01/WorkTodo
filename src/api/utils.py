@@ -1,4 +1,5 @@
 from api.urls import urls
+from api.resources import CardResource, TaskResource, PreferenceResource
 import requests
 import json
 
@@ -35,6 +36,12 @@ def get_tasks(token):
     tasks_resource = json.loads(response.content)
     return [TaskResource.from_json(resource) for resource in tasks_resource]
 
+def get_preferences(token):
+    url = urls['preferences']
+    response = requests.get(url, headers={'Authorization': 'Token {}'.format(token)})
+    prefs_resource = json.loads(response.content)
+    return [PreferenceResource.from_json(resource) for resource in prefs_resource]
+
 def create_card(token, card):
     url = urls['cards']
     data = card.to_json()
@@ -43,7 +50,7 @@ def create_card(token, card):
     assert sc == 201, 'Unable to create card, got {} status code instead of 201'.format(sc)
 
 
-def create_task(task, token):
+def create_task(token, task):
     url = urls['tasks']
     data = task.to_json()
     response = requests.post(url, headers={'Authorization': 'Token {}'.format(token)}, json=data)

@@ -1,87 +1,44 @@
 from datetime import datetime
-from urls import urls
-import requests
-import json
 from concurrent.futures import ThreadPoolExecutor
-
-
-def _get_cards(token):
-    url = urls['cards']
-    response = requests.get(url, headers={'Authorization': 'Token {}'.format(token)})
-    sc = response.status_code
-    assert sc == 200, 'Unable to get cards, got {} status code instead of 200'.format(sc)
-    cards_resource = json.loads(response.content)
-    return [CardResource.from_json(resource) for resource in cards_resource]
-
-
-def _remove_task(token, task):
-    task_id = task.id
-    url = urls['tasks'] + str(task_id)
-    response = requests.get(url, headers={'Authorization': 'Token {}'.format(token)})
-    sc = response.status_code
-    assert sc == 204, "Unable to delete task, got {} status code instead of 204".format(sc)
-
-
-def _modify_task(token, task):
-    url = urls['tasks']
-    resposne = requests.post(url, headers={'Authorization': 'Token {}'.format(token)}, json=task.to_json())
-    sc = response.status_code
-    assert sc == 200, "Unable to modify task, got {} status code instead of 200".format(sc)
-
-
-def _get_tasks(token):
-    url = urls['tasks']
-    response = requests.get(url, headers={'Authorization': 'Token {}'.format(token)})
-    sc = response.status_code
-    assert sc == 200, 'Unable to get tasks, got {} status code instead of 200'.format(sc)
-    tasks_resource = json.loads(response.content)
-    return [TaskResource.from_json(resource) for resource in tasks_resource]
-
-def _create_card(token, card):
-    url = urls['cards']
-    data = card.to_json()
-    response = requests.post(url, headers={'Authorization': 'Token {}'.format(token)}, json=data)
-    sc = response.status_code
-    assert sc == 201, 'Unable to create card, got {} status code instead of 201'.format(sc)
-
-
-def _create_task(task, token):
-    url = urls['tasks']
-    data = task.to_json()
-    response = requests.post(url, headers={'Authorization': 'Token {}'.format(token)}, json=data)
-    sc = response.status_code
-    assert sc == 201, 'Unable to create task, got {} status code instead of 201'.format(sc)
-    return TaskResource.from_json(json.loads(response.content))
-
+from api.utils import *
 
 class Dispatcher(object):
 
-    def __init__(self, token, output_queue):
-        self.token = token
+    def __init__(self, output_queue, token=None):
         self.output_queue = output_queue
+        self.token = token
         self.executor = ThreadPoolExecutor()
 
+    def authenticate(self, job_id, username, password):
+        future = self.executor.submit(authenticate, username, password)
+        self.output_queue.put((job_id, future))
+
     def get_cards(self, job_id):
-        future = self.executor.submit(_get_cards, self.token)
+        future = self.executor.submit(get_cards, self.token)
         self.output_queue.put((job_id, future))
 
     def get_tasks(self, job_id):
-        future = self.executor.submit(_get_tasks, self.token)
+        future = self.executor.submit(get_tasks, self.token)
+        self.output_queue.put((job_id, future))
+
+    def get_preferences(self, job_id):
+        future = self.executor.submit(get_preferences, job_id)
         self.output_queue.put((job_id, future))
 
     def create_card(self, job_id, card):
-        future = self.executor.submit(_create_card, self.token, card)
+        future = self.executor.submit(create_card, self.token, card)
+        self.output_queue.put((job_id, future))
 
     def create_task(self, job_id, task):
-        future = self.executor.submit(_create_task, self.token, task)
+        future = self.executor.submit(create_task, self.token, task)
         self.output_queue.put((job_id, future))
 
     def remove_task(self, job_id, task):
-        future = self.executor.submit(_remove_task, self.token, task)
+        future = self.executor.submit(remove_task, self.token, task)
         self.output_queue.put((job_id, future))
 
     def modify_task(self, job_id, task):
-        future = self.executor.submit(_modify_task, self.token, task)
+        future = self.executor.submit(modify_task, self.token, task)
         self.output_queue.put((job_id, future))
 
 
@@ -93,7 +50,6 @@ class ResourceBase(object):
 
     def to_json(self):
         return vars(self)
-
 
 
 class CardResource(ResourceBase):
