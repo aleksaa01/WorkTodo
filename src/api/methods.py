@@ -23,7 +23,7 @@ def remove_task(token, task):
 
 def modify_task(token, task):
     url = urls['tasks']
-    resposne = requests.post(url, headers={'Authorization': 'Token {}'.format(token)}, json=task.to_json())
+    response = requests.post(url, headers={'Authorization': 'Token {}'.format(token)}, json=task.to_json())
     sc = response.status_code
     assert sc == 200, "Unable to modify task, got {} status code instead of 200".format(sc)
 
@@ -36,11 +36,13 @@ def get_tasks(token):
     tasks_resource = json.loads(response.content)
     return [TaskResource.from_json(resource) for resource in tasks_resource]
 
+
 def get_preferences(token):
     url = urls['preferences']
     response = requests.get(url, headers={'Authorization': 'Token {}'.format(token)})
     prefs_resource = json.loads(response.content)
     return [PreferenceResource.from_json(resource) for resource in prefs_resource]
+
 
 def create_card(token, card):
     url = urls['cards']
@@ -57,6 +59,7 @@ def create_task(token, task):
     sc = response.status_code
     assert sc == 201, 'Unable to create task, got {} status code instead of 201'.format(sc)
     return TaskResource.from_json(json.loads(response.content))
+
 
 def authenticate(username, password):
     url = urls['authenticate']
