@@ -1,6 +1,9 @@
 import os
 import json
 from utils.singletons import GenericSingleton
+from api.resources import Dispatcher
+from queue import Queue
+from PyQt5.QtWidgets import QApplication
 
 
 STORAGE_NAME = "storage.json"
@@ -23,11 +26,41 @@ class Storage(object, metaclass=GenericSingleton):
 
         self._cards = storage["cards"]
         self._preferences = storage["preferences"]
+        self._token = storage['token']
 
         # Check saved attribute to see if file content and storage object are synchronized.
         self.saved = True
         # If debug is True, calling save() won't save anything.
         self.debug = False
+
+        self.output_queue = Queue()
+        self.disp = Dispatcher(self.output_queue)
+        if self._token:
+            self.disp.token = token
+
+    def is_authenticated(self):
+        if self._token is None:
+            return False
+        assert isinstance(self._token, str), 'Token should be represented by string, got {} instead'.format(type(self._token))
+        return True
+
+    def authenticate(self, username, password):
+        self.disp.authenticate(1, username, password)
+
+        while True:
+            QApplication.processEvents()
+            if self.output_queue.empty():
+                continue
+            job_id, future = self.output_queue.get()
+            if job_id != 1:
+                self.output_queue.put((job_id, future))
+                continue
+
+            token = future.result()
+            self.disp.token = token
+            self._token = token
+            break
+        return True
 
     def cards(self):
         return list(self._cards.keys())
