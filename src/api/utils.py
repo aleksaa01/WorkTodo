@@ -54,5 +54,5 @@ def create_task(task, token):
 def authenticate(username, password):
     url = urls['authenticate']
     data = {'username': username, 'password': password}
-    response = requests.post(urk, json=data)
+    response = requests.post(url, json=data)
     return json.loads(response.content)['token']
