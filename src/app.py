@@ -15,6 +15,9 @@ class AppWindow(QMainWindow):
 
         self.storage = Storage()
         self.storage.debug = False
+        if not self.storage.is_authenticated():
+            # show login/register dialog
+            pass
 
         # Shortcuts
         set_shortcut('save', self.storage.save, self)
