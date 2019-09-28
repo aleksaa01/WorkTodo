@@ -2,7 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 from api.methods import *
 
 
-class Dispatcher(object):
+class ApiCallDispatcher(object):
 
     def __init__(self, output_queue, token=None):
         self.output_queue = output_queue
