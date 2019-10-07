@@ -383,11 +383,21 @@ class CardActions(QWidget):
         dialog.exec_()
 
 
-class CardSidebar(QWidget):
+class CardSidebar(Sidebar):
 
-    item_clicked = pyqtSignal(str)
-    item_removed = pyqtSignal(str)
+    def __init__(self, model, max_size, parent):
+        super().__init__(model, max_size, parent)
 
+    def load(self):
+        for id, name in self.model.cards():
+            widget = self.create_widget(id, name)
+            self.add_widget(widget)
+
+    def item_clicked(self, widget_id):
+        pass
+
+
+class SidebarContainer(QWidget):
     def __init__(self, model, max_size=100, parent=None):
         super().__init__(parent)
 
