@@ -41,9 +41,18 @@ class Storage(object, metaclass=GenericSingleton):
 
     def load_from_file(self, f):
         data = json.load(f)
-        self.cards = [CardResource.from_json(resource) for resource in data['cards']]
-        self.tasks = [TaskResource.from_json(resource) for resource in data['tasks']]
-        self.preferences = [PreferenceResource.from_json(resource) for resource in data['preferences']]
+        self.cards = {}
+        self.tasks = {}
+        self.preferences = {}
+        for resource in data['cards']:
+            card = CardResource.from_json(resource)
+            self.cards[card.id] = card
+        for resource in data['tasks']:
+            task = TaskResource.from_json(resource)
+            self.tasks[task.id] = task
+        for resource in data['cards']:
+            pref = PreferenceResource.from_json(resource)
+            self.preferences[pref.id] = pref
         self.token = data['token']
 
     def is_authenticated(self):
