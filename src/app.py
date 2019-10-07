@@ -27,9 +27,9 @@ class AppWindow(QMainWindow):
         self.cw = QWidget(self)  # central widget
         self.layout = QVBoxLayout()
 
-        card_model = CardModel()
-        self.sidebar = CardSidebar(model=card_model, parent=self.cw)
-        self.manager = CardWidgetManager(self.sidebar, self.cw)
+        card_model = CardModel(self.storage)
+        self.sidebar = CardSidebar(card_model, parent=self.cw)
+        self.manager = CardWidgetManager(card_model, self.cw)
 
         self.layout.addWidget(self.sidebar)
         self.layout.addWidget(self.manager)
