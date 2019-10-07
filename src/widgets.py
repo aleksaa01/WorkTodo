@@ -111,11 +111,10 @@ class FlowLayout(QLayout):
 
 class SidebarButton(QPushButton):
 
-    def __init__(self, name, parent=None):
-        # Name should be same as text
-        super().__init__(name, parent)
+    def __init__(self, id, text, parent=None):
+        super().__init__(text, parent)
 
-        self.name = name
+        self.id = id
         self.setObjectName('SidebarButton')
         self.setCheckable(True)
 
@@ -130,55 +129,50 @@ class Sidebar(QScrollArea):
         self.setMaximumHeight(max_height)
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Maximum)
         self.sidebar_widget = QWidget(self)
-        self.layout = FlowLayout()
-        self.sidebar_widget.setLayout(self.layout)
+        self.sidebar_layout = FlowLayout()
+        self.sidebar_widget.setLayout(self.sidebar_layout)
         self.setWidget(self.sidebar_widget)
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setFrameShape(QScrollArea.NoFrame)
 
         self.model = model
-        self.widgets = []
-        self._load()
+        self.load()
 
-    def _load(self):
-        for card in self.model.cards():
-            self.display_widget(card)
+    def load(self):
+        raise NotImplementedError('load method not implemented.')
 
-    def setup_widget(self, widget, name):
+    def add_widget(self, widget):
         print('Adding new widget...')
-        widget.clicked.connect(lambda: self.item_clicked(name))
-        self.layout.addWidget(widget)
-        self.widgets.append(widget)
+        widget.clicked.connect(self.item_clicked)
+        self.sidebar_layout.addWidget(widget)
 
-    def remove_widget(self, name):
-        for idx, widget in enumerate(self.widgets):
-            if widget.name == name:
-                self.widgets.pop(idx)
+    def remove_widget(self, id):
+        # assumes that widgets have id attribute set
+        index = 0
+        widget = self.sidebar_layout.itemAt(index)
+        while widget:
+            if widget.id == id:
+                self.sidebar_layout.removeWidget(widget)
                 widget.deleteLater()
-                self.model.remove_card(name)
-                return
+            index += 1
+            widget = self.sidebar_layout.itemAt(index)
+            self.model.remove_card(id)
+            return
 
-        assert False, 'Widget with name {} is not present'.format(name)
+        assert False, 'Widget with id {} is not present'.format(id)
 
-    def item_clicked(self, name):
-        self.itemclicked.emit(name)
+    def item_clicked(self, widget_id):
+        self.itemclicked.emit(widget_id)
 
-    def display_widget(self, name):
-        widget = SidebarButton(name)
+    def create_widget(self, widget_id, widget_text):
+        widget = SidebarButton(widget_id, widget_text)
         min_width = 80
         preferred_width = widget.sizeHint().width() + 20
         width = max(min_width, preferred_width)
         widget.setMinimumWidth(width)
         widget.setMaximumHeight(20)
-        self.setup_widget(widget, name)
-
-    def add_widget(self, name):
-        self.display_widget(name)
-        self.model.add_card(name)
-
-    def widget_names(self):
-        return self.model.cards()
+        return widget
 
 
 class TimeEdit(QWidget):
