@@ -10,6 +10,14 @@ from PyQt5.QtWidgets import QApplication
 STORAGE_NAME = "storage.json"
 
 
+def unsave(func):
+    def wrapper(instance, *args, **kwargs):
+        return_value = func(instance, *args, **kwargs)
+        instance.saved = False
+        return return_value
+    return wrapper
+
+
 class Storage(object, metaclass=GenericSingleton):
 
     def __init__(self, filename=None, path=None):
@@ -41,18 +49,9 @@ class Storage(object, metaclass=GenericSingleton):
 
     def load_from_file(self, f):
         data = json.load(f)
-        self.cards = {}
-        self.tasks = {}
-        self.preferences = {}
-        for resource in data['cards']:
-            card = CardResource.from_json(resource)
-            self.cards[card.id] = card
-        for resource in data['tasks']:
-            task = TaskResource.from_json(resource)
-            self.tasks[task.id] = task
-        for resource in data['cards']:
-            pref = PreferenceResource.from_json(resource)
-            self.preferences[pref.id] = pref
+        self.cards = [CardResource.from_json(res) for res in data['cards']]
+        self.tasks = [TaskResource.from_json(res) for res in data['tasks']]
+        self.preferences = [PreferenceResource.from_json(res) for res in data['preferences']]
         self.token = data['token']
 
     def is_authenticated(self):
@@ -79,61 +78,53 @@ class Storage(object, metaclass=GenericSingleton):
             break
         return True
 
-    def cards(self):
-        return list(self._cards.keys())
+    def tasks_from_card(self, card_id):
+        return [task for task in self.tasks if task.card_id == card_id]
 
-    def tasks(self, card_name):
-        return self._cards[card_name]["tasks"]
+    @unsave
+    def add_card(self, card_resource):
+        self.cards.append(card_resource)
 
-    def preferences(self, card_name):
-        return self._preferences[card_name]
+    @unsave
+    def add_task(self, task_resource):
+        self.tasks.append(task_resource)
+        cid = task_resource.card_id
+        card = None
+        for c in self.cards:
+            if c.id == cid:
+                c.tasks.append(task_resource.id)
+                return
+        assert False, 'Failed to add task. There is no card with id {}'.format(cid)
 
-    def task_names(self, card_name):
-        tasks = self.tasks(card_name)
-        task_names = [''] * len(tasks)
-        for index, task in enumerate(tasks):
-            task_names[index] = task["name"]
+    @unsave
+    def remove_card(self, card_id):
+        index = self.cards.find(card_id)
+        self.cards.pop(index)
+        for idx, task in enumerate(self.tasks[:]):
+            if task.card_id == card_id:
+                self.tasks.pop(idx)
+        for idx, pref in enumerate(self.preferences[:]):
+            if pref.card_id == card_id:
+                self.preferences.pop(idx)
 
-        return task_names
+    @unsave
+    def pop_task(self, task_index):
+        return self.tasks.pop(task_index)
 
-    def add_card(self, card_name):
-        self._cards[card_name] = {"tasks": []}
-        self._preferences[card_name] = {"rules": {}}
-        self.saved = False
+    @unsave
+    def insert_task(self, task_resource):
+        self.tasks.insert(task_resource.position, task_resource)
 
-    def add_task(self, card_name, task):
-        if not isinstance(task, dict):
-            raise TypeError("Task value must be of type dict, got {} instead.".format(type(task)))
+    @unsave
+    def update_task(self, task_resource):
+        self.tasks[task_resource.position] = task_resource
 
-        self._cards[card_name]["tasks"].append(task)
-        self.saved = False
-
-    def remove_card(self, card_name):
-        self._cards.pop(card_name)
-        self._preferences.pop(card_name)
-        self.saved = False
-
-    def pop_task(self, card_name, task_index):
-        self.saved = False
-        return self._cards[card_name]["tasks"].pop(task_index)
-
-    def insert_task(self, card_name, task, index):
-        self._cards[card_name]["tasks"].insert(index, task)
-        self.saved = False
-
-    def get_task(self, card_name, task_name):
-        for task in self._cards[card_name]["tasks"]:
-            if task["name"] == task_name:
-                return task
-
-    def update_task_at(self, card_name, index, new_task):
-        self._cards[card_name]["tasks"][index] = new_task
-        print("Task at index {} has been updated.".format(index))
-        self.saved = False
-    
-    def update_preference(self, card_name, preference, new_value):
-        self._preferences[card_name][preference] = new_value
-        self.saved = False
+    @unsave
+    def update_preference(self, preference, card_id):
+        for idx, pref in enumerate(self.preferences):
+            if pref.card_id == card_id:
+                self.preferences[idx] = preference
+        assert False, "Preference with card_id {} doesn't exist".format(card_id)
 
     def save(self):
         if self.debug:
@@ -142,7 +133,10 @@ class Storage(object, metaclass=GenericSingleton):
             cards_resource = [card.to_json() for card in self.cards]
             tasks_resource = [task.to_json() for task in self.tasks]
             preferences_resource = [pref.to_json() for pref in self.preferences]
-            data = {'cards': cards_resource, 'tasks': tasks_resource, 'preferences': preferences_resource}
+            data = {
+                'cards': cards_resource, 'tasks': tasks_resource,
+                'preferences': preferences_resource, 'token': self.token
+            }
             json.dump(data, f)
         self.saved = True
         print("Storage state saved!")
