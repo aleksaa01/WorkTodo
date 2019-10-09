@@ -50,8 +50,13 @@ class Storage(object, metaclass=GenericSingleton):
     def load_from_file(self, f):
         data = json.load(f)
         self.cards = [CardResource.from_json(res) for res in data['cards']]
-        self.tasks = [TaskResource.from_json(res) for res in data['tasks']]
-        self.preferences = [PreferenceResource.from_json(res) for res in data['preferences']]
+        self._tasks = {card.id: [] for card in self.cards}
+        for task in data['tasks']:
+            self.tasks[task.card_id].append(task)
+        self.preferences = {}
+        for resource in data['preferences']:
+            pref = PreferenceResource.from_json(resource)
+            self.preferences[pref.card_id] = pref
         self.token = data['token']
 
     def is_authenticated(self):
@@ -78,53 +83,68 @@ class Storage(object, metaclass=GenericSingleton):
             break
         return True
 
-    def tasks_from_card(self, card_id):
-        return [task for task in self.tasks if task.card_id == card_id]
+    def get_preference(self, card_id):
+        return self.preferences[card_id]
+
+    def get_card(self, card_id):
+        for c in self.cards:
+            if c.id == card_id:
+                return c
+        raise ValueError("Card with id {} doesn't exist.".format(card_id))
+
+    def get_task(self, card_id, task_id):
+        for t in self.tasks[card_id]:
+            if t.id == task_id:
+                return t
+        raise ValueError("Task with id {} doesn't exist".format(task_id))
+
+    def tasks(self, card_id):
+        return self._tasks[card_id]
 
     @unsave
     def add_card(self, card_resource):
         self.cards.append(card_resource)
+        self.tasks[card_resource.id] = []
 
     @unsave
-    def add_task(self, task_resource):
-        self.tasks.append(task_resource)
+    def add_task(self, card_id, task_resource):
+        self.tasks[card_id].append(task_resource)
         cid = task_resource.card_id
         card = None
         for c in self.cards:
             if c.id == cid:
                 c.tasks.append(task_resource.id)
                 return
-        assert False, 'Failed to add task. There is no card with id {}'.format(cid)
+        raise ValueError('Failed to add task. There is no card with id {}'.format(cid))
 
     @unsave
     def remove_card(self, card_id):
-        index = self.cards.find(card_id)
+        index = -1
+        for idx, c in enumerate(self.cards):
+            if c.id == card_id:
+                index = idx
+                break
+        assert index != -1, "Can't remove card, card with id {} doesn't exist."
+
         self.cards.pop(index)
-        for idx, task in enumerate(self.tasks[:]):
-            if task.card_id == card_id:
-                self.tasks.pop(idx)
-        for idx, pref in enumerate(self.preferences[:]):
-            if pref.card_id == card_id:
-                self.preferences.pop(idx)
+        self.tasks.pop(card_id)
+        self.preferences.pop(card_id)
 
     @unsave
-    def pop_task(self, task_index):
-        return self.tasks.pop(task_index)
+    def pop_task(self, card_id, task_index):
+        return self.tasks.[card_id].pop(task_index)
 
     @unsave
-    def insert_task(self, task_resource):
-        self.tasks.insert(task_resource.position, task_resource)
+    def insert_task(self, card_id, task_resource):
+        self.tasks[card_id].insert(task_resource.position, task_resource)
 
     @unsave
-    def update_task(self, task_resource):
-        self.tasks[task_resource.position] = task_resource
+    def update_task(self, card_id, task_resource):
+        self.tasks[card_id][task_resource.position] = task_resource
 
     @unsave
-    def update_preference(self, preference, card_id):
-        for idx, pref in enumerate(self.preferences):
-            if pref.card_id == card_id:
-                self.preferences[idx] = preference
-        assert False, "Preference with card_id {} doesn't exist".format(card_id)
+    def update_preference(self, card_id, preference):
+        self.preferences[card_id] = preference
 
     def save(self):
         if self.debug:
