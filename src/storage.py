@@ -132,7 +132,7 @@ class Storage(object, metaclass=GenericSingleton):
 
     @unsave
     def pop_task(self, card_id, task_index):
-        return self.tasks.[card_id].pop(task_index)
+        return self.tasks[card_id].pop(task_index)
 
     @unsave
     def insert_task(self, card_id, task_resource):
@@ -151,8 +151,10 @@ class Storage(object, metaclass=GenericSingleton):
             return
         with open(self.path, 'w') as f:
             cards_resource = [card.to_json() for card in self.cards]
-            tasks_resource = [task.to_json() for task in self.tasks]
-            preferences_resource = [pref.to_json() for pref in self.preferences]
+            tasks_resource = []
+            for task_list in self._tasks.values():
+                tasks_resource.extend(task_list)
+            preferences_resource = [pref.to_json() for pref in self.preferences.values()]
             data = {
                 'cards': cards_resource, 'tasks': tasks_resource,
                 'preferences': preferences_resource, 'token': self.token
