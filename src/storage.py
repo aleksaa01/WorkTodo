@@ -50,13 +50,13 @@ class Storage(object, metaclass=GenericSingleton):
     def load_from_file(self, f):
         data = json.load(f)
         self.cards = [CardResource.from_json(res) for res in data['cards']]
-        self._tasks = {card.id: [] for card in self.cards}
+        self._tasks = {card.rid: [] for card in self.cards}
         for task in data['tasks']:
-            self.tasks[task.card_id].append(task)
+            self.tasks[task.card_rid].append(task)
         self.preferences = {}
         for resource in data['preferences']:
             pref = PreferenceResource.from_json(resource)
-            self.preferences[pref.card_id] = pref
+            self.preferences[pref.card_rid] = pref
         self.token = data['token']
 
     def is_authenticated(self):
@@ -83,68 +83,68 @@ class Storage(object, metaclass=GenericSingleton):
             break
         return True
 
-    def get_preference(self, card_id):
-        return self.preferences[card_id]
+    def get_preference(self, card_rid):
+        return self.preferences[card_rid]
 
-    def get_card(self, card_id):
+    def get_card(self, card_rid):
         for c in self.cards:
-            if c.id == card_id:
+            if c.rid == card_rid:
                 return c
-        raise ValueError("Card with id {} doesn't exist.".format(card_id))
+        raise ValueError("Card with rid {} doesn't exist.".format(card_rid))
 
-    def get_task(self, card_id, task_id):
-        for t in self.tasks[card_id]:
-            if t.id == task_id:
+    def get_task(self, card_rid, task_id):
+        for t in self.tasks[card_rid]:
+            if t.rid == task_id:
                 return t
-        raise ValueError("Task with id {} doesn't exist".format(task_id))
+        raise ValueError("Task with rid {} doesn't exist".format(task_id))
 
-    def tasks(self, card_id):
-        return self._tasks[card_id]
+    def tasks(self, card_rid):
+        return self._tasks[card_rid]
 
     @unsave
     def add_card(self, card_resource):
         self.cards.append(card_resource)
-        self.tasks[card_resource.id] = []
+        self.tasks[card_resource.rid] = []
 
     @unsave
-    def add_task(self, card_id, task_resource):
-        self.tasks[card_id].append(task_resource)
-        cid = task_resource.card_id
+    def add_task(self, card_rid, task_resource):
+        self.tasks[card_rid].append(task_resource)
+        crid = task_resource.card_rid
         card = None
         for c in self.cards:
-            if c.id == cid:
-                c.tasks.append(task_resource.id)
+            if c.rid == crid:
+                c.tasks.append(task_resource.rid)
                 return
-        raise ValueError('Failed to add task. There is no card with id {}'.format(cid))
+        raise ValueError('Failed to add task. There is no card with rid {}'.format(cid))
 
     @unsave
-    def remove_card(self, card_id):
+    def remove_card(self, card_rid):
         index = -1
         for idx, c in enumerate(self.cards):
-            if c.id == card_id:
+            if c.rid == card_rid:
                 index = idx
                 break
-        assert index != -1, "Can't remove card, card with id {} doesn't exist."
+        assert index != -1, "Can't remove card, card with rid {} doesn't exist."
 
         self.cards.pop(index)
-        self.tasks.pop(card_id)
-        self.preferences.pop(card_id)
+        self.tasks.pop(card_rid)
+        self.preferences.pop(card_rid)
 
     @unsave
-    def pop_task(self, card_id, task_index):
-        return self.tasks[card_id].pop(task_index)
+    def pop_task(self, card_rid, task_index):
+        return self.tasks[card_rid].pop(task_index)
 
     @unsave
-    def insert_task(self, card_id, task_resource):
-        self.tasks[card_id].insert(task_resource.position, task_resource)
+    def insert_task(self, card_rid, task_resource):
+        self.tasks[card_rid].insert(task_resource.position, task_resource)
 
     @unsave
-    def update_task(self, card_id, task_resource):
-        self.tasks[card_id][task_resource.position] = task_resource
+    def update_task(self, card_rid, task_resource):
+        self.tasks[card_rid][task_resource.position] = task_resource
 
     @unsave
-    def update_preference(self, card_id, preference):
-        self.preferences[card_id] = preference
+    def update_preference(self, card_rid, preference):
+        self.preferences[card_rid] = preference
 
     def save(self):
         if self.debug:

@@ -14,8 +14,8 @@ def get_cards(token):
 
 
 def remove_task(token, task):
-    task_id = task.id
-    url = urls['tasks'] + str(task_id)
+    task_rid = task.rid
+    url = urls['tasks'] + str(task_rid)
     response = requests.get(url, headers={'Authorization': 'Token {}'.format(token)})
     sc = response.status_code
     assert sc == 204, "Unable to delete task, got {} status code instead of 204".format(sc)

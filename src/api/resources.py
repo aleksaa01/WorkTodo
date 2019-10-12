@@ -14,7 +14,7 @@ class ResourceBase(object):
 class CardResource(ResourceBase):
 
     def __init__(self, **kwargs):
-        self.id = kwargs['id']
+        self.rid = kwargs['rid']
         self.name = kwargs['name']
         self.tasks = kwargs.get('tasks', [])
         self.preferences = kwargs.get('preferenecs', [])
@@ -23,17 +23,17 @@ class CardResource(ResourceBase):
 class TaskResource(ResourceBase):
 
     def __init__(self, **kwargs):
-        self.id = kwargs['id']
+        self.rid = kwargs['rid']
         self.description = kwargs['description']
-        self.card_id = kwargs['card_id']
+        self.card_rid = kwargs['card_rid']
         self.created = kwargs.get('created', datetime.now().timestamp())
 
 
 class PreferenceResource(ResourceBase):
 
     def __init__(self, **kwargs):
-        self.id = kwargs['id']
-        self.card_id = kwargs['card_id']
+        self.rid = kwargs['rid']
+        self.card_rid = kwargs['card_rid']
         self.warning_time = kwargs['warning_time']
         self.danger_time = kwargs['danger_time']
         self.show_date = kwargs['show_date']
