@@ -53,6 +53,7 @@ class Storage(object, metaclass=GenericSingleton):
         self._tasks = {card.rid: [] for card in self.cards}
         for task in data['tasks']:
             self.tasks[task.card_rid].append(task)
+        self.task_rids = set()
         self.preferences = {}
         for resource in data['preferences']:
             pref = PreferenceResource.from_json(resource)
@@ -92,11 +93,14 @@ class Storage(object, metaclass=GenericSingleton):
                 return c
         raise ValueError("Card with rid {} doesn't exist.".format(card_rid))
 
-    def get_task(self, card_rid, task_id):
+    def get_task(self, card_rid, task_idx):
+        return self.tasks[card_rid][task_idx]
+
+    def find_task(self, card_rid, task_rid):
         for t in self.tasks[card_rid]:
-            if t.rid == task_id:
+            if t.rid == task_rid:
                 return t
-        raise ValueError("Task with rid {} doesn't exist".format(task_id))
+        raise ValueError("Task with rid {} doesn't exist".format(task_rid))
 
     def tasks(self, card_rid):
         return self._tasks[card_rid]
@@ -109,6 +113,7 @@ class Storage(object, metaclass=GenericSingleton):
     @unsave
     def add_task(self, card_rid, task_resource):
         self.tasks[card_rid].append(task_resource)
+        self.task_rids.add(task_resource.rid)
         crid = task_resource.card_rid
         card = None
         for c in self.cards:
@@ -127,20 +132,33 @@ class Storage(object, metaclass=GenericSingleton):
         assert index != -1, "Can't remove card, card with rid {} doesn't exist."
 
         self.cards.pop(index)
-        self.tasks.pop(card_rid)
+        tasks = self.tasks.pop(card_rid)
+        for task in tasks:
+            self.task_rids.remove(task.rid)
         self.preferences.pop(card_rid)
 
     @unsave
     def pop_task(self, card_rid, task_index):
-        return self.tasks[card_rid].pop(task_index)
+        task = self.tasks[card_rid].pop(task_index)
+        self.task_rids.remove(task.rid)
+        return task
 
     @unsave
-    def insert_task(self, card_rid, task_resource):
-        self.tasks[card_rid].insert(task_resource.position, task_resource)
+    def insert_task(self, card_rid, idx, task_resource):
+        self.tasks[card_rid].insert(idx, task_resource)
+        self.task_rids.add(task_resource.rid)
 
     @unsave
-    def update_task(self, card_rid, task_resource):
-        self.tasks[card_rid][task_resource.position] = task_resource
+    def move_task(self, card_rid, old_idx, new_idx):
+        task_list = self.tasks[card_rid]
+        task = task_list[old_idx]
+        for idx in range(old_idx, new_idx):
+            task_list[idx] = task_list[idx + 1]
+        task_list[idx + 1] = task
+
+    @unsave
+    def update_task(self, card_rid, idx, task_resource):
+        self.tasks[card_rid][idx] = task_resource
 
     @unsave
     def update_preference(self, card_rid, preference):
