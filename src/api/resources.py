@@ -16,6 +16,8 @@ class CardResource(ResourceBase):
     def __init__(self, **kwargs):
         self.rid = kwargs['rid']
         self.name = kwargs['name']
+        # For perfermance reasons, you can update position just before API synchronization
+        self.position = kwargs['position']
         self.tasks = kwargs.get('tasks', [])
         self.preferences = kwargs.get('preferenecs', [])
 
@@ -25,6 +27,8 @@ class TaskResource(ResourceBase):
     def __init__(self, **kwargs):
         self.rid = kwargs['rid']
         self.description = kwargs['description']
+        # For perfermance reasons, you can update position just before API synchronization
+        self.position = kwargs['position']
         self.card_rid = kwargs['card_rid']
         self.created = kwargs.get('created', datetime.now().timestamp())
 
