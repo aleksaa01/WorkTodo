@@ -1,43 +1,41 @@
 from PyQt5.QtCore import QObject
-from tasks.objects import TaskObject
+from api.resources import TaskResource
 from storage import Storage
 
 
 class TasksModel(QObject):
 
-    def __init__(self, card_name):
-        self.name = card_name
-        self._storage = Storage()
-        self._tasks = None
-        self._load_tasks()
+    def __init__(self, storage, card_rid):
+        self._st = storage
+        self.crid = card_rid
+        self._last_rid = None
 
-    def _load_tasks(self):
-        self._tasks = [TaskObject(raw_task) for raw_task in self._storage.tasks(self.name)]
+    def data(self):
+        return [(task.rid, task.description, task.created)
+                for task in self._st.tasks[self.crid]]
 
-    def tasks(self):
-        return self._tasks
+    def add(self, text):
+        # Should I set position of the task here ? Seems unnecessary though.
+        task = TaskResource(description=text)
+        new_rid = self._get_new_rid()
+        task.rid = new_rid
+        self._st.add_task(self.crid, task)
 
-    def get_task(self, index):
-        return self._tasks[index]
+    def remove(self, task_index):
+        self._st.pop_task(self.crid, task_index)
 
-    def insert_task(self, index, task_object):
-        self._tasks.insert(index, task_object)
-        self._storage.insert_task(self.name, task_object.to_json(), index)
+    def move(self, old_idx, new_idx):
+        self._st.move_task(self.crid, old_idx, new_idx)
 
-    def pop_task(self, index):
-        task =  self._tasks.pop(index)
-        self._storage.pop_task(self.name, index)
-        return task
+    def update(self, task_index, text):
+        task = self._st.get_task(task_index)
+        task.description = text
+        self._st.update_task(task)
 
-    def find_task(self, text):
-        for idx, task in enumerate(self._tasks):
-            if task.description == text:
-                return idx
-        return -1
-
-    def update_task(self, index, new_task):
-        self._tasks[index] = new_task
-        self._storage.update_task_at(self.name, index, new_task.to_json())
-
-    def __len__(self):
-        return len(self._tasks)
+    def _get_new_rid(self):
+        new_rid = self._last_rid + 1 if self._last_rid else 0
+        while True:
+            if new_rid in self._st.task_rids:
+                new_rid += 1
+            else:
+                return new_rid
