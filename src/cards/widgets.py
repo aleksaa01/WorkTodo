@@ -18,12 +18,11 @@ import datetime
 
 class CardWidgetManager(QScrollArea):
 
-    def __init__(self, sidebar, parent=None):
+    def __init__(self, card_model, parent=None):
         super().__init__(parent)
-
-        self.sidebar = sidebar
-        self.sidebar.item_clicked.connect(self.display_or_remove)
-        self.sidebar.item_removed.connect(self.remove_if_exists)
+        self.model = card_model
+        self.model.on_clicked(self.display_or_remove)
+        self.model.on_removed(self.remove_if_exists)
 
         self.mwidget = QWidget()
         self.mlayout = QHBoxLayout()
@@ -32,26 +31,24 @@ class CardWidgetManager(QScrollArea):
         self.setWidgetResizable(True)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setFrameShape(QScrollArea.NoFrame)
-        
-        self._card_mapper = {}
+
+        self._active_cards = {}
 
         self.drag_index = None
         self.drag_source = None
-        self.drop_index = None
-        self.drop_source = None
 
-    def display_or_remove(self, card_name):
-        if card_name in self._card_mapper:
-            self.remove_card(card_name)
+    def display_or_remove(self, card_rid):
+        if card_rid in self._active_cards:
+            self.remove_card(card_rid)
         else:
-            self.display_card(card_name)
+            self.display_card(card_rid)
 
-    def remove_if_exists(self, card_name):
-        if card_name in self._card_mapper:
-            self.remove_card(card_name)
+    def remove_if_exists(self, card_rid):
+        if card_rid in self._active_cards:
+            self.remove_card(card_rid)
 
-    def remove_card(self, card_name):
-        card_widget = self._card_mapper[card_name]
+    def remove_card(self, card_rid):
+        card_widget = self._card_mapper[card_rid]
         self.mlayout.removeWidget(card_widget)
         # FIXME: Deleting a parent seems like a weird thing to do,
         #   but having container complicates things, because you now
@@ -59,11 +56,11 @@ class CardWidgetManager(QScrollArea):
         #   you have to store containers too. Just make a new widget that
         #   will hold both card_widget and card_actions.
         card_widget.parent().deleteLater()
-        self._card_mapper.pop(card_name)
+        self._active_cards.pop(card_rid)
 
-    def display_card(self, card_name):
+    def display_card(self, card_rid):
         container = QWidget(self)
-        card_widget = CardWidget(card_name, container)
+        card_widget = CardWidget(card_rid, container)
         card_widget.drag_event.connect(self.update_drag)
         card_widget.drop_event.connect(self.update_drop)
         card_actions = CardActions(card_widget, container)
@@ -74,21 +71,21 @@ class CardWidgetManager(QScrollArea):
         container.setLayout(layout)
         container.setFixedWidth(300)
 
-        self._card_mapper[card_name] = card_widget
+        self._active_cards[card_rid] = card_widget
         self.mlayout.addWidget(container)
         card_widget.load()
 
-    def update_drag(self, card_name, index):
-        self.drag_source = self._card_mapper[card_name]
+    def update_drag(self, card_rid, index):
+        self.drag_source = self._card_mapper[card_rid]
         self.drag_index = index
 
-    def update_drop(self, card_name, drop_index, indicator):
-        drop_source = self._card_mapper[card_name]
+    def update_drop(self, card_rid, drop_index, indicator):
+        drop_source = self._active_cards[card_rid]
         if self.drag_source == drop_source:
             drop_index = self._fix_drop_offset(drop_index, indicator)
 
-        task_object = self.drag_source.pop_task(self.drag_index)
-        drop_source.insert_task(drop_index, task_object)
+        task = self.drag_source.pop_task(self.drag_index)
+        drop_source.insert_task(drop_index, task)
 
     def _fix_drop_offset(self, drop_index, indicator):
         if self.drag_index < drop_index:
@@ -104,9 +101,11 @@ class CardWidget(QWidget):
     drag_event = pyqtSignal(str, int)
     drop_event = pyqtSignal(str, int, int)
 
-    def __init__(self, name, parent=None):
+    def __init__(self, card_rid, task_model, preferences, parent=None):
         super().__init__(parent)
-        self.name = name
+        self.rid = card_rid
+        self.model = task_model
+        self.prefs = preferences
 
         self.lw = CustomListWidget(self)
         self.lw.drag_event.connect(self.emit_drag_event)
@@ -122,11 +121,8 @@ class CardWidget(QWidget):
         layout.addWidget(self.lw)
         self.setLayout(layout)
 
-        self.model = TasksModel(self.name)
-
-        self.prefs = Preferences(self.name)
-        self.prefs_warning_icon = resource.get_icon('warning_icon')
-        self.prefs_danger_icon = resource.get_icon('danger_icon')
+        self._warning_icon = resource.get_icon('warning_icon')
+        self._danger_icon = resource.get_icon('danger_icon')
 
     def emit_drag_event(self, index):
         print('Drag emmited >>> ', index)
@@ -137,6 +133,7 @@ class CardWidget(QWidget):
         self.drop_event.emit(self.name, index, indicator)
 
     def load(self):
+
         print('Loading data...')
         t1 = time.perf_counter()
 
