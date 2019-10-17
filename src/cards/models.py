@@ -43,3 +43,47 @@ class CardsModel(object):
 
     def get_task_model(self, card_rid):
         return TaskModel(self._storage, card_rid)
+
+    def get_card_preferences(self, card_rid):
+        return PreferencesModel(self._st, card_rid)
+
+
+class PreferencesModel(object):
+
+    def __init__(self, storage, card_rid):
+        self._st = storage
+        self.crid = card_rid
+        self.pref = storage.get_preference(card_rid)
+
+    @property
+    def show_date(self):
+        return self.pref.show_date
+
+    @show_date.setter
+    def show_date(self, show):
+        if isinstance(show, bool):
+            self.pref.show_date = show
+        else:
+            raise TypeError('Need bool, got {} instead'.format(type(show)))
+
+    @property
+    def warning_time(self):
+        return self.pref.warning_time
+
+    @warning_time.setter
+    def warning_time(self, time):
+        if isinstance(time, int):
+            self.pref.warning_time = time
+        else:
+            raise TypeError('Need int, got {} instead'.format(type(time)))
+
+    @property
+    def danger_time(self):
+        return self.pref.danger_tiem
+
+    @daanger_time.setter
+    def danager_time(self, time):
+        if isinstance(time, int):
+            self.pref.danger_time = time
+        else:
+            raise TypeError('Need int, got {} instead'.format(type(time)))
