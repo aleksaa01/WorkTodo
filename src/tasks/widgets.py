@@ -101,11 +101,12 @@ class EditTaskDialog(QDialog):
 
 class TaskWidget(QWidget):
 
-    on_remove = pyqtSignal(str)
-    on_review = pyqtSignal(str)
+    on_remove = pyqtSignal(int)
+    on_review = pyqtSignal(int)
 
-    def __init__(self, text, actions, icon=None, max_text_width=200, parent=None):
+    def __init__(self, rid, text, actions, icon=None, max_text_width=200, parent=None):
         super().__init__(parent)
+        self.rid = rid
         self.actions = actions
         self.setObjectName("TaskWidget")
 
@@ -142,3 +143,23 @@ class TaskWidget(QWidget):
 
     def set_text(self, text):
         self.label.setText(text)
+
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+
+        if event.button() != Qt.RightButton:
+            return
+        action_menu = QMenu()
+        action_map = {}
+        for action in self.actions:
+            a = action_menu.addAction(action.icon, action.text)
+            if action.icon is None:
+                a = action_menu.addAction(action.text)
+            else:
+                a = action_menu.addAction(action.icon, action.text)
+            action_map[a] = action
+
+        chosen_action = action_menu.exec_(self.mapToGlobal(event.pos()))
+        if chosen_action is None:
+            return
+        action_map[chosen_action].signal.emit(event.pos())
