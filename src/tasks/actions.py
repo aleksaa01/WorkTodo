@@ -1,9 +1,9 @@
-from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt5.QtCore import QObject, pyqtSignal, QPoint
 
 
 class Action(QObject):
 
-    signal = pyqtSignal(str)
+    signal = pyqtSignal(QPoint)
 
     def __init__(self, text, icon=None):
         super().__init__(None)
