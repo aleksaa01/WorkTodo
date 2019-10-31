@@ -39,3 +39,7 @@ class TasksModel(QObject):
                 new_rid += 1
             else:
                 return new_rid
+
+    def __getitem__(self, idx):
+        task = self._st.get_task(self.crid, idx)
+        return (task.rid, taks.description, task.created)
