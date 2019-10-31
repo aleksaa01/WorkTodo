@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QLayout, QPushButton, QScrollArea, QSizePolicy, \
-    QHBoxLayout, QSpinBox, QLabel, QDialog, QVBoxLayout
+    QHBoxLayout, QSpinBox, QLabel, QDialog, QVBoxLayout, QStackedWidget, QLineEdit
 from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal
 
 
@@ -238,3 +238,101 @@ class SaveDialog(QDialog):
         mlayout.addWidget(self.message)
         mlayout.addLayout(btnlayout)
         self.setLayout(mlayout)
+
+
+class CredentialsScreen(QWidget):
+
+    def __init__(self, login_func, register_func):
+        self.login_func = login_func
+        self.register_func = register_func
+        self.mlayout = QVBoxLayout()
+        self.sw = QStackedWidget(self)
+
+        main_creds_page = MainCredentialsPage()
+        main_creds_page.action_chosen.connect(self.switch_page)
+        login_page = LoginPage()
+        login_page.login.connect(self.login)
+        reg_page = RegisterPage()
+
+        self.sw.addWidget(main_creds_page)
+        self.sw.addWidget(login_page)
+        self.sw.addWidget(reg_page)
+
+    def switch_page(self, page_idx):
+        self.sw.setCurrentIndex(page_idx)
+
+    def login(self, username, password):
+        login_func(username, password)
+
+
+
+class MainCredentialsPage(QWidget):
+
+    action_chosen = pyqtSignal(int)
+
+    def __init__(self):
+        reg_btn = QPushButton('Register')
+        reg_btn.setMaximumSize(350, 200)
+        reg_btn.clicked.connect(lambda: self.emit_action(1))
+        log_btn = QPushButton('Login')
+        log_btn.setMaximumSize(350, 200)
+        log_btn.clicked.connect(lambda: self.emit_action(1))
+
+        layout = QHBoxLayout()
+        layout.addWidget(reg_btn)
+        layout.addWidget(log_btn)
+        layout.addWidget(log_btn)
+        self.setLayout(layout)
+
+    def emit_action(self, action_num):
+        self.action_chosen.emit(action_num)
+
+
+class LoginPage(QWidget):
+
+    login = pyqtSignal(str, str)
+
+    def __init__(self):
+        self.username = QLineEdit()
+        self.username.setPlaceholderText('Username')
+        self.password = QLineEdit()
+        self.password.setEchoMode(QLineEdit.Password)
+        self.password.setPlaceHolderText('Password')
+        login_btn = QPushButton('Login')
+        login_btn.clicked.connect(self.login.emit)
+
+        layout = QVBoxLayout()
+        layout.addWidget(username)
+        layout.addWidget(password)
+
+    def emit(self):
+        usr = self.username.text()
+        psw = self.password.text()
+        # Just in case, delete text in password field emidiatelly
+        self.password.setText('')
+        self.login.emit(usr, psw)
+
+
+
+class RegisterPage(QWidget):
+
+    register = pyqtSignal(str, str, str, str)
+
+    def __init__(self):
+        self.email = QLineEdit()
+        self.username = QLineEdit()
+        self.password = QLineEdit()
+        self.confirm_password = QLineEdit()
+        register_btn = QPushButton('Register')
+        register_btn.clicked.connect(self.emit)
+
+    def emit(self):
+        email = self.email.text()
+        usr = self.email.text()
+        psw = self.password.text()
+        confirm = self.confirm_password.text()
+
+        self.password.setText('')
+        self.confirm_password.setText('')
+
+        self.register.emit(email, usr, psw, confirm)
