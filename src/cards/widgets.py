@@ -60,7 +60,9 @@ class CardWidgetManager(QScrollArea):
 
     def display_card(self, card_rid):
         container = QWidget(self)
-        card_widget = CardWidget(card_rid, container)
+        task_model = self.model.get_task_model(card_rid)
+        preference_model = self.model.get_preference_model(card_rid)
+        card_widget = CardWidget(card_rid, task_model, preference_model, container)
         card_widget.drag_event.connect(self.update_drag)
         card_widget.drop_event.connect(self.update_drop)
         card_actions = CardActions(card_widget, container)
@@ -101,11 +103,11 @@ class CardWidget(QWidget):
     drag_event = pyqtSignal(str, int)
     drop_event = pyqtSignal(str, int, int)
 
-    def __init__(self, card_rid, task_model, preferences, parent=None):
+    def __init__(self, card_rid, task_model, preference_model, parent=None):
         super().__init__(parent)
         self.rid = card_rid
-        self.model = task_model
-        self.prefs = preferences
+        self.tmodel = task_model
+        self.pmodel = preference_model
 
         self.lw = CustomListWidget(self)
         self.lw.drag_event.connect(self.emit_drag_event)
@@ -138,29 +140,29 @@ class CardWidget(QWidget):
         t1 = time.perf_counter()
 
         action_remove = Action('Remove', resource.get_icon('delete_icon'))
-        action_remove.signal.connect(self.find_and_remove)
+        action_remove.signal.connect(self.remove_task)
         action_edit = Action('Edit')
         action_edit.signal.connect(self.run_edit_task_dialog)
         self.actions = [action_remove, action_edit]
 
-        if self.prefs.expiration:
-            warning_time = self.prefs.expiration["warning"]
-            danger_time = self.prefs.expiration["danger"]
+        show_date = self.pmodel.show_date
+
+        if show_date:
+            warning_time = self.pmodel.warning_time
+            danger_time = self.pmodel.danger_time
         current_time = datetime.datetime.now().timestamp()
 
-        for task_object in self.model.tasks():
+        for rid, text, created in self.tmodel.data():
             icon = None
-            if self.prefs.expiration:
-                if danger_time and task_object.date + danger_time <= current_time:
-                    icon = self.prefs_danger_icon
-                elif warning_time and task_object.date + warning_time <= current_time:
-                    icon = self.prefs_warning_icon
+            if show_date:
+                if danger_time and created + danger_time <= current_time:
+                    icon = self._danger_icon
+                elif warning_time and created + warning_time <= current_time:
+                    icon = self._warning_icon
 
-            if self.prefs.show_date:
-                dt = datetime.datetime.fromtimestamp(task_object.date)
-                text = "{}\n({}.{}.{})".format(task_object.description, dt.day, dt.month, dt.year)
-            else:
-                text = task_object.description
+            if show_date:
+                dt = datetime.datetime.fromtimestamp(created)
+                text = "{}\n({}.{}.{})".format(text, dt.day, dt.month, dt.year)
 
             task_widget = TaskWidget(text, self.actions, icon)
             item = QListWidgetItem()
@@ -177,8 +179,12 @@ class CardWidget(QWidget):
         self.lw.clear()
         self.load()
 
+    def remove_task(self, pos):
+        idx = self.lw.IndexAt(pos)
+        self.tmodel.remove(idx)
+
     def get_task(self, index):
-        return self.model.get_task(index)
+        return self.tmodel[index]
 
     def pop_task(self, index):
         item = self.lw.takeItem(index)
@@ -189,6 +195,7 @@ class CardWidget(QWidget):
         idx = self.model.find_task(text)
         assert idx != -1  # fail if task wasn't found
         print('idx >>>', idx)
+        self.pop_task(idx)
         self.pop_task(idx)
 
     def insert_task(self, index, task_object):
