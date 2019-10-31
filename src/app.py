@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout
 from PyQt5.QtGui import QPixmap
 from cards.widgets import CardWidget, CardWidgetManager, CardSidebar
-from cards.models import CardModel
+from cards.models import CardsModel
 from widgets import SaveDialog, CredentialsScreen
 from storage import Storage
 from shortcuts import set_shortcut
@@ -29,8 +29,8 @@ class AppWindow(QMainWindow):
         self.cw.setLayout(self.layout)
         self.setCentralWidget(self.cw)
 
-        if not storage.is_authenticated():
-            creds_screen = CredentialsScreen(login_func=self.storage.authenticate)
+        if not self.storage.is_authenticated():
+            creds_screen = CredentialsScreen(self.storage.authenticate, self.storage.register, parent=self.cw)
             creds_screen.logged_in.connect(self.clear_and_load)
             self.layout.addWidget(creds_screen)
         else:
@@ -39,7 +39,7 @@ class AppWindow(QMainWindow):
         self.show()
 
     def load(self):
-        card_model = CardModel(self.storage)
+        card_model = CardsModel(self.storage)
         self.sidebar = CardSidebar(card_model, parent=self.cw)
         self.manager = CardWidgetManager(card_model, self.cw)
 
@@ -50,7 +50,7 @@ class AppWindow(QMainWindow):
         #TODO: test if takeAt(last index) is faster than takeAt(0)
         item = self.layout.takeAt(0)
         while item != None:
-            item.deleteLater()
+            item.widget().deleteLater()
             item = self.layout.takeAt(0)
         self.load()
 

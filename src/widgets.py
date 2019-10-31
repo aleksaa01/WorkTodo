@@ -242,41 +242,51 @@ class SaveDialog(QDialog):
 
 class CredentialsScreen(QWidget):
 
-    def __init__(self, login_func, register_func):
+    logged_in = pyqtSignal()
+
+    def __init__(self, login_func, register_func, parent=None):
+        super().__init__(parent)
         self.login_func = login_func
         self.register_func = register_func
         self.mlayout = QVBoxLayout()
         self.sw = QStackedWidget(self)
 
-        main_creds_page = MainCredentialsPage()
+        main_creds_page = MainCredentialsPage(self)
         main_creds_page.action_chosen.connect(self.switch_page)
-        login_page = LoginPage()
+        login_page = LoginPage(self)
         login_page.login.connect(self.login)
-        reg_page = RegisterPage()
+        reg_page = RegisterPage(self)
+        reg_page.register.connect(self.register)
 
         self.sw.addWidget(main_creds_page)
-        self.sw.addWidget(login_page)
         self.sw.addWidget(reg_page)
+        self.sw.addWidget(login_page)
+        #self.sw.setCurrentIndex(0)
 
     def switch_page(self, page_idx):
         self.sw.setCurrentIndex(page_idx)
 
     def login(self, username, password):
-        login_func(username, password)
+        self.login_func(username, password)
+        self.logged_in.emit()
 
+    def register(self, email, username, password):
+        self.register_func(email, username, password)
+        self.sw.setCurrentIndex(0)
 
 
 class MainCredentialsPage(QWidget):
 
     action_chosen = pyqtSignal(int)
 
-    def __init__(self):
+    def __init__(self, parent=None):
+        super().__init__(parent)
         reg_btn = QPushButton('Register')
         reg_btn.setMaximumSize(350, 200)
         reg_btn.clicked.connect(lambda: self.emit_action(1))
         log_btn = QPushButton('Login')
         log_btn.setMaximumSize(350, 200)
-        log_btn.clicked.connect(lambda: self.emit_action(1))
+        log_btn.clicked.connect(lambda: self.emit_action(2))
 
         layout = QHBoxLayout()
         layout.addWidget(reg_btn)
@@ -292,18 +302,21 @@ class LoginPage(QWidget):
 
     login = pyqtSignal(str, str)
 
-    def __init__(self):
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.username = QLineEdit()
         self.username.setPlaceholderText('Username')
         self.password = QLineEdit()
         self.password.setEchoMode(QLineEdit.Password)
-        self.password.setPlaceHolderText('Password')
+        self.password.setPlaceholderText('Password')
         login_btn = QPushButton('Login')
-        login_btn.clicked.connect(self.login.emit)
+        login_btn.clicked.connect(self.emit)
 
         layout = QVBoxLayout()
-        layout.addWidget(username)
-        layout.addWidget(password)
+        layout.addWidget(self.username)
+        layout.addWidget(self.password)
+        layout.addWidget(login_btn)
+        self.setLayout(layout)
 
     def emit(self):
         usr = self.username.text()
@@ -316,9 +329,10 @@ class LoginPage(QWidget):
 
 class RegisterPage(QWidget):
 
-    register = pyqtSignal(str, str, str, str)
+    register = pyqtSignal(str, str, str)
 
-    def __init__(self):
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.email = QLineEdit()
         self.username = QLineEdit()
         self.password = QLineEdit()
@@ -326,13 +340,24 @@ class RegisterPage(QWidget):
         register_btn = QPushButton('Register')
         register_btn.clicked.connect(self.emit)
 
+        layout = QVBoxLayout()
+        layout.addWidget(self.email)
+        layout.addWidget(self.username)
+        layout.addWidget(self.password)
+        layout.addWidget(self.confirm_password)
+        layout.addWidget(register_btn)
+        self.setLayout(layout)
+
     def emit(self):
         email = self.email.text()
         usr = self.email.text()
         psw = self.password.text()
         confirm = self.confirm_password.text()
 
+        if psw != confrim:
+            raise NotImplementedError()
+
         self.password.setText('')
         self.confirm_password.setText('')
 
-        self.register.emit(email, usr, psw, confirm)
+        self.register.emit(email, usr, psw)

@@ -1,6 +1,6 @@
 from storage import Storage
 from api.resources import CardResource
-from tasks.models import TaskModel
+from tasks.models import TasksModel
 
 
 class CardsModel(object):
@@ -81,7 +81,7 @@ class PreferencesModel(object):
     def danger_time(self):
         return self.pref.danger_tiem
 
-    @daanger_time.setter
+    @danger_time.setter
     def danager_time(self, time):
         if isinstance(time, int):
             self.pref.danger_time = time

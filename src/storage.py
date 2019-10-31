@@ -84,6 +84,9 @@ class Storage(object, metaclass=GenericSingleton):
             break
         return True
 
+    def register(self, email, username, password):
+        pass
+
     def get_preference(self, card_rid):
         return self.preferences[card_rid]
 
