@@ -66,3 +66,16 @@ def authenticate(username, password):
     data = {'username': username, 'password': password}
     response = requests.post(url, json=data)
     return json.loads(response.content)['token']
+
+def register(email, username, password):
+    url = urls['register']
+    data = {'email': email, 'username': username, 'password': password}
+    response = requests.post(url, json=data)
+    sc = response.status_code
+    raw = response.content
+    content = json.loads(raw) if len(raw) > 0 else ''
+    # assert sc == 201, 'Unable to register, got {} status code instead of 201'.format(sc)
+    x = 42
+    if isinstance(content, str):
+        return sc, content
+    return sc, content[0]
