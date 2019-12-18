@@ -13,6 +13,10 @@ class ApiCallDispatcher(object):
         future = self.executor.submit(authenticate, username, password)
         self.output_queue.put((job_id, future))
 
+    def register(self, job_id, email, username, password):
+        future = self.executor.submit(register, email, username, password)
+        self.output_queue.put((job_id, future))
+
     def get_cards(self, job_id):
         future = self.executor.submit(get_cards, self.token)
         self.output_queue.put((job_id, future))
@@ -22,7 +26,7 @@ class ApiCallDispatcher(object):
         self.output_queue.put((job_id, future))
 
     def get_preferences(self, job_id):
-        future = self.executor.submit(get_preferences, job_id)
+        future = self.executor.submit(get_preferences, self.token)
         self.output_queue.put((job_id, future))
 
     def create_card(self, job_id, card):
