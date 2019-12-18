@@ -21,8 +21,8 @@ class CardWidgetManager(QScrollArea):
     def __init__(self, card_model, parent=None):
         super().__init__(parent)
         self.model = card_model
-        self.model.on_clicked(self.display_or_remove)
-        self.model.on_removed(self.remove_if_exists)
+        self.model.on_click(self.show_or_remove)
+        self.model.on_remove(self.remove_if_exists)
 
         self.mwidget = QWidget()
         self.mlayout = QHBoxLayout()
@@ -37,11 +37,11 @@ class CardWidgetManager(QScrollArea):
         self.drag_index = None
         self.drag_source = None
 
-    def display_or_remove(self, card_rid):
+    def show_or_remove(self, card_rid):
         if card_rid in self._active_cards:
             self.remove_card(card_rid)
         else:
-            self.display_card(card_rid)
+            self.show_card(card_rid)
 
     def remove_if_exists(self, card_rid):
         if card_rid in self._active_cards:
@@ -58,10 +58,10 @@ class CardWidgetManager(QScrollArea):
         card_widget.parent().deleteLater()
         self._active_cards.pop(card_rid)
 
-    def display_card(self, card_rid):
+    def show_card(self, card_rid):
         container = QWidget(self)
         task_model = self.model.get_task_model(card_rid)
-        preference_model = self.model.get_preference_model(card_rid)
+        preference_model = self.model.get_card_preferences(card_rid)
         card_widget = CardWidget(card_rid, task_model, preference_model, container)
         card_widget.drag_event.connect(self.update_drag)
         card_widget.drop_event.connect(self.update_drop)
@@ -128,10 +128,12 @@ class CardWidget(QWidget):
 
     def emit_drag_event(self, index):
         print('Drag emmited >>> ', index)
+        # FIXME: drag_event should emit rid, not name
         self.drag_event.emit(self.name, index)
 
     def emit_drop_event(self, index, indicator):
         print('Drop emmited >>> ', index)
+        # FIXME: drop_event should emit rid, not name
         self.drop_event.emit(self.name, index, indicator)
 
     def load(self):
@@ -315,7 +317,8 @@ class CardActions(QWidget):
         self.card_widget = card_widget
         self.selection_flag = False
 
-        self.cardname_lbl = QLabel(card_widget.name)
+        # FIXME: cardname_lbl should contain name of the card, not rid(this was used for debugging)
+        self.cardname_lbl = QLabel(str(card_widget.rid))
 
         self.select = QToolButton(self)
         icon = resource.get_icon('select_icon')
@@ -389,16 +392,20 @@ class CardActions(QWidget):
 
 class CardSidebar(Sidebar):
 
-    def __init__(self, model, max_size, parent):
+    def __init__(self, model, max_size=100, parent=None):
         super().__init__(model, max_size, parent)
 
     def load(self):
-        for id, name in self.model.cards():
-            widget = self.create_widget(id, name)
+        print('IN CardSidebar > load')
+        for rid, name in self.model.cards():
+            print('rid, name:', rid, name)
+            widget = self.create_widget(rid, name)
+            print('widget >>>', widget)
             self.add_widget(widget)
 
-    def item_clicked(self, widget_id):
-        pass
+    def item_clicked(self, card_rid):
+        print('widget id:', card_rid)
+        self.model.show_card(card_rid)
 
 
 class SidebarContainer(QWidget):
