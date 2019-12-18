@@ -1,5 +1,5 @@
 
-DOMAIN = 'http://127.0.0.1'
+DOMAIN = 'http://192.168.1.5'
 PORT = 8000
 
 
@@ -12,7 +12,7 @@ urls = {
     'cards': 'api/cards/',
     'tasks': 'api/tasks/',
     'preferences': 'api/preferences/',
-    'register': 'api/register',
+    'register': 'api/register/',
     'authenticate': 'api/token-auth/'
 }
 
