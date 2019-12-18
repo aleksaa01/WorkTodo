@@ -3,11 +3,30 @@ from api.resources import CardResource
 from tasks.models import TasksModel
 
 
+#TODO: Synchronize CardsModel with the API.
+
+
 class CardsModel(object):
 
     def __init__(self, storage):
         self._st = storage
         self._last_rid = None
+        self._on_click_observers = []
+        self._on_remove_observers = []
+
+    def on_click(self, observer):
+        self._on_click_observers.append(observer)
+
+    def on_remove(self, observer):
+        self._on_remove_observers.append(observer)
+
+    def notify_show(self, card_rid):
+        for observer in self._on_click_observers:
+            observer(card_rid)
+
+    def notify_remove(self, card_rid):
+        for observer in self._on_remove_observers:
+            observer(card_rid)
 
     def cards(self):
         return [(card.rid, card.name) for card in self._st.cards]
@@ -28,6 +47,10 @@ class CardsModel(object):
 
     def remove_card(self, card_rid):
         self._storage.remove_card(card_rid)
+        self.notify_remove(card_rid)
+
+    def show_card(self, card_rid):
+        self.notify_show(card_rid)
 
     def update_card(self, card_rid, new_card_name):
         self._cards_map[card_rid].name = new_card_name
@@ -42,7 +65,7 @@ class CardsModel(object):
                 return new_rid
 
     def get_task_model(self, card_rid):
-        return TaskModel(self._storage, card_rid)
+        return TasksModel(self._st, card_rid)
 
     def get_card_preferences(self, card_rid):
         return PreferencesModel(self._st, card_rid)
@@ -79,7 +102,7 @@ class PreferencesModel(object):
 
     @property
     def danger_time(self):
-        return self.pref.danger_tiem
+        return self.pref.danger_time
 
     @danger_time.setter
     def danager_time(self, time):
