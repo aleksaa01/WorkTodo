@@ -45,7 +45,61 @@ class Storage(object, metaclass=GenericSingleton):
         self.output_queue = Queue()
         self.dispatcher = ApiCallDispatcher(self.output_queue)
         if self.token:
-            self.dispatcher.token = token
+            self.dispatcher.token = self.token
+
+    @unsave
+    def fetch_cards(self):
+        jid = 1
+        self.dispatcher.get_cards(jid)
+        future = self.extract_future(jid)
+
+        self.cards = future.result()
+        print('Cards updated.')
+
+    @unsave
+    def fetch_tasks(self):
+        self.tasks = {}
+        jid = 2
+        self.dispatcher.get_tasks(jid)
+        future = self.extract_future(jid)
+
+        for task in future.result():
+            if self.tasks.get(task.card_rid, None) is None:
+                self.tasks[task.card_rid] = []
+            task_pos = task.position
+            curr_len = len(self.tasks[task.card_rid])
+            if curr_len <= task_pos:
+                self.tasks[task.card_rid].extend([0] * (task_pos - curr_len))
+            self.tasks[task.card_rid].insert(task_pos, task)
+        print('Taks updated.')
+
+    @unsave
+    def fetch_preferences(self):
+        self.preferences = {}
+        jid = 3
+        self.dispatcher.get_preferences(jid)
+        future = self.extract_future(jid)
+
+        for pref in future.result():
+            self.preferences[pref.card_rid] = pref
+
+    def fetch_all(self):
+        self.fetch_cards()
+        self.fetch_tasks()
+        self.fetch_preferences()
+
+
+    def extract_future(self, jid):
+        while True:
+            QApplication.processEvents()
+            if self.output_queue.empty():
+                continue
+            job_id, future = self.output_queue.get()
+            if job_id != jid:
+                self.output_queue.put((job_id, future))
+                continue
+            return future
+
 
     def load_from_file(self, f):
         data = json.load(f)
@@ -53,6 +107,7 @@ class Storage(object, metaclass=GenericSingleton):
         self._tasks = {card.rid: [] for card in self.cards}
         for task in data['tasks']:
             self.tasks[task.card_rid].append(task)
+        # Added for prevention of continuous rid number growth(check fast if rid exists and reuse deleted)
         self.task_rids = set()
         self.preferences = {}
         for resource in data['preferences']:
@@ -84,8 +139,23 @@ class Storage(object, metaclass=GenericSingleton):
             break
         return True
 
-    def register(self, email, username, password):
-        pass
+    def register(self, callback, email, username, password):
+        jid = 5
+        self.dispatcher.register(jid, email, username, password)
+
+        while True:
+            QApplication.processEvents()
+            if self.output_queue.empty():
+                continue
+            job_id, future = self.output_queue.get()
+            if job_id != jid:
+                self.output_queue.put((job_id, future))
+                continue
+
+            result = future.result()
+            status_code, message = result
+            is_valid = True if status_code == 201 else False
+            callback(is_valid, message)
 
     def get_preference(self, card_rid):
         return self.preferences[card_rid]
