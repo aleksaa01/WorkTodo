@@ -48,7 +48,7 @@ class CardWidgetManager(QScrollArea):
             self.remove_card(card_rid)
 
     def remove_card(self, card_rid):
-        card_widget = self._card_mapper[card_rid]
+        card_widget = self._active_cards[card_rid]
         self.mlayout.removeWidget(card_widget)
         # FIXME: Deleting a parent seems like a weird thing to do,
         #   but having container complicates things, because you now
@@ -60,9 +60,10 @@ class CardWidgetManager(QScrollArea):
 
     def show_card(self, card_rid):
         container = QWidget(self)
+        card_name = self.model.get_name(card_rid)
         task_model = self.model.get_task_model(card_rid)
         preference_model = self.model.get_card_preferences(card_rid)
-        card_widget = CardWidget(card_rid, task_model, preference_model, container)
+        card_widget = CardWidget(card_rid, card_name, task_model, preference_model, container)
         card_widget.drag_event.connect(self.update_drag)
         card_widget.drop_event.connect(self.update_drop)
         card_actions = CardActions(card_widget, container)
@@ -103,9 +104,10 @@ class CardWidget(QWidget):
     drag_event = pyqtSignal(str, int)
     drop_event = pyqtSignal(str, int, int)
 
-    def __init__(self, card_rid, task_model, preference_model, parent=None):
+    def __init__(self, card_rid, card_name, task_model, preference_model, parent=None):
         super().__init__(parent)
         self.rid = card_rid
+        self.name = card_name
         self.tmodel = task_model
         self.pmodel = preference_model
 
@@ -317,8 +319,7 @@ class CardActions(QWidget):
         self.card_widget = card_widget
         self.selection_flag = False
 
-        # FIXME: cardname_lbl should contain name of the card, not rid(this was used for debugging)
-        self.cardname_lbl = QLabel(str(card_widget.rid))
+        self.cardname_lbl = QLabel(card_widget.name)
 
         self.select = QToolButton(self)
         icon = resource.get_icon('select_icon')
@@ -385,7 +386,7 @@ class CardActions(QWidget):
         self.card_widget.reload()
 
     def run_preferences_dialog(self):
-        dialog = PreferencesDialog(self.card_widget.prefs)
+        dialog = PreferencesDialog(self.card_widget.pmodel)
         dialog.accepted.connect(self.preferences_changed)
         dialog.exec_()
 
@@ -511,15 +512,15 @@ class PreferencesDialog(QDialog):
     accepted = pyqtSignal()
     rejected = pyqtSignal()
 
-    def __init__(self, preferences, parent=None):
+    def __init__(self, preferences_model, parent=None):
         super().__init__(parent)
 
-        self.prefs = preferences
+        self.pmodel = preferences_model
 
-        warning = self.prefs.expiration.get("warning", 0)
-        danger = self.prefs.expiration.get("danger", 0)
-        self.warning_lbl = QLabel('Mark as warning after how many seconds')
-        self.danger_lbl = QLabel('Mark as danger after how many seconds')
+        warning = self.pmodel.warning_time
+        danger = self.pmodel.danger_time
+        self.warning_lbl = QLabel('Mark as warning after')
+        self.danger_lbl = QLabel('Mark as danger after')
         self.warning_time = TimeEdit(warning, self)
         self.danger_time = TimeEdit(danger, self)
         self.ok_btn = QPushButton("OK")
@@ -539,7 +540,7 @@ class PreferencesDialog(QDialog):
 
         show_date_lbl = QLabel("Show date of task creation.")
         self.show_date_checkbox = QCheckBox()
-        if self.prefs.show_date:
+        if self.pmodel.show_date:
             self.show_date_checkbox.setChecked(True)
         else:
             self.show_date_checkbox.setChecked(False)
@@ -565,9 +566,9 @@ class PreferencesDialog(QDialog):
         dtime = self.danger_time.seconds()
         wtime = wtime if wtime > 0 else None
         dtime = dtime if dtime > 0 else None
-        expiration = {"warning": wtime, "danger": dtime}
-        self.prefs.expiration = expiration
-        self.prefs.show_date = self.show_date_checkbox.isChecked()
+        self.pmodel.warning_time = wtime
+        self.pmodel.danger_time = dtime
+        self.pmodel.show_date = self.show_date_checkbox.isChecked()
         self.accepted.emit()
         super().accept()
 
