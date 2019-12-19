@@ -166,7 +166,7 @@ class CardWidget(QWidget):
                 dt = datetime.datetime.fromtimestamp(created)
                 text = "{}\n({}.{}.{})".format(text, dt.day, dt.month, dt.year)
 
-            task_widget = TaskWidget(text, self.actions, icon)
+            task_widget = TaskWidget(rid, text, self.actions, icon)
             item = QListWidgetItem()
             item.setSizeHint(task_widget.sizeHint())
             self.lw.addItem(item)
@@ -219,7 +219,7 @@ class CardWidget(QWidget):
             elif warning_time and task_object.date + warning_time <= current_time:
                 icon = self.prefs_warning_icon
 
-        task_widget = TaskWidget(text, self.actions, icon)
+        task_widget = TaskWidget(task_object.rid, text, self.actions, icon)
         item = QListWidgetItem()
         item.setSizeHint(task_widget.sizeHint())
         self.lw.insertItem(index, item)
