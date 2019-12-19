@@ -31,14 +31,8 @@ class CardsModel(object):
     def cards(self):
         return [(card.rid, card.name) for card in self._st.cards]
 
-    def get_card(self, card_rid):
-        return self._st.get_card(card_rid)
-
-    def task_rids(self, card_rid):
-        return self._st.tasks(card_rid)
-
-    def preference(self, card_rid):
-        return self._st.get_preference(card_rid)
+    def get_name(self, card_rid):
+        return self._st.get_card(card_rid).name
 
     def add_card(self, card_name):
         new_rid = self._get_new_rid()
@@ -105,7 +99,7 @@ class PreferencesModel(object):
         return self.pref.danger_time
 
     @danger_time.setter
-    def danager_time(self, time):
+    def danger_time(self, time):
         if isinstance(time, int):
             self.pref.danger_time = time
         else:
