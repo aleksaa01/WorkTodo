@@ -2,6 +2,11 @@ from PyQt5.QtWidgets import QWidget, QLayout, QPushButton, QScrollArea, QSizePol
     QHBoxLayout, QSpinBox, QLabel, QDialog, QVBoxLayout, QStackedWidget, QLineEdit
 from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal
 
+import re
+
+
+EMAIL_REGEX = re.compile(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
+
 
 class FlowLayout(QLayout):
     def __init__(self, max_height=None, parent=None, margin=0, spacex=5, spacey=5):
@@ -111,12 +116,18 @@ class FlowLayout(QLayout):
 
 class SidebarButton(QPushButton):
 
+    clicked = pyqtSignal(int)
+
     def __init__(self, id, text, parent=None):
         super().__init__(text, parent)
 
-        self.id = id
+        self.widget_id = id
         self.setObjectName('SidebarButton')
         self.setCheckable(True)
+
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+        self.clicked.emit(self.widget_id)
 
 
 class Sidebar(QScrollArea):
@@ -256,12 +267,13 @@ class CredentialsScreen(QWidget):
         login_page = LoginPage(self)
         login_page.login.connect(self.login)
         reg_page = RegisterPage(self)
-        reg_page.register.connect(self.register)
+        reg_page.on_register.connect(self.register)
+        reg_page.registered.connect(lambda: self.sw.setCurrentIndex(0))
 
         self.sw.addWidget(main_creds_page)
         self.sw.addWidget(reg_page)
         self.sw.addWidget(login_page)
-        #self.sw.setCurrentIndex(0)
+        self.sw.setCurrentIndex(0)
 
     def switch_page(self, page_idx):
         self.sw.setCurrentIndex(page_idx)
@@ -270,9 +282,8 @@ class CredentialsScreen(QWidget):
         self.login_func(username, password)
         self.logged_in.emit()
 
-    def register(self, email, username, password):
-        self.register_func(email, username, password)
-        self.sw.setCurrentIndex(0)
+    def register(self, callback, email, username, password):
+        self.register_func(callback, email, username, password)
 
 
 class MainCredentialsPage(QWidget):
@@ -290,7 +301,6 @@ class MainCredentialsPage(QWidget):
 
         layout = QHBoxLayout()
         layout.addWidget(reg_btn)
-        layout.addWidget(log_btn)
         layout.addWidget(log_btn)
         self.setLayout(layout)
 
@@ -329,35 +339,63 @@ class LoginPage(QWidget):
 
 class RegisterPage(QWidget):
 
-    register = pyqtSignal(str, str, str)
+    on_register = pyqtSignal(object, str, str, str)
+    registered = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.email = QLineEdit()
+        self.email.setPlaceholderText('Email')
         self.username = QLineEdit()
+        self.username.setPlaceholderText('Username')
         self.password = QLineEdit()
+        self.password.setPlaceholderText('Password')
+        self.password.setEchoMode(QLineEdit.Password)
         self.confirm_password = QLineEdit()
-        register_btn = QPushButton('Register')
-        register_btn.clicked.connect(self.emit)
+        self.confirm_password.setPlaceholderText('Confirm Password')
+        self.confirm_password.setEchoMode(QLineEdit.Password)
+        self.error_reporter = QLabel()
+        self.error_reporter.setStyleSheet('color: red;')
+        self.register_btn = QPushButton('Register')
+        self.register_btn.clicked.connect(self.emit)
 
         layout = QVBoxLayout()
         layout.addWidget(self.email)
         layout.addWidget(self.username)
         layout.addWidget(self.password)
         layout.addWidget(self.confirm_password)
-        layout.addWidget(register_btn)
+        layout.addWidget(self.error_reporter)
+        layout.addWidget(self.register_btn)
         self.setLayout(layout)
 
     def emit(self):
         email = self.email.text()
-        usr = self.email.text()
+        usr = self.username.text()
         psw = self.password.text()
         confirm = self.confirm_password.text()
 
-        if psw != confrim:
-            raise NotImplementedError()
+        if len(psw) < 1:
+            self.error_reporter.setText("Password field can't be empty.")
+            return
+
+        if EMAIL_REGEX.match(email) is None:
+            self.error_reporter.setText('Invalid email !')
+            return
+
+        if psw != confirm:
+            self.error_reporter.setText("Passwords do not mach !")
+            return
 
         self.password.setText('')
         self.confirm_password.setText('')
 
-        self.register.emit(email, usr, psw)
+        self.register_btn.setEnabled(False)
+        self.on_register.emit(self.validate, email, usr, psw)
+
+    def validate(self, is_valid, message=None):
+        print("IN VALIDATE. Is valid:", is_valid)
+        if is_valid:
+            self.registered.emit()
+            return
+        self.register_btn.setEnabled(True)
+        self.error_reporter.setText(message)
