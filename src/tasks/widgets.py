@@ -2,12 +2,13 @@ from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
     QDialog, QTextEdit, QWidget, QCheckBox, QMenu, QToolButton, QFrame
 from PyQt5.QtCore import pyqtSignal, Qt, QPropertyAnimation, QRect
 from PyQt5.QtGui import QPalette, QColor
-from tasks.objects import create_task_object, TaskObject
+
+import datetime
 
 
 class AddTaskDialog(QDialog):
 
-    accepted = pyqtSignal(TaskObject)
+    accepted = pyqtSignal(str)
     rejected = pyqtSignal(bool)
 
     def __init__(self, parent=None):
@@ -41,9 +42,8 @@ class AddTaskDialog(QDialog):
 
     def accept(self):
         description = self.desc_text_edit.toPlainText()
-        task = create_task_object(description)
 
-        self.accepted.emit(task)
+        self.accepted.emit(description)
         super().accept()
 
     def reject(self):
@@ -52,14 +52,15 @@ class AddTaskDialog(QDialog):
 
 
 class EditTaskDialog(QDialog):
-    accepted = pyqtSignal(object)
+    accepted = pyqtSignal(str, int)
     rejected = pyqtSignal(bool)
 
-    def __init__(self, task_object, parent=None):
+    def __init__(self, task_description, created_at, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Edit Task")
 
-        self.old_task = task_object
+        self.task_desc = task_description
+        self.created = created_at
 
         mlayout = QVBoxLayout()
         desclayout = QHBoxLayout()
@@ -68,7 +69,7 @@ class EditTaskDialog(QDialog):
         desclbl = QLabel('Description:', self)
         self.desc_text_edit = QTextEdit(self)
         self.desc_text_edit.setMaximumHeight(100)
-        self.desc_text_edit.setPlainText(self.old_task.description)
+        self.desc_text_edit.setPlainText(self.task_desc)
         desclayout.addWidget(desclbl)
         desclayout.addWidget(self.desc_text_edit)
 
@@ -88,10 +89,11 @@ class EditTaskDialog(QDialog):
         self.setLayout(mlayout)
 
     def accept(self):
-        description = self.desc_text_edit.toPlainText()
-        task = create_task_object(description)
+        new_description = self.desc_text_edit.toPlainText()
+        now = datetime.datetime.now().timestamp()
+        self.created = int(now)
 
-        self.accepted.emit(task)
+        self.accepted.emit(new_description, self.created)
         super().accept()
 
     def reject(self):
@@ -114,17 +116,19 @@ class TaskWidget(QWidget):
         self.label.setWordWrap(True)
         self.label.setFixedWidth(max_text_width)
         if icon:
-            self.icon = QToolButton()
-            self.icon.setIcon(icon)
-            self.icon.setMaximumSize(20, 20)
-            self.icon.setAutoRaise(True)
+            self.icon_btn = QToolButton()
+            self.icon_btn.setIcon(icon)
+            self.icon_btn.setMaximumSize(20, 20)
+            self.icon_btn.setAutoRaise(True)
+        else:
+            self.icon_btn = None
 
         self.checker = None
 
         self.layout = QHBoxLayout()
         self.layout.addWidget(self.label)
         if icon:
-            self.layout.addWidget(self.icon)
+            self.layout.addWidget(self.icon_btn)
         self.layout.addStretch(0)
         self.setLayout(self.layout)
 
@@ -152,7 +156,6 @@ class TaskWidget(QWidget):
         action_menu = QMenu()
         action_map = {}
         for action in self.actions:
-            a = action_menu.addAction(action.icon, action.text)
             if action.icon is None:
                 a = action_menu.addAction(action.text)
             else:
