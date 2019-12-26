@@ -28,7 +28,7 @@ class TaskResource(ResourceBase):
         self.rid = kwargs['rid']
         self.description = kwargs['description']
         # For perfermance reasons, you can update position just before API synchronization
-        self.position = kwargs['position']
+        self.position = kwargs.get('position', None)
         self.card_rid = kwargs['card_rid']
         self.created = kwargs.get('created', datetime.now().timestamp())
 
