@@ -79,16 +79,21 @@ class CardWidgetManager(QScrollArea):
         card_widget.load()
 
     def update_drag(self, card_rid, index):
-        self.drag_source = self._card_mapper[card_rid]
+        self.drag_source = self._active_cards[card_rid]
         self.drag_index = index
 
     def update_drop(self, card_rid, drop_index, indicator):
         drop_source = self._active_cards[card_rid]
         if self.drag_source == drop_source:
             drop_index = self._fix_drop_offset(drop_index, indicator)
+            drop_source.move_task(self.drag_index, drop_index)
+            return
 
-        task = self.drag_source.pop_task(self.drag_index)
-        drop_source.insert_task(drop_index, task)
+        # it's very important to transfer tasks before we call view methods
+        # because view methods relly on models to do their job properly
+        self.model.transfer_task(drag_source.rid, drop_source.rid, drag_index, drop_index)
+        self.drag_source.pop_widget(self.drag_index)
+        drop_source.insert_widget(drop_index)
 
     def _fix_drop_offset(self, drop_index, indicator):
         if self.drag_index < drop_index:
@@ -101,8 +106,8 @@ class CardWidgetManager(QScrollArea):
 
 
 class CardWidget(QWidget):
-    drag_event = pyqtSignal(str, int)
-    drop_event = pyqtSignal(str, int, int)
+    drag_event = pyqtSignal(int, int)
+    drop_event = pyqtSignal(int, int, int)
 
     def __init__(self, card_rid, card_name, task_model, preference_model, parent=None):
         super().__init__(parent)
@@ -131,12 +136,12 @@ class CardWidget(QWidget):
     def emit_drag_event(self, index):
         print('Drag emmited >>> ', index)
         # FIXME: drag_event should emit rid, not name
-        self.drag_event.emit(self.name, index)
+        self.drag_event.emit(self.rid, index)
 
     def emit_drop_event(self, index, indicator):
         print('Drop emmited >>> ', index)
         # FIXME: drop_event should emit rid, not name
-        self.drop_event.emit(self.name, index, indicator)
+        self.drop_event.emit(self.rid, index, indicator)
 
     def load(self):
 
@@ -166,7 +171,7 @@ class CardWidget(QWidget):
 
             if show_date:
                 dt = datetime.datetime.fromtimestamp(created)
-                text = "{}\n({}.{}.{})".format(text, dt.day, dt.month, dt.year)
+                text = "{}\n({}.{}.{} {}:{})".format(text, dt.day, dt.month, dt.year, dt.hour, dt.minute)
 
             task_widget = TaskWidget(rid, text, self.actions, icon)
             item = QListWidgetItem()
@@ -184,7 +189,7 @@ class CardWidget(QWidget):
         self.load()
 
     def remove_task(self, pos):
-        idx = self.lw.IndexAt(pos)
+        idx = self.lw.indexAt(pos)
         self.tmodel.remove(idx)
 
     def get_task(self, index):
@@ -193,48 +198,63 @@ class CardWidget(QWidget):
     def pop_task(self, index):
         item = self.lw.takeItem(index)
         del item
-        return self.model.pop_task(index)
+        return self.tmodel.remove(index)
 
-    def find_and_remove(self, text):
-        idx = self.model.find_task(text)
-        assert idx != -1  # fail if task wasn't found
-        print('idx >>>', idx)
-        self.pop_task(idx)
-        self.pop_task(idx)
+    def pop_widget(self, index):
+        item = self.lw.item(index)
+        widget = self.lw.itemWidget(item)
+        self.lw.takeItem(index)
+        return widget
 
-    def insert_task(self, index, task_object):
-        # WARNING: Maybe we should first delete TaskWidget at the index, before
-        #   we create new one and do a setItemWidget.
-        if self.prefs.show_date:
-            dt = datetime.datetime.fromtimestamp(task_object.date)
-            text = "{}\n({}.{}.{})".format(task_object.description, dt.day, dt.month, dt.year)
-        else:
-            text = task_object.description
+    def insert_widget(self, index):
+        rid, text, created = self.tmodel.data(index)
 
-        icon = None
-        if self.prefs.expiration:
-            warning_time = self.prefs.expiration["warning"]
-            danger_time = self.prefs.expiration["danger"]
-            current_time = datetime.datetime.now().timestamp()
-            if danger_time and task_object.date + danger_time <= current_time:
-                icon = self.prefs_danger_icon
-            elif warning_time and task_object.date + warning_time <= current_time:
-                icon = self.prefs_warning_icon
+        if self.pmodel.show_date:
+            dt = datetime.datetime.fromtimestamp(created)
+            text = "{}\n({}.{}.{} {}:{})".format(text, dt.year, dt.month,
+                                                 dt.day, dt.hour, dt.minute)
 
-        task_widget = TaskWidget(task_object.rid, text, self.actions, icon)
+        dtime = self.pmodel.danger_time
+        wtime = self.pmodel.warning_time
+        now = datetime.datetime.now().timestamp()
+        if dtime and dtime + created <= now:
+            icon = self._danger_icon
+        elif wtime and wtime + created <= now:
+            icon = self._warning_icon
+
+        task_widget = TaskWidget(rid, text, self.actions, icon)
         item = QListWidgetItem()
         item.setSizeHint(task_widget.sizeHint())
         self.lw.insertItem(index, item)
         self.lw.setItemWidget(item, task_widget)
-        self.model.insert_task(index, task_object)
+
+    def move_task(self, from_idx, to_idx):
+        item = self.lw.item(from_idx)
+        widget = self.lw.itemWidget(item)
+        text = widget.label.text()
+        if widget.icon_btn:
+            icon = widget.icon_btn.icon()
+        else:
+            icon = None
+        rid, _, _ = self.tmodel.data(from_idx)
+        widget = TaskWidget(rid, text, self.actions, icon)
+        self.lw.takeItem(from_idx)
+
+        self.tmodel.move(from_idx, to_idx)
+
+        item = QListWidgetItem()
+        item.setSizeHint(widget.sizeHint())
+        self.lw.insertItem(to_idx, item)
+        self.lw.setItemWidget(item, widget)
+        x = 42
 
     def turn_on_selection(self):
-        for idx in range(len(self.model)):
+        for idx in range(len(self.tmodel)):
             widget = self.lw.itemWidget(self.lw.item(idx))
             widget.add_checker()
 
     def turn_off_selection(self):
-        for idx in range(len(self.model)):
+        for idx in range(len(self.tmodel)):
             widget = self.lw.itemWidget(self.lw.item(idx))
             widget.remove_checker()
 
@@ -245,34 +265,52 @@ class CardWidget(QWidget):
 
     def get_selected_rows(self):
         selected_rows = []
-        for idx in range(len(self.model)):
+        for idx in range(len(self.tmodel)):
             widget = self.lw.itemWidget(self.lw.item(idx))
             if widget.checker.isChecked():
                 selected_rows.append(idx)
 
         return selected_rows
 
-    def task_descs(self):
-        descs = []
-        for task in self.model.tasks():
-            descs.append(task.description)
+    def add_task(self, text):
+        created = datetime.datetime.now().timestamp()
+        rid = self.tmodel.add(text, created)
 
-        return descs
+        if self.pmodel.show_date:
+            dt = datetime.datetime.fromtimestamp(created)
+            text = "{}\n({}.{}.{})".format(text, dt.day, dt.month, dt.year)
 
-    def add(self, task_object):
-        self.insert_task(len(self.model), task_object)
+        icon = None
+        if self.pmodel.show_date:
+            wtime = self.pmodel.warning_time
+            dtime = self.pmodel.danger_time
+            current_time = datetime.datetime.now().timestamp()
+            if dtime and created + dtime <= current_time:
+                icon = self._danger_icon
+            elif wtime and created + wtime <= current_time:
+                icon = self._warning_icon
 
-    def run_edit_task_dialog(self, text):
-        index = self.model.find_task(text)
-        dialog = EditTaskDialog(self.model.get_task(index))
-        dialog.accepted.connect(lambda new_task: self.edit_task(index, new_task))
+        task_widget = TaskWidget(rid, text, self.actions, icon)
+        item = QListWidgetItem()
+        item.setSizeHint(task_widget.sizeHint())
+        self.lw.addItem(item)
+        self.lw.setItemWidget(item, task_widget)
+
+    def run_edit_task_dialog(self, pos):
+        index = self.lw.indexAt(pos).row()
+        rid, desc, created = self.tmodel.data(index)
+        dialog = EditTaskDialog(desc, created)
+        dialog.accepted.connect(lambda desc, created: self.edit_task(index, desc, created))
         dialog.exec_()
 
-    def edit_task(self, index, new_task):
-        self.model.update_task(index, new_task)
+
+    def edit_task(self, index, description, created_at):
+        self.tmodel.update(index, description, created_at)
         item = self.lw.item(index)
         widget = self.lw.itemWidget(item)
-        widget.set_text(new_task.description)
+        dt = datetime.datetime.fromtimestamp(created_at)
+        content = "{}\n({}.{}.{} {}:{})".format(description, dt.day, dt.month, dt.year, dt.hour, dt.minute)
+        widget.set_text(content)
         item.setSizeHint(widget.sizeHint())
 
 
@@ -379,7 +417,7 @@ class CardActions(QWidget):
 
     def run_add_task_dialog(self):
         dialog = AddTaskDialog()
-        dialog.accepted.connect(self.card_widget.add)
+        dialog.accepted.connect(self.card_widget.add_task)
         dialog.exec_()
 
     def preferences_changed(self):
