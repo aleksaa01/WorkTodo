@@ -279,7 +279,12 @@ class CredentialsScreen(QWidget):
         self.sw.setCurrentIndex(page_idx)
 
     def login(self, username, password):
-        self.login_func(username, password)
+        try:
+            self.login_func(username, password)
+        except Exception as err:
+            #FIXME: Username or password is wrong. Just display the message.
+            print(err)
+            raise
         self.logged_in.emit()
 
     def register(self, callback, email, username, password):
