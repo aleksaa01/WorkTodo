@@ -64,6 +64,10 @@ class CardsModel(object):
     def get_card_preferences(self, card_rid):
         return PreferencesModel(self._st, card_rid)
 
+    def transfer_task(self, from_crid, to_crid, from_idx, to_idx):
+        task = self._st.pop_task(from_crid, from_idx)
+        self._st.insert_task(to_crid, to_idx, task)
+
 
 class PreferencesModel(object):
 
