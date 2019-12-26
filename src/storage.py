@@ -31,7 +31,7 @@ class Storage(object, metaclass=GenericSingleton):
             self.path = os.path.join(os.getcwd(), self.name)
 
         self.cards = None
-        self.tasks = None
+        self._tasks = None
         self.preferences = None
         self.token = None
         with open(self.path, 'r') as f:
@@ -58,19 +58,19 @@ class Storage(object, metaclass=GenericSingleton):
 
     @unsave
     def fetch_tasks(self):
-        self.tasks = {}
+        self._tasks = {}
         jid = 2
         self.dispatcher.get_tasks(jid)
         future = self.extract_future(jid)
 
         for task in future.result():
-            if self.tasks.get(task.card_rid, None) is None:
-                self.tasks[task.card_rid] = []
+            if self._tasks.get(task.card_rid, None) is None:
+                self._tasks[task.card_rid] = []
             task_pos = task.position
-            curr_len = len(self.tasks[task.card_rid])
+            curr_len = len(self._tasks[task.card_rid])
             if curr_len <= task_pos:
-                self.tasks[task.card_rid].extend([0] * (task_pos - curr_len))
-            self.tasks[task.card_rid].insert(task_pos, task)
+                self._tasks[task.card_rid].extend([0] * (task_pos - curr_len))
+            self._tasks[task.card_rid].insert(task_pos, task)
         print('Taks updated.')
 
     @unsave
@@ -105,10 +105,12 @@ class Storage(object, metaclass=GenericSingleton):
         data = json.load(f)
         self.cards = [CardResource.from_json(res) for res in data['cards']]
         self._tasks = {card.rid: [] for card in self.cards}
-        for task in data['tasks']:
-            self.tasks[task.card_rid].append(task)
-        # Added for prevention of continuous rid number growth(check fast if rid exists and reuse deleted)
         self.task_rids = set()
+        for task_data in data['tasks']:
+            task_res = TaskResource.from_json(task_data)
+            self._tasks[task_res.card_rid].append(task_res)
+            self.task_rids.add(task_res.rid)
+        # Added for prevention of continuous rid number growth(check fast if rid exists and reuse deleted)
         self.preferences = {}
         for resource in data['preferences']:
             pref = PreferenceResource.from_json(resource)
@@ -167,10 +169,10 @@ class Storage(object, metaclass=GenericSingleton):
         raise ValueError("Card with rid {} doesn't exist.".format(card_rid))
 
     def get_task(self, card_rid, task_idx):
-        return self.tasks[card_rid][task_idx]
+        return self._tasks[card_rid][task_idx]
 
     def find_task(self, card_rid, task_rid):
-        for t in self.tasks[card_rid]:
+        for t in self._tasks[card_rid]:
             if t.rid == task_rid:
                 return t
         raise ValueError("Task with rid {} doesn't exist".format(task_rid))
@@ -181,19 +183,12 @@ class Storage(object, metaclass=GenericSingleton):
     @unsave
     def add_card(self, card_resource):
         self.cards.append(card_resource)
-        self.tasks[card_resource.rid] = []
+        self._tasks[card_resource.rid] = []
 
     @unsave
     def add_task(self, card_rid, task_resource):
-        self.tasks[card_rid].append(task_resource)
+        self._tasks[card_rid].append(task_resource)
         self.task_rids.add(task_resource.rid)
-        crid = task_resource.card_rid
-        card = None
-        for c in self.cards:
-            if c.rid == crid:
-                c.tasks.append(task_resource.rid)
-                return
-        raise ValueError('Failed to add task. There is no card with rid {}'.format(cid))
 
     @unsave
     def remove_card(self, card_rid):
@@ -205,33 +200,33 @@ class Storage(object, metaclass=GenericSingleton):
         assert index != -1, "Can't remove card, card with rid {} doesn't exist."
 
         self.cards.pop(index)
-        tasks = self.tasks.pop(card_rid)
+        tasks = self._tasks.pop(card_rid)
         for task in tasks:
             self.task_rids.remove(task.rid)
         self.preferences.pop(card_rid)
 
     @unsave
     def pop_task(self, card_rid, task_index):
-        task = self.tasks[card_rid].pop(task_index)
+        task = self._tasks[card_rid].pop(task_index)
         self.task_rids.remove(task.rid)
         return task
 
     @unsave
     def insert_task(self, card_rid, idx, task_resource):
-        self.tasks[card_rid].insert(idx, task_resource)
+        self._tasks[card_rid].insert(idx, task_resource)
         self.task_rids.add(task_resource.rid)
 
     @unsave
     def move_task(self, card_rid, old_idx, new_idx):
-        task_list = self.tasks[card_rid]
+        task_list = self._tasks[card_rid]
         task = task_list[old_idx]
         for idx in range(old_idx, new_idx):
             task_list[idx] = task_list[idx + 1]
-        task_list[idx + 1] = task
+        task_list[new_idx] = task
 
     @unsave
     def update_task(self, card_rid, idx, task_resource):
-        self.tasks[card_rid][idx] = task_resource
+        self._tasks[card_rid][idx] = task_resource
 
     @unsave
     def update_preference(self, card_rid, preference):
@@ -244,7 +239,7 @@ class Storage(object, metaclass=GenericSingleton):
             cards_resource = [card.to_json() for card in self.cards]
             tasks_resource = []
             for task_list in self._tasks.values():
-                tasks_resource.extend(task_list)
+                tasks_resource.extend([task.to_json() for task in task_list])
             preferences_resource = [pref.to_json() for pref in self.preferences.values()]
             data = {
                 'cards': cards_resource, 'tasks': tasks_resource,
