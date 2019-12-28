@@ -91,7 +91,8 @@ class CardWidgetManager(QScrollArea):
 
         # it's very important to transfer tasks before we call view methods
         # because view methods relly on models to do their job properly
-        self.model.transfer_task(drag_source.rid, drop_source.rid, drag_index, drop_index)
+        self.model.transfer_task(self.drag_source.rid, drop_source.rid,
+                                 self.drag_index, drop_index)
         self.drag_source.pop_widget(self.drag_index)
         drop_source.insert_widget(drop_index)
 

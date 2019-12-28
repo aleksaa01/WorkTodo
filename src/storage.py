@@ -71,6 +71,7 @@ class Storage(object, metaclass=GenericSingleton):
             if curr_len <= task_pos:
                 self._tasks[task.card_rid].extend([0] * (task_pos - curr_len))
             self._tasks[task.card_rid].insert(task_pos, task)
+            self.task_rids.add(task.rid)
         print('Taks updated.')
 
     @unsave
@@ -220,8 +221,12 @@ class Storage(object, metaclass=GenericSingleton):
     def move_task(self, card_rid, old_idx, new_idx):
         task_list = self._tasks[card_rid]
         task = task_list[old_idx]
-        for idx in range(old_idx, new_idx):
-            task_list[idx] = task_list[idx + 1]
+        if old_idx < new_idx:
+            for idx in range(old_idx, new_idx):
+                task_list[idx] = task_list[idx + 1]
+        else:
+            for idx in range(old_idx, new_idx, -1):
+                task_list[idx] = task_list[idx - 1]
         task_list[new_idx] = task
 
     @unsave
