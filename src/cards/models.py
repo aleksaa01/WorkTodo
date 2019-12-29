@@ -1,5 +1,5 @@
 from storage import Storage
-from api.resources import CardResource
+from api.resources import CardResource, PreferenceResource
 from tasks.models import TasksModel
 
 
@@ -36,11 +36,17 @@ class CardsModel(object):
 
     def add_card(self, card_name):
         new_rid = self._get_new_rid()
-        card = CardResource(rid=new_rid, name=card_name)
-        self._storage.add_card(card)
+        num_cards = len(self._st.cards)
+        card = CardResource(rid=new_rid, name=card_name, position=num_cards)
+        self._st.add_card(card)
+        pref_rid = self._get_new_pref_rid()
+        pref = PreferenceResource(rid=pref_rid, card_rid=new_rid, warning_time=0,
+                                  danger_time=0, show_date=False)
+        self._st.add_preference(new_rid, pref)
+        return new_rid
 
     def remove_card(self, card_rid):
-        self._storage.remove_card(card_rid)
+        self._st.remove_card(card_rid)
         self.notify_remove(card_rid)
 
     def show_card(self, card_rid):
@@ -53,7 +59,15 @@ class CardsModel(object):
     def _get_new_rid(self):
         new_rid = self._last_rid + 1 if self._last_rid else 1
         while True:
-            if self._st.cards.get(new_rid, False):
+            if new_rid in self._st.card_rids:
+                new_rid += 1
+            else:
+                return new_rid
+
+    def _get_new_pref_rid(self):
+        new_rid = 0
+        while True:
+            if new_rid in self._st.preference_rids:
                 new_rid += 1
             else:
                 return new_rid
@@ -74,6 +88,7 @@ class PreferencesModel(object):
     def __init__(self, storage, card_rid):
         self._st = storage
         self.crid = card_rid
+        # If you change pref here, it will also be changed in storage.
         self.pref = storage.get_preference(card_rid)
 
     @property

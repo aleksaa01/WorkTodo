@@ -31,8 +31,11 @@ class Storage(object, metaclass=GenericSingleton):
             self.path = os.path.join(os.getcwd(), self.name)
 
         self.cards = None
+        self.card_rids = set()
         self._tasks = None
+        self.task_rids = set()
         self.preferences = None
+        self.preference_rids = set()
         self.token = None
         with open(self.path, 'r') as f:
             self.load_from_file(f)
@@ -54,6 +57,8 @@ class Storage(object, metaclass=GenericSingleton):
         future = self.extract_future(jid)
 
         self.cards = future.result()
+        for c in self.cards:
+            self.card_rids.add(c.rid)
         print('Cards updated.')
 
     @unsave
@@ -83,6 +88,7 @@ class Storage(object, metaclass=GenericSingleton):
 
         for pref in future.result():
             self.preferences[pref.card_rid] = pref
+            self.preference_rids.add(pref.rid)
 
     def fetch_all(self):
         self.fetch_cards()
@@ -106,7 +112,6 @@ class Storage(object, metaclass=GenericSingleton):
         data = json.load(f)
         self.cards = [CardResource.from_json(res) for res in data['cards']]
         self._tasks = {card.rid: [] for card in self.cards}
-        self.task_rids = set()
         for task_data in data['tasks']:
             task_res = TaskResource.from_json(task_data)
             self._tasks[task_res.card_rid].append(task_res)
@@ -116,6 +121,7 @@ class Storage(object, metaclass=GenericSingleton):
         for resource in data['preferences']:
             pref = PreferenceResource.from_json(resource)
             self.preferences[pref.card_rid] = pref
+            self.preference_rids.add(pref.rid)
         self.token = data['token']
 
     def is_authenticated(self):
@@ -184,6 +190,7 @@ class Storage(object, metaclass=GenericSingleton):
     @unsave
     def add_card(self, card_resource):
         self.cards.append(card_resource)
+        self.card_rids.add(card_resource.rid)
         self._tasks[card_resource.rid] = []
 
     @unsave
@@ -192,19 +199,29 @@ class Storage(object, metaclass=GenericSingleton):
         self.task_rids.add(task_resource.rid)
 
     @unsave
+    def add_preference(self, card_rid, preference_resource):
+        if self.preferences.get(card_rid, False):
+            raise ValueError("Can't add preference, card with rid={} "
+                             "already has preference set.".format(card_rid))
+        self.preferences[card_rid] = preference_resource
+        self.preference_rids.add(preference_resource.rid)
+
+    @unsave
     def remove_card(self, card_rid):
         index = -1
-        for idx, c in enumerate(self.cards):
-            if c.rid == card_rid:
+        for idx, card in enumerate(self.cards):
+            if card.rid == card_rid:
                 index = idx
                 break
-        assert index != -1, "Can't remove card, card with rid {} doesn't exist."
+        assert index != -1, "Can't remove card, card with rid={} doesn't exist.".format(card_rid)
 
         self.cards.pop(index)
+        self.card_rids.remove(card_rid)
         tasks = self._tasks.pop(card_rid)
         for task in tasks:
             self.task_rids.remove(task.rid)
-        self.preferences.pop(card_rid)
+        pref = self.preferences.pop(card_rid)
+        self.preference_rids.remove(pref.rid)
 
     @unsave
     def pop_task(self, card_rid, task_index):
