@@ -161,15 +161,16 @@ class Sidebar(QScrollArea):
     def remove_widget(self, id):
         # assumes that widgets have id attribute set
         index = 0
-        widget = self.sidebar_layout.itemAt(index)
+        item = self.sidebar_layout.itemAt(index)
+        widget = item.widget()
         while widget:
-            if widget.id == id:
-                self.sidebar_layout.removeWidget(widget)
+            if widget.widget_id == id:
+                item = self.sidebar_layout.takeAt(index)
+                widget = item.widget()
                 widget.deleteLater()
+                return
             index += 1
-            widget = self.sidebar_layout.itemAt(index)
-            self.model.remove_card(id)
-            return
+            widget = self.sidebar_layout.itemAt(index).widget()
 
         assert False, 'Widget with id {} is not present'.format(id)
 

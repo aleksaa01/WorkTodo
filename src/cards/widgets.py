@@ -217,6 +217,7 @@ class CardWidget(QWidget):
 
         dtime = self.pmodel.danger_time
         wtime = self.pmodel.warning_time
+        icon = None
         now = datetime.datetime.now().timestamp()
         if dtime and dtime + created <= now:
             icon = self._danger_icon
@@ -432,6 +433,8 @@ class CardActions(QWidget):
 
 class CardSidebar(Sidebar):
 
+    itemclicked = pyqtSignal(int)
+
     def __init__(self, model, max_size=100, parent=None):
         super().__init__(model, max_size, parent)
 
@@ -445,16 +448,28 @@ class CardSidebar(Sidebar):
 
     def item_clicked(self, card_rid):
         print('widget id:', card_rid)
+        self.itemclicked.emit(card_rid)
+
+    def show(self, card_rid):
         self.model.show_card(card_rid)
+
+    def remove(self, card_rid):
+        self.model.remove_card(card_rid)
+        self.remove_widget(card_rid)
+
+    def create(self, card_name):
+        card_rid = self.model.add_card(card_name)
+        wgt = self.create_widget(card_rid, card_name)
+        self.add_widget(wgt)
 
 
 class SidebarContainer(QWidget):
-    def __init__(self, model, max_size=100, parent=None):
+    def __init__(self, sidebar, max_size=100, parent=None):
         super().__init__(parent)
 
         self.mlayout = QHBoxLayout()
 
-        self.sidebar = Sidebar(model, max_size, self)
+        self.sidebar = sidebar
         self.sidebar.itemclicked.connect(self.handle_item_clicked)
 
         self.add_btn = QToolButton(self)
@@ -483,20 +498,19 @@ class SidebarContainer(QWidget):
 
         self.in_remove_mode = False
 
-    def handle_item_clicked(self, str):
+    def handle_item_clicked(self, param):
         if self.in_remove_mode:
-            self.sidebar.remove_widget(str)
-            self.item_removed.emit(str)
+            self.sidebar.remove(param)
         else:
-            self.item_clicked.emit(str)
+            self.sidebar.show(param)
 
     def run_add_dialog(self):
-        dialog = AddCardDialog(self.sidebar.widget_names())
+        dialog = AddCardDialog()
         dialog.accepted.connect(self.add_widget)
         dialog.exec_()
 
     def add_widget(self, widget_name):
-        self.sidebar.add_widget(widget_name)
+        self.sidebar.create(widget_name)
 
     def toggle_remove_mode(self):
         self.in_remove_mode = not self.in_remove_mode
@@ -511,13 +525,11 @@ class AddCardDialog(QDialog):
     accepted = pyqtSignal(str)
     rejected = pyqtSignal(bool)
 
-    def __init__(self, card_names, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.card_names = card_names
-
-        self.qname = QLineEdit(self)
-        self.qname.setPlaceholderText('Card Name')
+        self.cname = QLineEdit(self)
+        self.cname.setPlaceholderText('Card Name')
         self.ok_btn = QPushButton('OK')
         self.ok_btn.clicked.connect(self.accept)
         self.cancel_btn = QPushButton('Cancel')
@@ -528,16 +540,12 @@ class AddCardDialog(QDialog):
         btn_layout.addWidget(self.cancel_btn)
 
         mlayout = QVBoxLayout()
-        mlayout.addWidget(self.qname)
+        mlayout.addWidget(self.cname)
         mlayout.addLayout(btn_layout)
         self.setLayout(mlayout)
 
     def accept(self):
-        card_name = self.qname.text()
-        if card_name in self.card_names:
-            self.qname.setStyleSheet('border: 1px solid red;')
-            return
-
+        card_name = self.cname.text()
         self.accepted.emit(card_name)
         super().accept()
 
@@ -603,8 +611,6 @@ class PreferencesDialog(QDialog):
     def accept(self):
         wtime = self.warning_time.seconds()
         dtime = self.danger_time.seconds()
-        wtime = wtime if wtime > 0 else None
-        dtime = dtime if dtime > 0 else None
         self.pmodel.warning_time = wtime
         self.pmodel.danger_time = dtime
         self.pmodel.show_date = self.show_date_checkbox.isChecked()

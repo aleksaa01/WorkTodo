@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout
 from PyQt5.QtGui import QPixmap
-from cards.widgets import CardWidget, CardWidgetManager, CardSidebar
+from cards.widgets import CardWidget, CardWidgetManager, CardSidebar, SidebarContainer
 from cards.models import CardsModel
 from widgets import SaveDialog, CredentialsScreen
 from storage import Storage
@@ -38,10 +38,11 @@ class AppWindow(QMainWindow):
     def load(self):
         self.storage.fetch_all()
         card_model = CardsModel(self.storage)
-        self.sidebar = CardSidebar(card_model, parent=self.cw)
+        sidebar = CardSidebar(card_model, parent=self.cw)
+        self.sidebar_container = SidebarContainer(sidebar)
         self.manager = CardWidgetManager(card_model, self.cw)
 
-        self.layout.addWidget(self.sidebar)
+        self.layout.addWidget(self.sidebar_container)
         self.layout.addWidget(self.manager)
 
     def clear_and_load(self):
