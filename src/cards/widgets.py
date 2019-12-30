@@ -251,11 +251,14 @@ class CardWidget(QWidget):
         x = 42
 
     def turn_on_selection(self):
+        self.lw.setSelectionMode(QAbstractItemView.NoSelection)
+        self.lw.clearSelection()
         for idx in range(len(self.tmodel)):
             widget = self.lw.itemWidget(self.lw.item(idx))
             widget.add_checker()
 
     def turn_off_selection(self):
+        self.lw.setSelectionMode(QAbstractItemView.SingleSelection)
         for idx in range(len(self.tmodel)):
             widget = self.lw.itemWidget(self.lw.item(idx))
             widget.remove_checker()
