@@ -52,8 +52,7 @@ class Storage(object, metaclass=GenericSingleton):
 
     @unsave
     def fetch_cards(self):
-        jid = 1
-        self.dispatcher.get_cards(jid)
+        jid = self.dispatcher.get_cards()
         future = self.extract_future(jid)
 
         self.cards = future.result()
@@ -64,8 +63,7 @@ class Storage(object, metaclass=GenericSingleton):
     @unsave
     def fetch_tasks(self):
         self._tasks = {}
-        jid = 2
-        self.dispatcher.get_tasks(jid)
+        jid = self.dispatcher.get_tasks()
         future = self.extract_future(jid)
 
         for task in future.result():
@@ -82,8 +80,7 @@ class Storage(object, metaclass=GenericSingleton):
     @unsave
     def fetch_preferences(self):
         self.preferences = {}
-        jid = 3
-        self.dispatcher.get_preferences(jid)
+        jid = self.dispatcher.get_preferences()
         future = self.extract_future(jid)
 
         for pref in future.result():
@@ -131,40 +128,22 @@ class Storage(object, metaclass=GenericSingleton):
         return True
 
     def authenticate(self, username, password):
-        self.dispatcher.authenticate(0, username, password)
+        jid = self.dispatcher.authenticate(username, password)
 
-        while True:
-            QApplication.processEvents()
-            if self.output_queue.empty():
-                continue
-            job_id, future = self.output_queue.get()
-            if job_id != 0:
-                self.output_queue.put((job_id, future))
-                continue
-
-            token = future.result()
-            self.dispatcher.token = token
-            self.token = token
-            break
+        future = self.extract_future(jid)
+        token = future.result()
+        self.dispatcher.token = token
+        self.token = token
         return True
 
     def register(self, callback, email, username, password):
-        jid = 5
-        self.dispatcher.register(jid, email, username, password)
+        jid = self.dispatcher.register(email, username, password)
 
-        while True:
-            QApplication.processEvents()
-            if self.output_queue.empty():
-                continue
-            job_id, future = self.output_queue.get()
-            if job_id != jid:
-                self.output_queue.put((job_id, future))
-                continue
-
-            result = future.result()
-            status_code, message = result
-            is_valid = True if status_code == 201 else False
-            callback(is_valid, message)
+        future = self.extract_future(jid)
+        result = future.result()
+        status_code, message = result
+        is_valid = True if status_code == 201 else False
+        callback(is_valid, message)
 
     def get_preference(self, card_rid):
         return self.preferences[card_rid]
