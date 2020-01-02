@@ -5,6 +5,7 @@ from api.dispatcher import ApiCallDispatcher
 from api.resources import CardResource, TaskResource, PreferenceResource
 from queue import Queue
 from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import QTimer
 
 
 STORAGE_NAME = "storage.json"
@@ -91,6 +92,7 @@ class Storage(object, metaclass=GenericSingleton):
         self.fetch_cards()
         self.fetch_tasks()
         self.fetch_preferences()
+        self.save()
 
 
     def extract_future(self, jid):
@@ -249,3 +251,48 @@ class Storage(object, metaclass=GenericSingleton):
             json.dump(data, f)
         self.saved = True
         print("Storage state saved!")
+
+    def sync(self):
+        with open(self.path, 'r') as f:
+            file_data = json.load(f)
+
+        self._fix_positions(self.cards)
+        for task_list in self._tasks.values():
+            self._fix_positions(task_list)
+
+        cards_resource = [card.to_json() for card in self.cards]
+        tasks_resource = []
+        for task_list in self._tasks.values():
+            tasks_resource.extend([task.to_json() for task in task_list])
+        preferences_resource = [pref.to_json() for pref in self.preferences.values()]
+
+        data = {
+            'cards': cards_resource, 'tasks': tasks_resource,
+            'preferences': preferences_resource, 'token': self.token
+        }
+        jid = self.dispatcher.sync(file_data, data)
+        self.timer = QTimer()
+        self.timer.timeout.connect(lambda: self._check_for_sync_errors(jid))
+        self.timer.start(1000)
+
+    def _fix_positions(self, resource_list):
+        for idx, res in enumerate(resource_list):
+            res.position = idx
+
+    def _check_for_sync_errors(self, jid):
+        print('Checking for sync errors...')
+        num_items = self.output_queue.qsize()
+        for _ in range(num_items):
+            job_id, future = self.output_queue.get()
+            if job_id != jid:
+                self.output_queue.put((job_id, future))
+            else:
+                try:
+                    res = future.result()
+                except Exception as err:
+                    print('Dispatcher error:', err)
+                    self.timer.stop()
+                    raise
+                print('Dispatcher result:', res)
+                self.timer.stop()
+                return
