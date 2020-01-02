@@ -232,6 +232,8 @@ class TimeEdit(QWidget):
 
 class SaveDialog(QDialog):
 
+    canceled = pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -239,11 +241,14 @@ class SaveDialog(QDialog):
 
         self.savebtn = QPushButton("Save")
         self.savebtn.clicked.connect(self.accept)
-        self.cancelbtn = QPushButton("Don't save")
-        self.cancelbtn.clicked.connect(self.reject)
+        self.nosavebtn = QPushButton("Don't save")
+        self.nosavebtn.clicked.connect(self.reject)
+        self.cancelbtn = QPushButton("Cancel")
+        self.cancelbtn.clicked.connect(self.close)
 
         btnlayout = QHBoxLayout()
         btnlayout.addWidget(self.savebtn)
+        btnlayout.addWidget(self.nosavebtn)
         btnlayout.addWidget(self.cancelbtn)
 
         mlayout = QVBoxLayout()
@@ -251,6 +256,9 @@ class SaveDialog(QDialog):
         mlayout.addLayout(btnlayout)
         self.setLayout(mlayout)
 
+    def close(self):
+        self.canceled.emit()
+        super().close()
 
 class CredentialsScreen(QWidget):
 

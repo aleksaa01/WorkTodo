@@ -56,10 +56,9 @@ class AppWindow(QMainWindow):
     def closeEvent(self, event):
         if self.storage.saved is False:
             dialog = SaveDialog(self)
-            dialog.accepted.connect(self.storage.save)
-            dialog.exec()
-
-        super().closeEvent(event)
+            dialog.accepted.connect(self.save)
+            dialog.canceled.connect(lambda: event.ignore())
+            result = dialog.exec()
 
     def save(self):
         self.storage.sync()
