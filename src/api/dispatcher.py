@@ -73,6 +73,13 @@ class ApiCallDispatcher(object):
         self.output_queue.put((jid, future))
         return jid
 
+    def sync(self, file_data, curr_data):
+        jid = self._job_id_counter
+        self._job_id_counter += 1
+        future = self.executor.submit(sync_diff, self.token, file_data, curr_data)
+        self.output_queue.put((jid, future))
+        return jid
+
 
 
 if __name__ == '__main__':
