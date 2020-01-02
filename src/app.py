@@ -17,7 +17,7 @@ class AppWindow(QMainWindow):
         self.storage.debug = False
 
         # Shortcuts
-        set_shortcut('save', self.storage.save, self)
+        set_shortcut('save', self.save, self)
         set_shortcut('quit', self.close, self)
         ###########
 
@@ -60,6 +60,10 @@ class AppWindow(QMainWindow):
             dialog.exec()
 
         super().closeEvent(event)
+
+    def save(self):
+        self.storage.sync()
+        self.storage.save()
 
 
 if __name__ == '__main__':
