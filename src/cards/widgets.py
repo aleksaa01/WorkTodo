@@ -190,7 +190,7 @@ class CardWidget(QWidget):
         self.load()
 
     def remove_task(self, pos):
-        idx = self.lw.indexAt(pos).row()
+        idx = self.lw.indexAt(self.lw.mapFromGlobal(pos)).row()
         item = self.lw.takeItem(idx)
         del item
         self.tmodel.remove(idx)
@@ -304,7 +304,7 @@ class CardWidget(QWidget):
         self.lw.setItemWidget(item, task_widget)
 
     def run_edit_task_dialog(self, pos):
-        index = self.lw.indexAt(pos).row()
+        index = self.lw.indexAt(self.lw.mapFromGlobal(pos)).row()
         rid, desc, created = self.tmodel.data(index)
         dialog = EditTaskDialog(desc, created)
         dialog.accepted.connect(lambda desc, created: self.edit_task(index, desc, created))
