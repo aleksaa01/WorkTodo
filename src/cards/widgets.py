@@ -190,7 +190,9 @@ class CardWidget(QWidget):
         self.load()
 
     def remove_task(self, pos):
-        idx = self.lw.indexAt(pos)
+        idx = self.lw.indexAt(pos).row()
+        item = self.lw.takeItem(idx)
+        del item
         self.tmodel.remove(idx)
 
     def get_task(self, index):
