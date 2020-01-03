@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QLayout, QPushButton, QScrollArea, QSizePolicy, \
-    QHBoxLayout, QSpinBox, QLabel, QDialog, QVBoxLayout, QStackedWidget, QLineEdit
+    QHBoxLayout, QSpinBox, QLabel, QDialog, QVBoxLayout, QStackedWidget, QLineEdit, QFrame
 from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal
 
 import re
@@ -284,6 +284,9 @@ class CredentialsScreen(QWidget):
         self.sw.addWidget(login_page)
         self.sw.setCurrentIndex(0)
 
+        self.mlayout.addWidget(self.sw)
+        self.setLayout(self.mlayout)
+
     def switch_page(self, page_idx):
         self.sw.setCurrentIndex(page_idx)
 
@@ -306,17 +309,20 @@ class MainCredentialsPage(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        # self.setObjectName('MCP')
         reg_btn = QPushButton('Register')
-        reg_btn.setMaximumSize(350, 200)
+        reg_btn.setMinimumSize(180, 60)
         reg_btn.clicked.connect(lambda: self.emit_action(1))
         log_btn = QPushButton('Login')
-        log_btn.setMaximumSize(350, 200)
+        log_btn.setMinimumSize(180, 60)
         log_btn.clicked.connect(lambda: self.emit_action(2))
 
         layout = QHBoxLayout()
+        layout.setAlignment(Qt.AlignHCenter)
         layout.addWidget(reg_btn)
         layout.addWidget(log_btn)
         self.setLayout(layout)
+        # self.setStyleSheet('QWidget[objectName=MCP]{border: 1px solid red;}')
 
     def emit_action(self, action_num):
         self.action_chosen.emit(action_num)
@@ -328,19 +334,33 @@ class LoginPage(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        outer_container = QWidget()
+        outer_container.setFixedSize(400, 400)
         self.username = QLineEdit()
         self.username.setPlaceholderText('Username')
+        self.username.setFixedSize(300, 25)
         self.password = QLineEdit()
         self.password.setEchoMode(QLineEdit.Password)
         self.password.setPlaceholderText('Password')
+        self.password.setFixedSize(300, 25)
         login_btn = QPushButton('Login')
         login_btn.clicked.connect(self.emit)
+        login_btn.setFixedSize(100, 30)
+
+        mlayout = QVBoxLayout()
+        mlayout.setAlignment(Qt.AlignCenter)
+        mlayout.addWidget(outer_container)
 
         layout = QVBoxLayout()
-        layout.addWidget(self.username)
-        layout.addWidget(self.password)
-        layout.addWidget(login_btn)
-        self.setLayout(layout)
+        layout.setSpacing(12)
+        layout.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.username, 0, Qt.AlignHCenter)
+        layout.addWidget(self.password, 0, Qt.AlignHCenter)
+        layout.insertSpacing(2, 20)
+        layout.addWidget(login_btn, 0, Qt.AlignHCenter)
+
+        outer_container.setLayout(layout)
+        self.setLayout(mlayout)
 
     def emit(self):
         usr = self.username.text()
