@@ -439,6 +439,7 @@ class CardActions(QWidget):
 class CardSidebar(Sidebar):
 
     itemclicked = pyqtSignal(int)
+    logout = pyqtSignal()
 
     def __init__(self, model, max_size=100, parent=None):
         super().__init__(model, max_size, parent)
@@ -492,13 +493,24 @@ class SidebarContainer(QWidget):
         self.remove_btn.setMaximumSize(30, 30)
         self.remove_btn.setAutoRaise(True)
         self.remove_btn.clicked.connect(self.toggle_remove_mode)
+        self.logout_btn = QToolButton(self)
+        icon = resource.get_icon('logout_icon')
+        self.logout_btn.setIcon(icon)
+        self.logout_btn.setIconSize(QSize(32, 32))
+        self.logout_btn.setMaximumSize(32, 32)
+        self.logout_btn.setAutoRaise(True)
+        self.logout_btn.clicked.connect(lambda: self.sidebar.logout.emit())
 
+        main_side_layout = QHBoxLayout()
         layout = QVBoxLayout()
         layout.addWidget(self.add_btn)
         layout.addWidget(self.remove_btn)
+        main_side_layout.addLayout(layout)
+        main_side_layout.addWidget(self.logout_btn)
+
 
         self.mlayout.addWidget(self.sidebar)
-        self.mlayout.addLayout(layout)
+        self.mlayout.addLayout(main_side_layout)
         self.setLayout(self.mlayout)
 
         self.in_remove_mode = False
