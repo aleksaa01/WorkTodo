@@ -39,6 +39,7 @@ class AppWindow(QMainWindow):
         self.storage.fetch_all()
         card_model = CardsModel(self.storage)
         sidebar = CardSidebar(card_model, parent=self.cw)
+        sidebar.logout.connect(self.logout)
         self.sidebar_container = SidebarContainer(sidebar)
         self.manager = CardWidgetManager(card_model, self.cw)
 
@@ -46,12 +47,23 @@ class AppWindow(QMainWindow):
         self.layout.addWidget(self.manager)
 
     def clear_and_load(self):
-        #TODO: test if takeAt(last index) is faster than takeAt(0)
+        self.clear()
+        self.load()
+
+    def clear(self):
+        # TODO: test if takeAt(last index) is faster than takeAt(0)
         item = self.layout.takeAt(0)
         while item != None:
             item.widget().deleteLater()
             item = self.layout.takeAt(0)
-        self.load()
+
+    def logout(self):
+        self.clear()
+        self.storage.token = None
+        creds_screen = CredentialsScreen(self.storage.authenticate, self.storage.register, parent=self.cw)
+        creds_screen.logged_in.connect(self.clear_and_load)
+        self.layout.addWidget(creds_screen)
+        self.save()
 
     def closeEvent(self, event):
         if self.storage.saved is False:
