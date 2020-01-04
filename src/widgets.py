@@ -275,9 +275,11 @@ class CredentialsScreen(QWidget):
         main_creds_page.action_chosen.connect(self.switch_page)
         login_page = LoginPage(self)
         login_page.login.connect(self.login)
+        login_page.action_chosen.connect(self.switch_page)
         reg_page = RegisterPage(self)
         reg_page.on_register.connect(self.register)
         reg_page.registered.connect(lambda: self.sw.setCurrentIndex(0))
+        reg_page.action_chosen.connect(self.switch_page)
 
         self.sw.addWidget(main_creds_page)
         self.sw.addWidget(reg_page)
@@ -309,7 +311,6 @@ class MainCredentialsPage(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        # self.setObjectName('MCP')
         reg_btn = QPushButton('Register')
         reg_btn.setMinimumSize(180, 60)
         reg_btn.clicked.connect(lambda: self.emit_action(1))
@@ -322,7 +323,6 @@ class MainCredentialsPage(QWidget):
         layout.addWidget(reg_btn)
         layout.addWidget(log_btn)
         self.setLayout(layout)
-        # self.setStyleSheet('QWidget[objectName=MCP]{border: 1px solid red;}')
 
     def emit_action(self, action_num):
         self.action_chosen.emit(action_num)
@@ -331,6 +331,7 @@ class MainCredentialsPage(QWidget):
 class LoginPage(QWidget):
 
     login = pyqtSignal(str, str)
+    action_chosen = pyqtSignal(int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -346,6 +347,9 @@ class LoginPage(QWidget):
         login_btn = QPushButton('Login')
         login_btn.clicked.connect(self.emit)
         login_btn.setFixedSize(100, 30)
+        back_btn = QPushButton('Back')
+        back_btn.clicked.connect(lambda: self.action_chosen.emit(0))
+        back_btn.setFixedSize(100, 30)
 
         mlayout = QVBoxLayout()
         mlayout.setAlignment(Qt.AlignCenter)
@@ -357,7 +361,11 @@ class LoginPage(QWidget):
         layout.addWidget(self.username, 0, Qt.AlignHCenter)
         layout.addWidget(self.password, 0, Qt.AlignHCenter)
         layout.insertSpacing(2, 20)
-        layout.addWidget(login_btn, 0, Qt.AlignHCenter)
+
+        btn_layout = QHBoxLayout()
+        btn_layout.addWidget(back_btn)
+        btn_layout.addWidget(login_btn)
+        layout.addLayout(btn_layout)
 
         outer_container.setLayout(layout)
         self.setLayout(mlayout)
@@ -375,32 +383,54 @@ class RegisterPage(QWidget):
 
     on_register = pyqtSignal(object, str, str, str)
     registered = pyqtSignal()
+    action_chosen = pyqtSignal(int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        outer_container = QWidget()
         self.email = QLineEdit()
         self.email.setPlaceholderText('Email')
+        self.email.setFixedSize(300, 25)
         self.username = QLineEdit()
         self.username.setPlaceholderText('Username')
+        self.username.setFixedSize(300, 25)
         self.password = QLineEdit()
         self.password.setPlaceholderText('Password')
         self.password.setEchoMode(QLineEdit.Password)
+        self.password.setFixedSize(300, 25)
         self.confirm_password = QLineEdit()
         self.confirm_password.setPlaceholderText('Confirm Password')
         self.confirm_password.setEchoMode(QLineEdit.Password)
+        self.confirm_password.setFixedSize(300, 25)
         self.error_reporter = QLabel()
         self.error_reporter.setStyleSheet('color: red;')
+        self.error_reporter.setFixedSize(300, 25)
         self.register_btn = QPushButton('Register')
         self.register_btn.clicked.connect(self.emit)
+        self.register_btn.setFixedSize(100, 30)
+        self.back_btn = QPushButton('Back')
+        self.back_btn.clicked.connect(lambda: self.action_chosen.emit(0))
+        self.back_btn.setFixedSize(100, 30)
+
+        mlayout = QVBoxLayout()
+        mlayout.setAlignment(Qt.AlignCenter)
+        mlayout.addWidget(outer_container)
 
         layout = QVBoxLayout()
-        layout.addWidget(self.email)
-        layout.addWidget(self.username)
-        layout.addWidget(self.password)
-        layout.addWidget(self.confirm_password)
-        layout.addWidget(self.error_reporter)
-        layout.addWidget(self.register_btn)
-        self.setLayout(layout)
+        layout.addWidget(self.email, 0, Qt.AlignCenter)
+        layout.addWidget(self.username, 0, Qt.AlignCenter)
+        layout.addWidget(self.password, 0, Qt.AlignCenter)
+        layout.addWidget(self.confirm_password, 0, Qt.AlignCenter)
+        layout.addWidget(self.error_reporter, 0, Qt.AlignCenter)
+        layout.insertSpacing(5, 20)
+
+        btn_layout = QHBoxLayout()
+        btn_layout.addWidget(self.back_btn)
+        btn_layout.addWidget(self.register_btn)
+        layout.addLayout(btn_layout)
+
+        outer_container.setLayout(layout)
+        self.setLayout(mlayout)
 
     def emit(self):
         email = self.email.text()
