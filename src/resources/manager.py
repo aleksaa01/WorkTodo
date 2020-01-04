@@ -21,6 +21,7 @@ class ResourceManager(metaclass=Singleton):
             'warning_icon': None,
             'danger_icon': None,
             'preferences_icon': None,
+            'logout_icon': None,
         }
 
     def icon_exists(self, icon_name):
