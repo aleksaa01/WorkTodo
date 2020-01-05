@@ -232,7 +232,9 @@ class TimeEdit(QWidget):
 
 class SaveDialog(QDialog):
 
-    canceled = pyqtSignal()
+    Accepted = 1
+    Rejected = 0
+    Canceled = 2
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -240,11 +242,11 @@ class SaveDialog(QDialog):
         self.message = QLabel("You have unsaved changes.")
 
         self.savebtn = QPushButton("Save")
-        self.savebtn.clicked.connect(self.accept)
+        self.savebtn.clicked.connect(lambda: self.accept(True))
         self.nosavebtn = QPushButton("Don't save")
-        self.nosavebtn.clicked.connect(self.reject)
+        self.nosavebtn.clicked.connect(lambda: self.reject(True))
         self.cancelbtn = QPushButton("Cancel")
-        self.cancelbtn.clicked.connect(self.close)
+        self.cancelbtn.clicked.connect(lambda: self.close(True))
 
         btnlayout = QHBoxLayout()
         btnlayout.addWidget(self.savebtn)
@@ -256,9 +258,26 @@ class SaveDialog(QDialog):
         mlayout.addLayout(btnlayout)
         self.setLayout(mlayout)
 
-    def close(self):
-        self.canceled.emit()
+        self._user_choice = None
+
+    def accept(self, set_result=False):
+        if set_result is True:
+            self._user_choice = self.Accepted
+        super().accept()
+
+    def reject(self, set_result=False):
+        if set_result is True:
+            self._user_choice = self.Rejected
+        super().reject()
+
+    def close(self, set_result=False):
+        if set_result is True:
+            self._user_choice = self.Canceled
         super().close()
+
+    def exec(self, *args, **kwargs):
+        super().exec(*args, **kwargs)
+        return self._user_choice
 
 class CredentialsScreen(QWidget):
 

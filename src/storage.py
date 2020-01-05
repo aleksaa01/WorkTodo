@@ -296,3 +296,11 @@ class Storage(object, metaclass=GenericSingleton):
                 print('Dispatcher result:', res)
                 self.timer.stop()
                 return
+
+    def remove_token(self):
+        with open(self.path, 'r') as f:
+            data = json.load(f)
+
+        data['token'] = None
+        with open(self.path, 'w') as f:
+            json.dump(data, f)
