@@ -85,7 +85,7 @@ def add_cards(token, card_list):
 
 def update_tasks(token, task_list):
     url = urls['tasks']
-    reponse = requests.put(url, headers={'Authorization': 'Token {}'.format(token)}, json=task_list)
+    response = requests.put(url, headers={'Authorization': 'Token {}'.format(token)}, json=task_list)
     sc = response.status_code
     return True
 
