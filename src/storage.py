@@ -73,8 +73,8 @@ class Storage(object, metaclass=GenericSingleton):
             task_pos = task.position
             curr_len = len(self._tasks[task.card_rid])
             if curr_len <= task_pos:
-                self._tasks[task.card_rid].extend([0] * (task_pos - curr_len))
-            self._tasks[task.card_rid].insert(task_pos, task)
+                self._tasks[task.card_rid].extend([0] * (1 + task_pos - curr_len))
+            self._tasks[task.card_rid][task_pos] = task
             self.task_rids.add(task.rid)
         print('Taks updated.')
 
