@@ -1,11 +1,10 @@
 
-DOMAIN = 'http://192.168.1.5'
-PORT = 8000
+DOMAIN = 'https://avram.pythonanywhere.com'
 
 
 def prepend_domain(urls):
     for key, value in urls.items():
-        urls[key] = DOMAIN + ':' + str(PORT) + '/' + value
+        urls[key] = DOMAIN + '/' + value
 
 
 urls = {
