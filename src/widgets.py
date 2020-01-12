@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QLayout, QPushButton, QScrollArea, QSizePolicy, \
-    QHBoxLayout, QSpinBox, QLabel, QDialog, QVBoxLayout, QStackedWidget, QLineEdit, QFrame
-from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal
+    QHBoxLayout, QSpinBox, QLabel, QDialog, QVBoxLayout, QStackedWidget, QLineEdit, \
+    QFrame
+from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal, QLine, QEvent, QPropertyAnimation
 
 import re
 
@@ -114,16 +115,31 @@ class FlowLayout(QLayout):
         self.resize_layout(self.geometry())
 
 
-class SidebarButton(QPushButton):
+class SidebarCardHolder(QFrame):
 
     clicked = pyqtSignal(int)
 
     def __init__(self, id, text, parent=None):
-        super().__init__(text, parent)
+        super().__init__(parent)
+        # self.setFrameShape(QFrame.StyledPanel)
+        # self.setFrameShadow(QFrame.Plain)
 
         self.widget_id = id
-        self.setObjectName('SidebarButton')
-        self.setCheckable(True)
+        self.setMouseTracking(True)
+
+        self.text_lbl = QLabel(text)
+        self.bottom_line = QFrame()
+        self.bottom_line.setFrameShape(QFrame.HLine)
+        self.bottom_line.setFrameShadow(QFrame.Sunken)
+
+        mlayout = QVBoxLayout()
+        mlayout.setContentsMargins(0,0,0,0)
+        mlayout.addWidget(self.text_lbl, 0, Qt.AlignCenter)
+        mlayout.addWidget(self.bottom_line, 0, Qt.AlignCenter)
+        self.setLayout(mlayout)
+
+        size_hint = self.sizeHint()
+        self.setFixedSize(size_hint)
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
@@ -178,12 +194,11 @@ class Sidebar(QScrollArea):
         self.itemclicked.emit(widget_id)
 
     def create_widget(self, widget_id, widget_text):
-        widget = SidebarButton(widget_id, widget_text)
+        widget = SidebarCardHolder(widget_id, widget_text)
         min_width = 80
         preferred_width = widget.sizeHint().width() + 20
         width = max(min_width, preferred_width)
         widget.setMinimumWidth(width)
-        widget.setMaximumHeight(20)
         return widget
 
 
