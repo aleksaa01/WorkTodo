@@ -142,6 +142,8 @@ class SidebarCardHolder(QFrame):
         self.setLayout(mlayout)
 
         size_hint = self.sizeHint()
+        # Needed because of hover visuals when card-holder is triggered(displayed).
+        size_hint.setHeight(size_hint.height() + 1)
         self.setFixedSize(size_hint)
 
         self.anim = QPropertyAnimation(self.bottom_line, b'minimumWidth')
