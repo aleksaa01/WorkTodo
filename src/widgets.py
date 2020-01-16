@@ -131,6 +131,9 @@ class SidebarCardHolder(QFrame):
         self.bottom_line = QFrame()
         self.bottom_line.setFrameShape(QFrame.HLine)
         self.bottom_line.setFrameShadow(QFrame.Sunken)
+        self.bottom_line.setFixedHeight(1)
+        self.bottom_line.setObjectName('CardHolderBLine')
+        self.bottom_line.setStyleSheet('#CardHolderBLine{background: blue;}')
 
         mlayout = QVBoxLayout()
         mlayout.setContentsMargins(0,0,0,0)
