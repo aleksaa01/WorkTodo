@@ -146,22 +146,39 @@ class SidebarCardHolder(QFrame):
 
         self.anim = QPropertyAnimation(self.bottom_line, b'minimumWidth')
         self.anim.setDuration(300)
+        self.triggered = False
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
         self.clicked.emit(self.widget_id)
+        self.triggered = not self.triggered
+        if self.triggered:
+            self.anim.stop()
+            self.bottom_line.setFixedHeight(2)
+            self.anim.setStartValue(self.bottom_line.width())
+            self.anim.setEndValue(self.width() + 10)
+            self.anim.start()
+        else:
+            self.bottom_line.setFixedHeight(1)
+
 
     def enterEvent(self, event):
-        self.anim.stop()
-        self.anim.setStartValue(self.bottom_line.width())
-        self.anim.setEndValue(self.width() + 10)
-        self.anim.start()
+        if self.triggered:
+            self.bottom_line.setFixedHeight(2)
+        else:
+            self.anim.stop()
+            self.anim.setStartValue(self.bottom_line.width())
+            self.anim.setEndValue(self.width() + 10)
+            self.anim.start()
 
     def leaveEvent(self, event):
-        self.anim.stop()
-        self.anim.setStartValue(self.bottom_line.width())
-        self.anim.setEndValue(0)
-        self.anim.start()
+        if self.triggered:
+            self.bottom_line.setFixedHeight(1)
+        else:
+            self.anim.stop()
+            self.anim.setStartValue(self.bottom_line.width())
+            self.anim.setEndValue(0)
+            self.anim.start()
 
 
 class Sidebar(QScrollArea):
