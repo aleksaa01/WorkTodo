@@ -119,12 +119,12 @@ class SidebarCardHolder(QFrame):
 
     clicked = pyqtSignal(int)
 
-    def __init__(self, id, text, parent=None):
+    def __init__(self, wgt_id, text, parent=None):
         super().__init__(parent)
         # self.setFrameShape(QFrame.StyledPanel)
         # self.setFrameShadow(QFrame.Plain)
 
-        self.widget_id = id
+        self.widget_id = wgt_id
         self.setMouseTracking(True)
 
         self.text_lbl = QLabel(text)
