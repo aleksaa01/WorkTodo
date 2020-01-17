@@ -32,7 +32,7 @@ class AppWindow(QMainWindow):
             self.layout.addWidget(creds_screen)
         else:
             self.load()
-            self.loaded = True
+            self.logged_in = True
 
         self.show()
 
@@ -59,22 +59,24 @@ class AppWindow(QMainWindow):
             item = self.layout.takeAt(0)
 
     def logout(self):
-        self.storage.remove_token()
         if self.storage.saved is False:
             dialog = SaveDialog(self)
             result = dialog.exec()
             if result == dialog.Accepted:
-                self.save()
+                self.storage.sync()
             elif result == dialog.Canceled:
                 return
+
+        self.storage.wipe()
+
         self.clear()
         creds_screen = CredentialsScreen(self.storage.authenticate, self.storage.register, parent=self.cw)
         creds_screen.logged_in.connect(self.clear_and_load)
         self.layout.addWidget(creds_screen)
-        self.loaded = False
+        self.logged_in = False
 
     def closeEvent(self, event):
-        if self.storage.saved is False and self.loaded is True:
+        if self.storage.saved is False and self.logged_in is True:
             dialog = SaveDialog(self)
             result = dialog.exec()
             if result == dialog.Accepted:

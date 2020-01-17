@@ -297,10 +297,7 @@ class Storage(object, metaclass=GenericSingleton):
                 self.timer.stop()
                 return
 
-    def remove_token(self):
-        with open(self.path, 'r') as f:
-            data = json.load(f)
-
-        data['token'] = None
+    def wipe(self):
+        data = {'cards': [], 'tasks': [], 'preferences': [], 'token': None}
         with open(self.path, 'w') as f:
             json.dump(data, f)
