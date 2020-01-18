@@ -502,16 +502,24 @@ class SidebarContainer(QWidget):
         self.logout_btn.setAutoRaise(True)
         self.logout_btn.clicked.connect(lambda: self.sidebar.logout.emit())
 
-        main_side_layout = QHBoxLayout()
-        layout = QVBoxLayout()
-        layout.addWidget(self.add_btn)
-        layout.addWidget(self.remove_btn)
-        main_side_layout.addLayout(layout)
-        main_side_layout.addWidget(self.logout_btn)
+        sidebar_actions_layout = QVBoxLayout()
+        sidebar_actions_layout.setContentsMargins(0, 0, 0, 0)
+        sidebar_actions_layout.setSpacing(0)
+        sidebar_actions_layout.addWidget(self.add_btn, 0, Qt.AlignTop)
+        sidebar_actions_layout.addWidget(self.remove_btn, 0, Qt.AlignTop)
 
+        logout_layout = QVBoxLayout()
+        logout_layout.addWidget(self.logout_btn, 0, Qt.AlignTop)
+        logout_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.mlayout.addWidget(self.sidebar)
-        self.mlayout.addLayout(main_side_layout)
+        sidebar_layout = QHBoxLayout()
+        sidebar_layout.setContentsMargins(5, 8, 5, 0)
+        sidebar_layout.addWidget(self.sidebar)
+
+        self.mlayout.setContentsMargins(0, 0, 0, 0)
+        self.mlayout.addLayout(sidebar_actions_layout)
+        self.mlayout.addLayout(sidebar_layout)
+        self.mlayout.addLayout(logout_layout)
         self.setLayout(self.mlayout)
 
         self.in_remove_mode = False
