@@ -484,6 +484,7 @@ class SidebarContainer(QWidget):
         self.add_btn.setIconSize(QSize(22, 22))
         self.add_btn.setMinimumSize(22, 22)
         self.add_btn.setAutoRaise(True)
+        self.add_btn.setToolTip('Add card')
         self.add_btn.clicked.connect(self.run_add_dialog)
 
         self.remove_btn = QToolButton(self)
@@ -492,6 +493,7 @@ class SidebarContainer(QWidget):
         self.remove_btn.setIconSize(QSize(22, 22))
         self.remove_btn.setMaximumSize(22, 22)
         self.remove_btn.setAutoRaise(True)
+        self.remove_btn.setToolTip('Remove card')
         self.remove_btn.clicked.connect(self.toggle_remove_mode)
 
         self.logout_btn = QToolButton(self)
@@ -500,6 +502,7 @@ class SidebarContainer(QWidget):
         self.logout_btn.setIconSize(QSize(22, 22))
         self.logout_btn.setMaximumSize(22, 22)
         self.logout_btn.setAutoRaise(True)
+        self.logout_btn.setToolTip('Logout')
         self.logout_btn.clicked.connect(lambda: self.sidebar.logout.emit())
 
         sidebar_actions_layout = QVBoxLayout()
