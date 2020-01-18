@@ -470,7 +470,7 @@ class CardSidebar(Sidebar):
 
 
 class SidebarContainer(QWidget):
-    def __init__(self, sidebar, max_size=100, parent=None):
+    def __init__(self, sidebar, parent=None):
         super().__init__(parent)
 
         self.mlayout = QHBoxLayout()
