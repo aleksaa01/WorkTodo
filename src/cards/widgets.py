@@ -371,6 +371,7 @@ class CardActions(QWidget):
         self.select.setIcon(icon)
         self.select.setMaximumSize(20, 20)
         self.select.setAutoRaise(True)
+        self.select.setToolTip('Select multiple tasks')
         self.select.clicked.connect(self.selection_triggered)
 
         self.delete = QToolButton(self)
@@ -378,6 +379,7 @@ class CardActions(QWidget):
         self.delete.setIcon(icon)
         self.delete.setMaximumSize(20, 20)
         self.delete.setAutoRaise(True)
+        self.delete.setToolTip('Remove selected tasks')
         self.delete.clicked.connect(self.delete_triggered)
 
         self.add = QToolButton(self)
@@ -385,6 +387,7 @@ class CardActions(QWidget):
         self.add.setIcon(icon)
         self.add.setMaximumSize(20, 20)
         self.add.setAutoRaise(True)
+        self.add.setToolTip('Create new task')
         self.add.clicked.connect(self.run_add_task_dialog)
 
         self.preferences = QToolButton(self)
@@ -392,6 +395,7 @@ class CardActions(QWidget):
         self.preferences.setIcon(icon)
         self.preferences.setMaximumSize(20, 20)
         self.preferences.setAutoRaise(True)
+        self.preferences.setToolTip('Card options')
         self.preferences.clicked.connect(self.run_preferences_dialog)
 
         layout = QHBoxLayout(self)
