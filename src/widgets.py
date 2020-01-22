@@ -528,7 +528,6 @@ class RegisterPage(QWidget):
         self.on_register.emit(self.validate, email, usr, psw)
 
     def validate(self, is_valid, message=None):
-        print("IN VALIDATE. Is valid:", is_valid)
         if is_valid:
             self.registered.emit()
             return

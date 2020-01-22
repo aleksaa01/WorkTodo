@@ -79,38 +79,3 @@ class ApiCallDispatcher(object):
         future = self.executor.submit(sync_diff, self.token, file_data, curr_data)
         self.output_queue.put((jid, future))
         return jid
-
-
-
-if __name__ == '__main__':
-    import requests
-    import json
-    from queue import Queue
-    data = {'username': 'user1', 'password': 'user1'}
-    response = requests.post(urls['authenticate'], json=data)
-    print(response.content)
-    content = json.loads(response.content)
-    token = content['token']
-    print(token)
-
-    q = Queue()
-    dispatcher = Dispatcher(token, q)
-    dispatcher.get_cards(1)
-    dispatcher.get_tasks(2)
-    dispatcher.get_cards(3)
-    dispatcher.get_tasks(4)
-
-    jobs = 4
-    while jobs > 0:
-        if q.empty():
-            continue
-        jobs -= 1
-        job_id, future = q.get()
-        if not future.done():
-            q.put((job_id, future))
-        result = future.result()
-        if isinstance(result, list):
-            print('--------', job_id)
-            for i in result:
-                print(vars(i))
-            print('^^^^^^^^')

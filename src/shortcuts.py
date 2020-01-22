@@ -3,7 +3,6 @@ from PyQt5.QtGui import QKeySequence
 from PyQt5.QtCore import Qt
 
 
-
 shortcuts = {
     'save': QKeySequence(Qt.CTRL + Qt.Key_S),
     'quit': QKeySequence(Qt.CTRL + Qt.Key_Q),

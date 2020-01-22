@@ -4,7 +4,7 @@ from datetime import datetime
 class ResourceBase(object):
     """
     #field_map: Use it if you want to name resource fields differently
-        from how are they named in the api.
+        from how they are named in the api.
     """
     field_map = None
 
@@ -31,7 +31,7 @@ class CardResource(ResourceBase):
     def __init__(self, **kwargs):
         self.rid = kwargs['rid']
         self.name = kwargs['name']
-        # For perfermance reasons, you can update position just before API synchronization
+        # For perfermance reasons, update position just before API synchronization
         self.position = kwargs['position']
 
 
@@ -40,7 +40,7 @@ class TaskResource(ResourceBase):
     def __init__(self, **kwargs):
         self.rid = kwargs['rid']
         self.description = kwargs['description']
-        # For perfermance reasons, you can update position just before API synchronization
+        # For perfermance reasons, update position just before API synchronization
         self.position = kwargs.get('position', None)
         self.card_rid = kwargs['card_rid']
         self.created = kwargs.get('created', datetime.now().timestamp())

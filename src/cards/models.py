@@ -3,9 +3,6 @@ from api.resources import CardResource, PreferenceResource
 from tasks.models import TasksModel
 
 
-#TODO: Synchronize CardsModel with the API.
-
-
 class CardsModel(object):
 
     def __init__(self, storage):

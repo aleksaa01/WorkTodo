@@ -160,15 +160,15 @@ def sync_diff(token, file_data, curr_data):
     task_updates, task_removes, task_adds = _find_resource_diff(file_tasks, curr_tasks)
     pref_updates, pref_removes, pref_adds = _find_resource_diff(file_prefs, curr_prefs)
 
-    r = update_cards(token, card_updates) if card_updates else True
-    r = remove_cards(token, card_removes) if card_removes else True
-    r = add_cards(token, card_adds) if card_adds else True
-    r = update_tasks(token, task_updates) if task_updates else True
-    r = remove_tasks(token, task_removes) if task_removes else True
-    r = add_tasks(token, task_adds) if task_adds else True
-    r = update_preferences(token, pref_updates) if pref_updates else True
-    r = remove_preferences(token, pref_removes) if pref_removes else True
-    r = add_preferences(token, pref_adds) if pref_adds else True
+    update_cards(token, card_updates) if card_updates else True
+    remove_cards(token, card_removes) if card_removes else True
+    add_cards(token, card_adds) if card_adds else True
+    update_tasks(token, task_updates) if task_updates else True
+    remove_tasks(token, task_removes) if task_removes else True
+    add_tasks(token, task_adds) if task_adds else True
+    update_preferences(token, pref_updates) if pref_updates else True
+    remove_preferences(token, pref_removes) if pref_removes else True
+    add_preferences(token, pref_adds) if pref_adds else True
 
     return True
 
