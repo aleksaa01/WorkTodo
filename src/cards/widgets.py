@@ -157,18 +157,16 @@ class CardWidget(QWidget):
 
         show_date = self.pmodel.show_date
 
-        if show_date:
-            warning_time = self.pmodel.warning_time
-            danger_time = self.pmodel.danger_time
+        warning_time = self.pmodel.warning_time
+        danger_time = self.pmodel.danger_time
         current_time = datetime.datetime.now().timestamp()
 
         for rid, text, created in self.tmodel.data():
             icon = None
-            if show_date:
-                if danger_time and created + danger_time <= current_time:
-                    icon = self._danger_icon
-                elif warning_time and created + warning_time <= current_time:
-                    icon = self._warning_icon
+            if danger_time and created + danger_time <= current_time:
+                icon = self._danger_icon
+            elif warning_time and created + warning_time <= current_time:
+                icon = self._warning_icon
 
             if show_date:
                 dt = datetime.datetime.fromtimestamp(created)
@@ -288,14 +286,13 @@ class CardWidget(QWidget):
             text = "{}\n({}.{}.{})".format(text, dt.day, dt.month, dt.year)
 
         icon = None
-        if self.pmodel.show_date:
-            wtime = self.pmodel.warning_time
-            dtime = self.pmodel.danger_time
-            current_time = datetime.datetime.now().timestamp()
-            if dtime and created + dtime <= current_time:
-                icon = self._danger_icon
-            elif wtime and created + wtime <= current_time:
-                icon = self._warning_icon
+        wtime = self.pmodel.warning_time
+        dtime = self.pmodel.danger_time
+        current_time = datetime.datetime.now().timestamp()
+        if dtime and created + dtime <= current_time:
+            icon = self._danger_icon
+        elif wtime and created + wtime <= current_time:
+            icon = self._warning_icon
 
         task_widget = TaskWidget(rid, text, self.actions, icon)
         item = QListWidgetItem()
