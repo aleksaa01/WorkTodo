@@ -32,7 +32,6 @@ class AppWindow(QMainWindow):
             self.layout.addWidget(creds_screen)
         else:
             self.load()
-            self.logged_in = True
 
         self.show()
 
@@ -46,6 +45,7 @@ class AppWindow(QMainWindow):
 
         self.layout.addWidget(self.sidebar_container)
         self.layout.addWidget(self.manager)
+        self.logged_in = True
 
     def clear_and_load(self):
         self.clear()
