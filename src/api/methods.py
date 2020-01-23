@@ -106,7 +106,7 @@ def add_tasks(token, task_list):
 
 def update_preferences(token, preference_list):
     url = urls['preferences']
-    reponse = requests.put(url, headers={'Authorization': 'Token {}'.format(token)}, json=preference_list)
+    response = requests.put(url, headers={'Authorization': 'Token {}'.format(token)}, json=preference_list)
     sc = response.status_code
     return True
 
