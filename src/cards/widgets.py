@@ -212,8 +212,7 @@ class CardWidget(QWidget):
 
         if self.pmodel.show_date:
             dt = datetime.datetime.fromtimestamp(created)
-            text = "{}\n({}.{}.{} {}:{})".format(text, dt.year, dt.month,
-                                                 dt.day, dt.hour, dt.minute)
+            text = "{}\n({}.{}.{} {}:{})".format(text, dt.day, dt.month, dt.year, dt.hour, dt.minute)
 
         dtime = self.pmodel.danger_time
         wtime = self.pmodel.warning_time
@@ -283,7 +282,7 @@ class CardWidget(QWidget):
 
         if self.pmodel.show_date:
             dt = datetime.datetime.fromtimestamp(created)
-            text = "{}\n({}.{}.{})".format(text, dt.day, dt.month, dt.year)
+            text = "{}\n({}.{}.{} {}:{})".format(text, dt.day, dt.month, dt.year, dt.hour, dt.minute)
 
         icon = None
         wtime = self.pmodel.warning_time
