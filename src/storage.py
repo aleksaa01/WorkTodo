@@ -38,6 +38,7 @@ class Storage(object, metaclass=GenericSingleton):
         self.preferences = None
         self.preference_rids = set()
         self.token = None
+        # You have to load first, in order to check if token exists.
         with open(self.path, 'r') as f:
             self.load_from_file(f)
 
@@ -115,7 +116,6 @@ class Storage(object, metaclass=GenericSingleton):
             task_res = TaskResource.from_json(task_data)
             self._tasks[task_res.card_rid].append(task_res)
             self.task_rids.add(task_res.rid)
-        # Added for prevention of continuous rid number growth(check fast if rid exists and reuse deleted)
         self.preferences = {}
         for resource in data['preferences']:
             pref = PreferenceResource.from_json(resource)
@@ -149,6 +149,9 @@ class Storage(object, metaclass=GenericSingleton):
 
     def get_preference(self, card_rid):
         return self.preferences[card_rid]
+
+    def get_preference_field(self, card_rid, field):
+        return getattr(self.preferences[card_rid], field)
 
     def get_card(self, card_rid):
         for c in self.cards:
@@ -232,8 +235,14 @@ class Storage(object, metaclass=GenericSingleton):
         self._tasks[card_rid][idx] = task_resource
 
     @unsave
-    def update_preference(self, card_rid, preference):
-        self.preferences[card_rid] = preference
+    def update_preference(self, card_rid, field, new_value):
+        # check if attribute exists first
+        getattr(self.preferences[card_rid], field)
+        setattr(self.preferences[card_rid], field, new_value)
+
+    @unsave
+    def replace_preference(self, card_rid, preference_resource):
+        self.preferences[card_rid] = preference_resource
 
     def save(self):
         if self.debug:
