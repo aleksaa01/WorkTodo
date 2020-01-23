@@ -85,38 +85,36 @@ class PreferencesModel(object):
     def __init__(self, storage, card_rid):
         self._st = storage
         self.crid = card_rid
-        # If you change pref here, it will also be changed in storage.
-        self.pref = storage.get_preference(card_rid)
 
     @property
     def show_date(self):
-        return self.pref.show_date
+        return self._st.get_preference_field(self.crid, 'show_date')
 
     @show_date.setter
     def show_date(self, show):
         if isinstance(show, bool):
-            self.pref.show_date = show
+            self._st.update_preference(self.crid, 'show_date', show)
         else:
             raise TypeError('Need bool, got {} instead'.format(type(show)))
 
     @property
     def warning_time(self):
-        return self.pref.warning_time
+        return self._st.get_preference_field(self.crid, 'warning_time')
 
     @warning_time.setter
     def warning_time(self, time):
         if isinstance(time, int):
-            self.pref.warning_time = time
+            self._st.update_preference(self.crid, 'warning_time', time)
         else:
             raise TypeError('Need int, got {} instead'.format(type(time)))
 
     @property
     def danger_time(self):
-        return self.pref.danger_time
+        return self._st.get_preference_field(self.crid, 'danger_time')
 
     @danger_time.setter
     def danger_time(self, time):
         if isinstance(time, int):
-            self.pref.danger_time = time
+            self._st.update_preference(self.crid, 'danger_time', time)
         else:
             raise TypeError('Need int, got {} instead'.format(type(time)))
