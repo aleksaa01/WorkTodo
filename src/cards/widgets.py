@@ -558,6 +558,8 @@ class AddCardDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.setWindowTitle('Add Card')
+
         self.cname = QLineEdit(self)
         self.cname.setPlaceholderText('Card Name')
         self.ok_btn = QPushButton('OK')
@@ -591,6 +593,8 @@ class PreferencesDialog(QDialog):
 
     def __init__(self, preferences_model, parent=None):
         super().__init__(parent)
+
+        self.setWindowTitle('Preferences')
 
         self.pmodel = preferences_model
 

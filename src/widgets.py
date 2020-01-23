@@ -291,6 +291,8 @@ class SaveDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.setWindowTitle('Save')
+
         self.message = QLabel("You have unsaved changes.")
 
         self.savebtn = QPushButton("Save")
