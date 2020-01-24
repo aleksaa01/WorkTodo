@@ -311,8 +311,11 @@ class CardWidget(QWidget):
         self.tmodel.update(index, description, created_at)
         item = self.lw.item(index)
         widget = self.lw.itemWidget(item)
-        dt = datetime.datetime.fromtimestamp(created_at)
-        content = "{}\n({}.{}.{} {}:{})".format(description, dt.day, dt.month, dt.year, dt.hour, dt.minute)
+        if self.pmodel.show_date:
+            dt = datetime.datetime.fromtimestamp(created_at)
+            content = "{}\n({}.{}.{} {}:{})".format(description, dt.day, dt.month, dt.year, dt.hour, dt.minute)
+        else:
+            content = description
         widget.set_text(content)
         item.setSizeHint(widget.sizeHint())
 
