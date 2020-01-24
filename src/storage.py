@@ -297,6 +297,9 @@ class Storage(object, metaclass=GenericSingleton):
                 self.output_queue.put((job_id, future))
             else:
                 try:
+                    if not future.done():
+                        self.output_queue.put((job_id, future))
+                        return
                     res = future.result()
                 except Exception as err:
                     print('Dispatcher error:', err)
