@@ -31,11 +31,11 @@ class Storage(object, metaclass=GenericSingleton):
         else:
             self.path = os.path.join(os.getcwd(), self.name)
 
-        self.cards = None
+        self.cards = []
         self.card_rids = set()
-        self._tasks = None
+        self._tasks = {}
         self.task_rids = set()
-        self.preferences = None
+        self.preferences = {}
         self.preference_rids = set()
         self.token = None
         # You have to load first, in order to check if token exists.
@@ -60,17 +60,15 @@ class Storage(object, metaclass=GenericSingleton):
         self.cards = future.result()
         for c in self.cards:
             self.card_rids.add(c.rid)
+            self._tasks[c.rid] = []
         print('Cards updated.')
 
     @unsave
     def fetch_tasks(self):
-        self._tasks = {}
         jid = self.dispatcher.get_tasks()
         future = self.extract_future(jid)
 
         for task in future.result():
-            if self._tasks.get(task.card_rid, None) is None:
-                self._tasks[task.card_rid] = []
             task_pos = task.position
             curr_len = len(self._tasks[task.card_rid])
             if curr_len <= task_pos:
