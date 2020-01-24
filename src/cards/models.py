@@ -77,6 +77,7 @@ class CardsModel(object):
 
     def transfer_task(self, from_crid, to_crid, from_idx, to_idx):
         task = self._st.pop_task(from_crid, from_idx)
+        task.card_rid = to_crid
         self._st.insert_task(to_crid, to_idx, task)
 
 
