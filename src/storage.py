@@ -1,11 +1,13 @@
 import os
 import json
+from requests.exceptions import ConnectionError
 from utils.singletons import GenericSingleton
 from api.dispatcher import ApiCallDispatcher
 from api.resources import CardResource, TaskResource, PreferenceResource
 from queue import Queue
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QTimer
+from api.methods import NoInternetConnection, InvalidCredentials
 
 
 STORAGE_NAME = "storage.json"
@@ -131,9 +133,16 @@ class Storage(object, metaclass=GenericSingleton):
         jid = self.dispatcher.authenticate(username, password)
 
         future = self.extract_future(jid)
-        token = future.result()
-        self.dispatcher.token = token
-        self.token = token
+        try:
+            token = future.result()
+        except ConnectionError:
+            return NoInternetConnection
+
+        if isinstance(token, str):
+            self.dispatcher.token = token
+            self.token = token
+        else:
+            return InvalidCredentials
         return True
 
     def register(self, callback, email, username, password):
