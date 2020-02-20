@@ -403,7 +403,7 @@ class MainCredentialsPage(QWidget):
 
 class LoginPage(QWidget):
 
-    login = pyqtSignal(str, str)
+    login = pyqtSignal(object, str, str)
     action_chosen = pyqtSignal(int)
 
     def __init__(self, parent=None):
@@ -417,9 +417,12 @@ class LoginPage(QWidget):
         self.password.setEchoMode(QLineEdit.Password)
         self.password.setPlaceholderText('Password')
         self.password.setFixedSize(300, 25)
-        login_btn = QPushButton('Login')
-        login_btn.clicked.connect(self.emit)
-        login_btn.setFixedSize(100, 30)
+        self.error_reporter = QLabel()
+        self.error_reporter.setStyleSheet('color: red;')
+        self.error_reporter.setFixedSize(300, 25)
+        self.login_btn = QPushButton('Login')
+        self.login_btn.clicked.connect(self.emit)
+        self.login_btn.setFixedSize(100, 30)
         back_btn = QPushButton('Back')
         back_btn.clicked.connect(lambda: self.action_chosen.emit(0))
         back_btn.setFixedSize(100, 30)
@@ -433,11 +436,12 @@ class LoginPage(QWidget):
         layout.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.username, 0, Qt.AlignHCenter)
         layout.addWidget(self.password, 0, Qt.AlignHCenter)
+        layout.addWidget(self.error_reporter, 0, Qt.AlignCenter)
         layout.insertSpacing(2, 20)
 
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(back_btn)
-        btn_layout.addWidget(login_btn)
+        btn_layout.addWidget(self.login_btn)
         layout.addLayout(btn_layout)
 
         outer_container.setLayout(layout)
@@ -450,6 +454,12 @@ class LoginPage(QWidget):
         self.password.setText('')
         self.login.emit(usr, psw)
 
+        self.login_btn.setEnabled(False)
+        self.login.emit(self.report_error, usr, psw)
+
+    def report_error(self, message):
+        self.login_btn.setEnabled(True)
+        self.error_reporter.setText(message)
 
 
 class RegisterPage(QWidget):
