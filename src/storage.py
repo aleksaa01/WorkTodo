@@ -145,14 +145,19 @@ class Storage(object, metaclass=GenericSingleton):
             return InvalidCredentials
         return True
 
-    def register(self, callback, email, username, password):
+    def register(self, email, username, password):
         jid = self.dispatcher.register(email, username, password)
 
         future = self.extract_future(jid)
-        result = future.result()
-        status_code, message = result
-        is_valid = True if status_code == 201 else False
-        callback(is_valid, message)
+        try:
+            reg_message = future.result()
+        except ConnectionError:
+            return NoInternetConnection
+
+        if reg_message is True:
+            return True
+        else:
+            return reg_message
 
     def get_preference(self, card_rid):
         return self.preferences[card_rid]
