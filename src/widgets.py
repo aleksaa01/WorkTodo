@@ -3,6 +3,8 @@ from PyQt5.QtWidgets import QWidget, QLayout, QPushButton, QScrollArea, QSizePol
     QFrame
 from PyQt5.QtCore import QRect, QSize, Qt, QPoint, pyqtSignal, QLine, QEvent, QPropertyAnimation
 
+from api.methods import NoInternetConnection, InvalidCredentials
+
 import re
 
 
@@ -332,6 +334,7 @@ class SaveDialog(QDialog):
     def exec(self, *args, **kwargs):
         super().exec(*args, **kwargs)
         return self._user_choice
+
 
 class CredentialsScreen(QWidget):
 

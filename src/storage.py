@@ -23,6 +23,8 @@ def unsave(func):
 
 class Storage(object, metaclass=GenericSingleton):
 
+
+
     def __init__(self, filename=None, path=None):
         self.name = filename if filename else STORAGE_NAME
         if path:
