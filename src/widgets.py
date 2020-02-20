@@ -459,7 +459,6 @@ class LoginPage(QWidget):
         psw = self.password.text()
         # Just in case, delete text in password field emidiatelly
         self.password.setText('')
-        self.login.emit(usr, psw)
 
         self.login_btn.setEnabled(False)
         self.login.emit(self.report_error, usr, psw)
@@ -472,7 +471,6 @@ class LoginPage(QWidget):
 class RegisterPage(QWidget):
 
     on_register = pyqtSignal(object, str, str, str)
-    registered = pyqtSignal()
     action_chosen = pyqtSignal(int)
 
     def __init__(self, parent=None):
@@ -544,11 +542,8 @@ class RegisterPage(QWidget):
         self.confirm_password.setText('')
 
         self.register_btn.setEnabled(False)
-        self.on_register.emit(self.validate, email, usr, psw)
+        self.on_register.emit(self.report_error, email, usr, psw)
 
-    def validate(self, is_valid, message=None):
-        if is_valid:
-            self.registered.emit()
-            return
+    def report_error(self, message):
         self.register_btn.setEnabled(True)
         self.error_reporter.setText(message)
