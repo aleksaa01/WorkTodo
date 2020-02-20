@@ -4,6 +4,10 @@ import requests
 import json
 
 
+NoInternetConnection = 0
+InvalidCredentials = 1
+
+
 def get_cards(token):
     url = urls['cards']
     response = requests.get(url, headers={'Authorization': 'Token {}'.format(token)})
@@ -129,7 +133,10 @@ def authenticate(username, password):
     url = urls['authenticate']
     data = {'username': username, 'password': password}
     response = requests.post(url, json=data)
-    return json.loads(response.content)['token']
+    if response.status_code == 200:
+        return json.loads(response.content)['token']
+    else:
+        return False
 
 
 def register(email, username, password):
@@ -137,11 +144,12 @@ def register(email, username, password):
     data = {'email': email, 'username': username, 'password': password}
     response = requests.post(url, json=data)
     sc = response.status_code
-    raw = response.content
-    content = json.loads(raw) if len(raw) > 0 else ''
-    if isinstance(content, str):
-        return sc, content
-    return sc, content[0]
+    if sc == 201:
+        return True
+    else:
+        # Email or username already exists
+        content = json.loads(response.content)
+        return content[0]
 
 def sync_diff(token, file_data, curr_data):
     file_cards = {c['rid']:c for c in file_data['cards']}
