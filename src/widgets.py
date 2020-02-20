@@ -351,7 +351,6 @@ class CredentialsScreen(QWidget):
         login_page.action_chosen.connect(self.switch_page)
         reg_page = RegisterPage(self)
         reg_page.on_register.connect(self.register)
-        reg_page.registered.connect(lambda: self.sw.setCurrentIndex(0))
         reg_page.action_chosen.connect(self.switch_page)
 
         self.sw.addWidget(main_creds_page)
@@ -365,17 +364,25 @@ class CredentialsScreen(QWidget):
     def switch_page(self, page_idx):
         self.sw.setCurrentIndex(page_idx)
 
-    def login(self, username, password):
-        try:
-            self.login_func(username, password)
-        except Exception as err:
-            #FIXME: Username or password is wrong. Just display the message.
-            print(err)
-            raise
-        self.logged_in.emit()
+    def login(self, callback, username, password):
+        result = self.login_func(username, password)
+        if result is True:
+            self.logged_in.emit()
+        elif result == NoInternetConnection:
+            callback('No internet connection')
+        elif result == InvalidCredentials:
+            callback('Wrong username or password')
+        else:
+            callback(result)
 
     def register(self, callback, email, username, password):
-        self.register_func(callback, email, username, password)
+        result = self.register_func(email, username, password)
+        if result is True:
+            self.sw.setCurrentIndex(0)
+        elif result == NoInternetConnection:
+            callback('No internet connection')
+        else:
+            callback(result)
 
 
 class MainCredentialsPage(QWidget):
